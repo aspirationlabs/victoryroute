@@ -262,6 +262,7 @@ dependencies = [
     { name = "urllib3" },
     { name = "uvicorn" },
     { name = "virtualenv" },
+    { name = "websockets" },
     { name = "workos" },
 ]
 
@@ -336,6 +337,7 @@ requires-dist = [
     { name = "urllib3" },
     { name = "uvicorn" },
     { name = "virtualenv" },
+    { name = "websockets" },
     { name = "workos" },
 ]
 
