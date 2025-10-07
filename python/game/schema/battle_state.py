@@ -64,6 +64,48 @@ class BattleState:
         team = self.get_team(player)
         return team.get_active_pokemon()
 
+    def get_available_moves(self, player: str = "p1") -> List[str]:
+        """Get available moves for a player.
+
+        If request data is available (from RequestEvent), returns that.
+        Otherwise, infers from battle state (replay mode).
+
+        Args:
+            player: Player ID (p1 or p2)
+
+        Returns:
+            List of available move names
+        """
+        # If we have request data, use it
+        if player == "p1" and self.available_moves:
+            return self.available_moves
+
+        # Otherwise, infer from state
+        from python.game.environment.state_transition import StateTransition
+
+        return StateTransition._infer_available_moves(self, player)
+
+    def get_available_switches(self, player: str = "p1") -> List[int]:
+        """Get available switches for a player.
+
+        If request data is available (from RequestEvent), returns that.
+        Otherwise, infers from battle state (replay mode).
+
+        Args:
+            player: Player ID (p1 or p2)
+
+        Returns:
+            List of indices of Pokemon that can be switched in
+        """
+        # If we have request data, use it
+        if player == "p1" and self.available_switches:
+            return self.available_switches
+
+        # Otherwise, infer from state
+        from python.game.environment.state_transition import StateTransition
+
+        return StateTransition._infer_available_switches(self, player)
+
     def get_pokemon_battle_state(
         self, pokemon: PokemonState, base_stats: Optional[Dict[Stat, int]] = None
     ) -> Dict[str, Any]:

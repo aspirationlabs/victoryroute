@@ -157,10 +157,12 @@ Evaluate the quality of the agent's reasoning:
 4. **Generate Evaluation Data**: Parse replays and create evaluation datasets
 5. **Run Evaluations**: Test agents using multiple evaluation methods
 6. **Iterate**: Refine agents, prompts, and tools based on evaluation results
+7. **Running Scripts**: Assume the venv is running. This is not a bazel project. Just run python <script>.
 
 ## Testing Philosophy
 
 - **Test files co-located**: Each `foo.py` has corresponding `foo_test.py` in same directory
+- **Executing Tests**: Just run `pytest` to run all tests.
 - **Immutable state simplifies testing**: Easy to set up specific game states for unit tests
 - **Battle scenarios as test cases**: Key battle mechanics verified through scenario tests
 
