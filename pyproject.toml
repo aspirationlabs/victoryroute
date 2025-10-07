@@ -53,6 +53,7 @@ dependencies = [
     "pydantic-core",
     "pyjwt",
     "pyrefly",
+    "pytest",
     "python-dateutil",
     "python-dotenv",
     "pyyaml",

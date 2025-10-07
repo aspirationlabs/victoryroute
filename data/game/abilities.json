@@ -1,0 +1,1572 @@
+[
+  {
+    "name": "No Ability",
+    "num": 0,
+    "rating": 0.1
+  },
+  {
+    "name": "Adaptability",
+    "num": 91,
+    "rating": 4
+  },
+  {
+    "name": "Aerilate",
+    "num": 184,
+    "rating": 4
+  },
+  {
+    "name": "Aftermath",
+    "num": 106,
+    "rating": 2
+  },
+  {
+    "name": "Air Lock",
+    "num": 76,
+    "rating": 1.5
+  },
+  {
+    "name": "Analytic",
+    "num": 148,
+    "rating": 2.5
+  },
+  {
+    "name": "Anger Point",
+    "num": 83,
+    "rating": 1
+  },
+  {
+    "name": "Anger Shell",
+    "num": 271,
+    "rating": 3
+  },
+  {
+    "name": "Anticipation",
+    "num": 107,
+    "rating": 0.5
+  },
+  {
+    "name": "Arena Trap",
+    "num": 71,
+    "rating": 5
+  },
+  {
+    "name": "Armor Tail",
+    "num": 296,
+    "rating": 2.5
+  },
+  {
+    "name": "Aroma Veil",
+    "num": 165,
+    "rating": 2
+  },
+  {
+    "name": "As One (Glastrier)",
+    "num": 266,
+    "rating": 3.5
+  },
+  {
+    "name": "As One (Spectrier)",
+    "num": 267,
+    "rating": 3.5
+  },
+  {
+    "name": "Aura Break",
+    "num": 188,
+    "rating": 1
+  },
+  {
+    "name": "Bad Dreams",
+    "num": 123,
+    "rating": 1.5
+  },
+  {
+    "name": "Ball Fetch",
+    "num": 237,
+    "rating": 0
+  },
+  {
+    "name": "Battery",
+    "num": 217,
+    "rating": 0
+  },
+  {
+    "name": "Battle Armor",
+    "num": 4,
+    "rating": 1
+  },
+  {
+    "name": "Battle Bond",
+    "num": 210,
+    "rating": 3.5
+  },
+  {
+    "name": "Beads of Ruin",
+    "num": 284,
+    "rating": 4.5
+  },
+  {
+    "name": "Beast Boost",
+    "num": 224,
+    "rating": 3.5
+  },
+  {
+    "name": "Berserk",
+    "num": 201,
+    "rating": 2
+  },
+  {
+    "name": "Big Pecks",
+    "num": 145,
+    "rating": 0.5
+  },
+  {
+    "name": "Blaze",
+    "num": 66,
+    "rating": 2
+  },
+  {
+    "name": "Bulletproof",
+    "num": 171,
+    "rating": 3
+  },
+  {
+    "name": "Cheek Pouch",
+    "num": 167,
+    "rating": 2
+  },
+  {
+    "name": "Chilling Neigh",
+    "num": 264,
+    "rating": 3
+  },
+  {
+    "name": "Chlorophyll",
+    "num": 34,
+    "rating": 3
+  },
+  {
+    "name": "Clear Body",
+    "num": 29,
+    "rating": 2
+  },
+  {
+    "name": "Cloud Nine",
+    "num": 13,
+    "rating": 1.5
+  },
+  {
+    "name": "Color Change",
+    "num": 16,
+    "rating": 0
+  },
+  {
+    "name": "Comatose",
+    "num": 213,
+    "rating": 4
+  },
+  {
+    "name": "Commander",
+    "num": 279,
+    "rating": 0
+  },
+  {
+    "name": "Competitive",
+    "num": 172,
+    "rating": 2.5
+  },
+  {
+    "name": "Compound Eyes",
+    "num": 14,
+    "rating": 3
+  },
+  {
+    "name": "Contrary",
+    "num": 126,
+    "rating": 4.5
+  },
+  {
+    "name": "Corrosion",
+    "num": 212,
+    "rating": 2.5
+  },
+  {
+    "name": "Costar",
+    "num": 294,
+    "rating": 0
+  },
+  {
+    "name": "Cotton Down",
+    "num": 238,
+    "rating": 2
+  },
+  {
+    "name": "Cud Chew",
+    "num": 291,
+    "rating": 2
+  },
+  {
+    "name": "Curious Medicine",
+    "num": 261,
+    "rating": 0
+  },
+  {
+    "name": "Cursed Body",
+    "num": 130,
+    "rating": 2
+  },
+  {
+    "name": "Cute Charm",
+    "num": 56,
+    "rating": 0.5
+  },
+  {
+    "name": "Damp",
+    "num": 6,
+    "rating": 0.5
+  },
+  {
+    "name": "Dancer",
+    "num": 216,
+    "rating": 1.5
+  },
+  {
+    "name": "Dark Aura",
+    "num": 186,
+    "rating": 3
+  },
+  {
+    "name": "Dauntless Shield",
+    "num": 235,
+    "rating": 3.5
+  },
+  {
+    "name": "Dazzling",
+    "num": 219,
+    "rating": 2.5
+  },
+  {
+    "name": "Defeatist",
+    "num": 129,
+    "rating": -1
+  },
+  {
+    "name": "Defiant",
+    "num": 128,
+    "rating": 3
+  },
+  {
+    "name": "Delta Stream",
+    "num": 191,
+    "rating": 4
+  },
+  {
+    "name": "Desolate Land",
+    "num": 190,
+    "rating": 4.5
+  },
+  {
+    "name": "Disguise",
+    "num": 209,
+    "rating": 3.5
+  },
+  {
+    "name": "Download",
+    "num": 88,
+    "rating": 3.5
+  },
+  {
+    "name": "Dragon's Maw",
+    "num": 263,
+    "rating": 3.5
+  },
+  {
+    "name": "Drizzle",
+    "num": 2,
+    "rating": 4
+  },
+  {
+    "name": "Drought",
+    "num": 70,
+    "rating": 4
+  },
+  {
+    "name": "Dry Skin",
+    "num": 87,
+    "rating": 3
+  },
+  {
+    "name": "Early Bird",
+    "num": 48,
+    "rating": 1.5
+  },
+  {
+    "name": "Earth Eater",
+    "num": 297,
+    "rating": 3.5
+  },
+  {
+    "name": "Effect Spore",
+    "num": 27,
+    "rating": 2
+  },
+  {
+    "name": "Electric Surge",
+    "num": 226,
+    "rating": 4
+  },
+  {
+    "name": "Electromorphosis",
+    "num": 280,
+    "rating": 3
+  },
+  {
+    "name": "Embody Aspect (Cornerstone)",
+    "num": 304,
+    "rating": 3.5
+  },
+  {
+    "name": "Embody Aspect (Hearthflame)",
+    "num": 303,
+    "rating": 3.5
+  },
+  {
+    "name": "Embody Aspect (Teal)",
+    "num": 301,
+    "rating": 3.5
+  },
+  {
+    "name": "Embody Aspect (Wellspring)",
+    "num": 302,
+    "rating": 3.5
+  },
+  {
+    "name": "Emergency Exit",
+    "num": 194,
+    "rating": 1
+  },
+  {
+    "name": "Fairy Aura",
+    "num": 187,
+    "rating": 3
+  },
+  {
+    "name": "Filter",
+    "num": 111,
+    "rating": 3
+  },
+  {
+    "name": "Flame Body",
+    "num": 49,
+    "rating": 2
+  },
+  {
+    "name": "Flare Boost",
+    "num": 138,
+    "rating": 2
+  },
+  {
+    "name": "Flash Fire",
+    "num": 18,
+    "rating": 3.5
+  },
+  {
+    "name": "Flower Gift",
+    "num": 122,
+    "rating": 1
+  },
+  {
+    "name": "Flower Veil",
+    "num": 166,
+    "rating": 0
+  },
+  {
+    "name": "Fluffy",
+    "num": 218,
+    "rating": 3.5
+  },
+  {
+    "name": "Forecast",
+    "num": 59,
+    "rating": 2
+  },
+  {
+    "name": "Forewarn",
+    "num": 108,
+    "rating": 0.5
+  },
+  {
+    "name": "Friend Guard",
+    "num": 132,
+    "rating": 0
+  },
+  {
+    "name": "Frisk",
+    "num": 119,
+    "rating": 1.5
+  },
+  {
+    "name": "Full Metal Body",
+    "num": 230,
+    "rating": 2
+  },
+  {
+    "name": "Fur Coat",
+    "num": 169,
+    "rating": 4
+  },
+  {
+    "name": "Gale Wings",
+    "num": 177,
+    "rating": 1.5
+  },
+  {
+    "name": "Galvanize",
+    "num": 206,
+    "rating": 4
+  },
+  {
+    "name": "Gluttony",
+    "num": 82,
+    "rating": 1.5
+  },
+  {
+    "name": "Good as Gold",
+    "num": 283,
+    "rating": 5
+  },
+  {
+    "name": "Gooey",
+    "num": 183,
+    "rating": 2
+  },
+  {
+    "name": "Gorilla Tactics",
+    "num": 255,
+    "rating": 4.5
+  },
+  {
+    "name": "Grass Pelt",
+    "num": 179,
+    "rating": 0.5
+  },
+  {
+    "name": "Grassy Surge",
+    "num": 229,
+    "rating": 4
+  },
+  {
+    "name": "Grim Neigh",
+    "num": 265,
+    "rating": 3
+  },
+  {
+    "name": "Guard Dog",
+    "num": 275,
+    "rating": 2
+  },
+  {
+    "name": "Gulp Missile",
+    "num": 241,
+    "rating": 2.5
+  },
+  {
+    "name": "Guts",
+    "num": 62,
+    "rating": 3.5
+  },
+  {
+    "name": "Hadron Engine",
+    "num": 289,
+    "rating": 4.5
+  },
+  {
+    "name": "Harvest",
+    "num": 139,
+    "rating": 2.5
+  },
+  {
+    "name": "Healer",
+    "num": 131,
+    "rating": 0
+  },
+  {
+    "name": "Heatproof",
+    "num": 85,
+    "rating": 2
+  },
+  {
+    "name": "Heavy Metal",
+    "num": 134,
+    "rating": 0
+  },
+  {
+    "name": "Honey Gather",
+    "num": 118,
+    "rating": 0
+  },
+  {
+    "name": "Hospitality",
+    "num": 299,
+    "rating": 0
+  },
+  {
+    "name": "Huge Power",
+    "num": 37,
+    "rating": 5
+  },
+  {
+    "name": "Hunger Switch",
+    "num": 258,
+    "rating": 1
+  },
+  {
+    "name": "Hustle",
+    "num": 55,
+    "rating": 3.5
+  },
+  {
+    "name": "Hydration",
+    "num": 93,
+    "rating": 1.5
+  },
+  {
+    "name": "Hyper Cutter",
+    "num": 52,
+    "rating": 1.5
+  },
+  {
+    "name": "Ice Body",
+    "num": 115,
+    "rating": 1
+  },
+  {
+    "name": "Ice Face",
+    "num": 248,
+    "rating": 3
+  },
+  {
+    "name": "Ice Scales",
+    "num": 246,
+    "rating": 4
+  },
+  {
+    "name": "Illuminate",
+    "num": 35,
+    "rating": 0.5
+  },
+  {
+    "name": "Illusion",
+    "num": 149,
+    "rating": 4.5
+  },
+  {
+    "name": "Immunity",
+    "num": 17,
+    "rating": 2
+  },
+  {
+    "name": "Imposter",
+    "num": 150,
+    "rating": 5
+  },
+  {
+    "name": "Infiltrator",
+    "num": 151,
+    "rating": 2.5
+  },
+  {
+    "name": "Innards Out",
+    "num": 215,
+    "rating": 4
+  },
+  {
+    "name": "Inner Focus",
+    "num": 39,
+    "rating": 1
+  },
+  {
+    "name": "Insomnia",
+    "num": 15,
+    "rating": 1.5
+  },
+  {
+    "name": "Intimidate",
+    "num": 22,
+    "rating": 3.5
+  },
+  {
+    "name": "Intrepid Sword",
+    "num": 234,
+    "rating": 4
+  },
+  {
+    "name": "Iron Barbs",
+    "num": 160,
+    "rating": 2.5
+  },
+  {
+    "name": "Iron Fist",
+    "num": 89,
+    "rating": 3
+  },
+  {
+    "name": "Justified",
+    "num": 154,
+    "rating": 2.5
+  },
+  {
+    "name": "Keen Eye",
+    "num": 51,
+    "rating": 0.5
+  },
+  {
+    "name": "Klutz",
+    "num": 103,
+    "rating": -1
+  },
+  {
+    "name": "Leaf Guard",
+    "num": 102,
+    "rating": 0.5
+  },
+  {
+    "name": "Levitate",
+    "num": 26,
+    "rating": 3.5
+  },
+  {
+    "name": "Libero",
+    "num": 236,
+    "rating": 4
+  },
+  {
+    "name": "Light Metal",
+    "num": 135,
+    "rating": 1
+  },
+  {
+    "name": "Lightning Rod",
+    "num": 31,
+    "rating": 3
+  },
+  {
+    "name": "Limber",
+    "num": 7,
+    "rating": 2
+  },
+  {
+    "name": "Lingering Aroma",
+    "num": 268,
+    "rating": 2
+  },
+  {
+    "name": "Liquid Ooze",
+    "num": 64,
+    "rating": 2.5
+  },
+  {
+    "name": "Liquid Voice",
+    "num": 204,
+    "rating": 1.5
+  },
+  {
+    "name": "Long Reach",
+    "num": 203,
+    "rating": 1
+  },
+  {
+    "name": "Magic Bounce",
+    "num": 156,
+    "rating": 4
+  },
+  {
+    "name": "Magic Guard",
+    "num": 98,
+    "rating": 4
+  },
+  {
+    "name": "Magician",
+    "num": 170,
+    "rating": 1
+  },
+  {
+    "name": "Magma Armor",
+    "num": 40,
+    "rating": 0.5
+  },
+  {
+    "name": "Magnet Pull",
+    "num": 42,
+    "rating": 4
+  },
+  {
+    "name": "Marvel Scale",
+    "num": 63,
+    "rating": 2.5
+  },
+  {
+    "name": "Mega Launcher",
+    "num": 178,
+    "rating": 3
+  },
+  {
+    "name": "Merciless",
+    "num": 196,
+    "rating": 1.5
+  },
+  {
+    "name": "Mimicry",
+    "num": 250,
+    "rating": 0
+  },
+  {
+    "name": "Mind's Eye",
+    "num": 300,
+    "rating": 0
+  },
+  {
+    "name": "Minus",
+    "num": 58,
+    "rating": 0
+  },
+  {
+    "name": "Mirror Armor",
+    "num": 240,
+    "rating": 2
+  },
+  {
+    "name": "Misty Surge",
+    "num": 228,
+    "rating": 3.5
+  },
+  {
+    "name": "Mold Breaker",
+    "num": 104,
+    "rating": 3
+  },
+  {
+    "name": "Moody",
+    "num": 141,
+    "rating": 5
+  },
+  {
+    "name": "Motor Drive",
+    "num": 78,
+    "rating": 3
+  },
+  {
+    "name": "Moxie",
+    "num": 153,
+    "rating": 3
+  },
+  {
+    "name": "Multiscale",
+    "num": 136,
+    "rating": 3.5
+  },
+  {
+    "name": "Multitype",
+    "num": 121,
+    "rating": 4
+  },
+  {
+    "name": "Mummy",
+    "num": 152,
+    "rating": 2
+  },
+  {
+    "name": "Mycelium Might",
+    "num": 298,
+    "rating": 2
+  },
+  {
+    "name": "Natural Cure",
+    "num": 30,
+    "rating": 2.5
+  },
+  {
+    "name": "Neuroforce",
+    "num": 233,
+    "rating": 2.5
+  },
+  {
+    "name": "Neutralizing Gas",
+    "num": 256,
+    "rating": 3.5
+  },
+  {
+    "name": "No Guard",
+    "num": 99,
+    "rating": 4
+  },
+  {
+    "name": "Normalize",
+    "num": 96,
+    "rating": 0
+  },
+  {
+    "name": "Oblivious",
+    "num": 12,
+    "rating": 1.5
+  },
+  {
+    "name": "Opportunist",
+    "num": 290,
+    "rating": 3
+  },
+  {
+    "name": "Orichalcum Pulse",
+    "num": 288,
+    "rating": 4.5
+  },
+  {
+    "name": "Overcoat",
+    "num": 142,
+    "rating": 2
+  },
+  {
+    "name": "Overgrow",
+    "num": 65,
+    "rating": 2
+  },
+  {
+    "name": "Own Tempo",
+    "num": 20,
+    "rating": 1.5
+  },
+  {
+    "name": "Parental Bond",
+    "num": 185,
+    "rating": 4.5
+  },
+  {
+    "name": "Pastel Veil",
+    "num": 257,
+    "rating": 2
+  },
+  {
+    "name": "Perish Body",
+    "num": 253,
+    "rating": 1
+  },
+  {
+    "name": "Pickpocket",
+    "num": 124,
+    "rating": 1
+  },
+  {
+    "name": "Pickup",
+    "num": 53,
+    "rating": 0.5
+  },
+  {
+    "name": "Pixilate",
+    "num": 182,
+    "rating": 4
+  },
+  {
+    "name": "Plus",
+    "num": 57,
+    "rating": 0
+  },
+  {
+    "name": "Poison Heal",
+    "num": 90,
+    "rating": 4
+  },
+  {
+    "name": "Poison Point",
+    "num": 38,
+    "rating": 1.5
+  },
+  {
+    "name": "Poison Puppeteer",
+    "num": 310,
+    "rating": 3
+  },
+  {
+    "name": "Poison Touch",
+    "num": 143,
+    "rating": 2
+  },
+  {
+    "name": "Power Construct",
+    "num": 211,
+    "rating": 5
+  },
+  {
+    "name": "Power of Alchemy",
+    "num": 223,
+    "rating": 0
+  },
+  {
+    "name": "Power Spot",
+    "num": 249,
+    "rating": 0
+  },
+  {
+    "name": "Prankster",
+    "num": 158,
+    "rating": 4
+  },
+  {
+    "name": "Pressure",
+    "num": 46,
+    "rating": 2.5
+  },
+  {
+    "name": "Primordial Sea",
+    "num": 189,
+    "rating": 4.5
+  },
+  {
+    "name": "Prism Armor",
+    "num": 232,
+    "rating": 3
+  },
+  {
+    "name": "Propeller Tail",
+    "num": 239,
+    "rating": 0
+  },
+  {
+    "name": "Protean",
+    "num": 168,
+    "rating": 4
+  },
+  {
+    "name": "Protosynthesis",
+    "num": 281,
+    "rating": 3
+  },
+  {
+    "name": "Psychic Surge",
+    "num": 227,
+    "rating": 4
+  },
+  {
+    "name": "Punk Rock",
+    "num": 244,
+    "rating": 3.5
+  },
+  {
+    "name": "Pure Power",
+    "num": 74,
+    "rating": 5
+  },
+  {
+    "name": "Purifying Salt",
+    "num": 272,
+    "rating": 4
+  },
+  {
+    "name": "Quark Drive",
+    "num": 282,
+    "rating": 3
+  },
+  {
+    "name": "Queenly Majesty",
+    "num": 214,
+    "rating": 2.5
+  },
+  {
+    "name": "Quick Draw",
+    "num": 259,
+    "rating": 2.5
+  },
+  {
+    "name": "Quick Feet",
+    "num": 95,
+    "rating": 2.5
+  },
+  {
+    "name": "Rain Dish",
+    "num": 44,
+    "rating": 1.5
+  },
+  {
+    "name": "Rattled",
+    "num": 155,
+    "rating": 1
+  },
+  {
+    "name": "Receiver",
+    "num": 222,
+    "rating": 0
+  },
+  {
+    "name": "Reckless",
+    "num": 120,
+    "rating": 3
+  },
+  {
+    "name": "Refrigerate",
+    "num": 174,
+    "rating": 4
+  },
+  {
+    "name": "Regenerator",
+    "num": 144,
+    "rating": 4.5
+  },
+  {
+    "name": "Ripen",
+    "num": 247,
+    "rating": 2
+  },
+  {
+    "name": "Rivalry",
+    "num": 79,
+    "rating": 0
+  },
+  {
+    "name": "RKS System",
+    "num": 225,
+    "rating": 4
+  },
+  {
+    "name": "Rock Head",
+    "num": 69,
+    "rating": 3
+  },
+  {
+    "name": "Rocky Payload",
+    "num": 276,
+    "rating": 3.5
+  },
+  {
+    "name": "Rough Skin",
+    "num": 24,
+    "rating": 2.5
+  },
+  {
+    "name": "Run Away",
+    "num": 50,
+    "rating": 0
+  },
+  {
+    "name": "Sand Force",
+    "num": 159,
+    "rating": 2
+  },
+  {
+    "name": "Sand Rush",
+    "num": 146,
+    "rating": 3
+  },
+  {
+    "name": "Sand Spit",
+    "num": 245,
+    "rating": 1
+  },
+  {
+    "name": "Sand Stream",
+    "num": 45,
+    "rating": 4
+  },
+  {
+    "name": "Sand Veil",
+    "num": 8,
+    "rating": 1.5
+  },
+  {
+    "name": "Sap Sipper",
+    "num": 157,
+    "rating": 3
+  },
+  {
+    "name": "Schooling",
+    "num": 208,
+    "rating": 3
+  },
+  {
+    "name": "Scrappy",
+    "num": 113,
+    "rating": 3
+  },
+  {
+    "name": "Screen Cleaner",
+    "num": 251,
+    "rating": 2
+  },
+  {
+    "name": "Seed Sower",
+    "num": 269,
+    "rating": 2.5
+  },
+  {
+    "name": "Serene Grace",
+    "num": 32,
+    "rating": 3.5
+  },
+  {
+    "name": "Shadow Shield",
+    "num": 231,
+    "rating": 3.5
+  },
+  {
+    "name": "Shadow Tag",
+    "num": 23,
+    "rating": 5
+  },
+  {
+    "name": "Sharpness",
+    "num": 292,
+    "rating": 3.5
+  },
+  {
+    "name": "Shed Skin",
+    "num": 61,
+    "rating": 3
+  },
+  {
+    "name": "Sheer Force",
+    "num": 125,
+    "rating": 3.5
+  },
+  {
+    "name": "Shell Armor",
+    "num": 75,
+    "rating": 1
+  },
+  {
+    "name": "Shield Dust",
+    "num": 19,
+    "rating": 2
+  },
+  {
+    "name": "Shields Down",
+    "num": 197,
+    "rating": 3
+  },
+  {
+    "name": "Simple",
+    "num": 86,
+    "rating": 4
+  },
+  {
+    "name": "Skill Link",
+    "num": 92,
+    "rating": 3
+  },
+  {
+    "name": "Slow Start",
+    "num": 112,
+    "rating": -1
+  },
+  {
+    "name": "Slush Rush",
+    "num": 202,
+    "rating": 3
+  },
+  {
+    "name": "Sniper",
+    "num": 97,
+    "rating": 2
+  },
+  {
+    "name": "Snow Cloak",
+    "num": 81,
+    "rating": 1.5
+  },
+  {
+    "name": "Snow Warning",
+    "num": 117,
+    "rating": 4
+  },
+  {
+    "name": "Solar Power",
+    "num": 94,
+    "rating": 2
+  },
+  {
+    "name": "Solid Rock",
+    "num": 116,
+    "rating": 3
+  },
+  {
+    "name": "Soul-Heart",
+    "num": 220,
+    "rating": 3.5
+  },
+  {
+    "name": "Soundproof",
+    "num": 43,
+    "rating": 2
+  },
+  {
+    "name": "Speed Boost",
+    "num": 3,
+    "rating": 4.5
+  },
+  {
+    "name": "Stakeout",
+    "num": 198,
+    "rating": 4.5
+  },
+  {
+    "name": "Stall",
+    "num": 100,
+    "rating": -1
+  },
+  {
+    "name": "Stalwart",
+    "num": 242,
+    "rating": 0
+  },
+  {
+    "name": "Stamina",
+    "num": 192,
+    "rating": 4
+  },
+  {
+    "name": "Stance Change",
+    "num": 176,
+    "rating": 4
+  },
+  {
+    "name": "Static",
+    "num": 9,
+    "rating": 2
+  },
+  {
+    "name": "Steadfast",
+    "num": 80,
+    "rating": 1
+  },
+  {
+    "name": "Steam Engine",
+    "num": 243,
+    "rating": 2
+  },
+  {
+    "name": "Steelworker",
+    "num": 200,
+    "rating": 3.5
+  },
+  {
+    "name": "Steely Spirit",
+    "num": 252,
+    "rating": 3.5
+  },
+  {
+    "name": "Stench",
+    "num": 1,
+    "rating": 0.5
+  },
+  {
+    "name": "Sticky Hold",
+    "num": 60,
+    "rating": 1.5
+  },
+  {
+    "name": "Storm Drain",
+    "num": 114,
+    "rating": 3
+  },
+  {
+    "name": "Strong Jaw",
+    "num": 173,
+    "rating": 3.5
+  },
+  {
+    "name": "Sturdy",
+    "num": 5,
+    "rating": 3
+  },
+  {
+    "name": "Suction Cups",
+    "num": 21,
+    "rating": 1
+  },
+  {
+    "name": "Super Luck",
+    "num": 105,
+    "rating": 1.5
+  },
+  {
+    "name": "Supersweet Syrup",
+    "num": 306,
+    "rating": 1.5
+  },
+  {
+    "name": "Supreme Overlord",
+    "num": 293,
+    "rating": 4
+  },
+  {
+    "name": "Surge Surfer",
+    "num": 207,
+    "rating": 3
+  },
+  {
+    "name": "Swarm",
+    "num": 68,
+    "rating": 2
+  },
+  {
+    "name": "Sweet Veil",
+    "num": 175,
+    "rating": 2
+  },
+  {
+    "name": "Swift Swim",
+    "num": 33,
+    "rating": 3
+  },
+  {
+    "name": "Symbiosis",
+    "num": 180,
+    "rating": 0
+  },
+  {
+    "name": "Synchronize",
+    "num": 28,
+    "rating": 2
+  },
+  {
+    "name": "Sword of Ruin",
+    "num": 285,
+    "rating": 4.5
+  },
+  {
+    "name": "Tablets of Ruin",
+    "num": 284,
+    "rating": 4.5
+  },
+  {
+    "name": "Tangled Feet",
+    "num": 77,
+    "rating": 1
+  },
+  {
+    "name": "Tangling Hair",
+    "num": 221,
+    "rating": 2
+  },
+  {
+    "name": "Technician",
+    "num": 101,
+    "rating": 3.5
+  },
+  {
+    "name": "Telepathy",
+    "num": 140,
+    "rating": 0
+  },
+  {
+    "name": "Teraform Zero",
+    "num": 309,
+    "rating": 3
+  },
+  {
+    "name": "Tera Shell",
+    "num": 308,
+    "rating": 3.5
+  },
+  {
+    "name": "Tera Shift",
+    "num": 307,
+    "rating": 3
+  },
+  {
+    "name": "Teravolt",
+    "num": 164,
+    "rating": 3
+  },
+  {
+    "name": "Thermal Exchange",
+    "num": 270,
+    "rating": 2.5
+  },
+  {
+    "name": "Thick Fat",
+    "num": 47,
+    "rating": 3.5
+  },
+  {
+    "name": "Tinted Lens",
+    "num": 110,
+    "rating": 4
+  },
+  {
+    "name": "Torrent",
+    "num": 67,
+    "rating": 2
+  },
+  {
+    "name": "Tough Claws",
+    "num": 181,
+    "rating": 3.5
+  },
+  {
+    "name": "Toxic Boost",
+    "num": 137,
+    "rating": 3
+  },
+  {
+    "name": "Toxic Chain",
+    "num": 305,
+    "rating": 4.5
+  },
+  {
+    "name": "Toxic Debris",
+    "num": 295,
+    "rating": 3.5
+  },
+  {
+    "name": "Trace",
+    "num": 36,
+    "rating": 2.5
+  },
+  {
+    "name": "Transistor",
+    "num": 262,
+    "rating": 3.5
+  },
+  {
+    "name": "Triage",
+    "num": 205,
+    "rating": 3.5
+  },
+  {
+    "name": "Truant",
+    "num": 54,
+    "rating": -1
+  },
+  {
+    "name": "Turboblaze",
+    "num": 163,
+    "rating": 3
+  },
+  {
+    "name": "Unaware",
+    "num": 109,
+    "rating": 4
+  },
+  {
+    "name": "Unburden",
+    "num": 84,
+    "rating": 3.5
+  },
+  {
+    "name": "Unnerve",
+    "num": 127,
+    "rating": 1
+  },
+  {
+    "name": "Unseen Fist",
+    "num": 260,
+    "rating": 2
+  },
+  {
+    "name": "Vessel of Ruin",
+    "num": 284,
+    "rating": 4.5
+  },
+  {
+    "name": "Victory Star",
+    "num": 162,
+    "rating": 2
+  },
+  {
+    "name": "Vital Spirit",
+    "num": 72,
+    "rating": 1.5
+  },
+  {
+    "name": "Volt Absorb",
+    "num": 10,
+    "rating": 3.5
+  },
+  {
+    "name": "Wandering Spirit",
+    "num": 254,
+    "rating": 2.5
+  },
+  {
+    "name": "Water Absorb",
+    "num": 11,
+    "rating": 3.5
+  },
+  {
+    "name": "Water Bubble",
+    "num": 199,
+    "rating": 4.5
+  },
+  {
+    "name": "Water Compaction",
+    "num": 195,
+    "rating": 1.5
+  },
+  {
+    "name": "Water Veil",
+    "num": 41,
+    "rating": 2
+  },
+  {
+    "name": "Weak Armor",
+    "num": 133,
+    "rating": 1
+  },
+  {
+    "name": "Well-Baked Body",
+    "num": 273,
+    "rating": 3.5
+  },
+  {
+    "name": "White Smoke",
+    "num": 73,
+    "rating": 2
+  },
+  {
+    "name": "Wimp Out",
+    "num": 193,
+    "rating": 1
+  },
+  {
+    "name": "Wind Power",
+    "num": 277,
+    "rating": 1
+  },
+  {
+    "name": "Wind Rider",
+    "num": 274,
+    "rating": 3.5
+  },
+  {
+    "name": "Wonder Guard",
+    "num": 25,
+    "rating": 5
+  },
+  {
+    "name": "Wonder Skin",
+    "num": 147,
+    "rating": 2
+  },
+  {
+    "name": "Zen Mode",
+    "num": 161,
+    "rating": 0
+  },
+  {
+    "name": "Zero to Hero",
+    "num": 278,
+    "rating": 5
+  },
+  {
+    "name": "Mountaineer",
+    "num": -1,
+    "rating": 3
+  },
+  {
+    "name": "Rebound",
+    "num": -2,
+    "rating": 3
+  },
+  {
+    "name": "Persistent",
+    "num": -3,
+    "rating": 3
+  }
+]

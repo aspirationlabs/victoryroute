@@ -1,0 +1,127 @@
+[
+  {
+    "name": "Adamant",
+    "plus_stat": "atk",
+    "minus_stat": "spa"
+  },
+  {
+    "name": "Bashful",
+    "plus_stat": null,
+    "minus_stat": null
+  },
+  {
+    "name": "Bold",
+    "plus_stat": "def",
+    "minus_stat": "atk"
+  },
+  {
+    "name": "Brave",
+    "plus_stat": "atk",
+    "minus_stat": "spe"
+  },
+  {
+    "name": "Calm",
+    "plus_stat": "spd",
+    "minus_stat": "atk"
+  },
+  {
+    "name": "Careful",
+    "plus_stat": "spd",
+    "minus_stat": "spa"
+  },
+  {
+    "name": "Docile",
+    "plus_stat": null,
+    "minus_stat": null
+  },
+  {
+    "name": "Gentle",
+    "plus_stat": "spd",
+    "minus_stat": "def"
+  },
+  {
+    "name": "Hardy",
+    "plus_stat": null,
+    "minus_stat": null
+  },
+  {
+    "name": "Hasty",
+    "plus_stat": "spe",
+    "minus_stat": "def"
+  },
+  {
+    "name": "Impish",
+    "plus_stat": "def",
+    "minus_stat": "spa"
+  },
+  {
+    "name": "Jolly",
+    "plus_stat": "spe",
+    "minus_stat": "spa"
+  },
+  {
+    "name": "Lax",
+    "plus_stat": "def",
+    "minus_stat": "spd"
+  },
+  {
+    "name": "Lonely",
+    "plus_stat": "atk",
+    "minus_stat": "def"
+  },
+  {
+    "name": "Mild",
+    "plus_stat": "spa",
+    "minus_stat": "def"
+  },
+  {
+    "name": "Modest",
+    "plus_stat": "spa",
+    "minus_stat": "atk"
+  },
+  {
+    "name": "Naive",
+    "plus_stat": "spe",
+    "minus_stat": "spd"
+  },
+  {
+    "name": "Naughty",
+    "plus_stat": "atk",
+    "minus_stat": "spd"
+  },
+  {
+    "name": "Quiet",
+    "plus_stat": "spa",
+    "minus_stat": "spe"
+  },
+  {
+    "name": "Quirky",
+    "plus_stat": null,
+    "minus_stat": null
+  },
+  {
+    "name": "Rash",
+    "plus_stat": "spa",
+    "minus_stat": "spd"
+  },
+  {
+    "name": "Relaxed",
+    "plus_stat": "def",
+    "minus_stat": "spe"
+  },
+  {
+    "name": "Sassy",
+    "plus_stat": "spd",
+    "minus_stat": "spe"
+  },
+  {
+    "name": "Serious",
+    "plus_stat": null,
+    "minus_stat": null
+  },
+  {
+    "name": "Timid",
+    "plus_stat": "spe",
+    "minus_stat": "atk"
+  }
+]
