@@ -1,0 +1,2687 @@
+[
+  {
+    "name": "Ability Shield",
+    "num": 1881,
+    "gen": 9
+  },
+  {
+    "name": "Abomasite",
+    "num": 674,
+    "gen": 6
+  },
+  {
+    "name": "Absolite",
+    "num": 677,
+    "gen": 6
+  },
+  {
+    "name": "Absorb Bulb",
+    "num": 545,
+    "gen": 5
+  },
+  {
+    "name": "Adamant Crystal",
+    "num": 1777,
+    "gen": 8
+  },
+  {
+    "name": "Adamant Orb",
+    "num": 135,
+    "gen": 4
+  },
+  {
+    "name": "Adrenaline Orb",
+    "num": 846,
+    "gen": 7
+  },
+  {
+    "name": "Aerodactylite",
+    "num": 672,
+    "gen": 6
+  },
+  {
+    "name": "Aggronite",
+    "num": 667,
+    "gen": 6
+  },
+  {
+    "name": "Aguav Berry",
+    "num": 162,
+    "gen": 3
+  },
+  {
+    "name": "Air Balloon",
+    "num": 541,
+    "gen": 5
+  },
+  {
+    "name": "Alakazite",
+    "num": 679,
+    "gen": 6
+  },
+  {
+    "name": "Aloraichium Z",
+    "num": 803,
+    "gen": 7
+  },
+  {
+    "name": "Altarianite",
+    "num": 755,
+    "gen": 6
+  },
+  {
+    "name": "Ampharosite",
+    "num": 658,
+    "gen": 6
+  },
+  {
+    "name": "Apicot Berry",
+    "num": 205,
+    "gen": 3
+  },
+  {
+    "name": "Armor Fossil",
+    "num": 104,
+    "gen": 4
+  },
+  {
+    "name": "Aspear Berry",
+    "num": 153,
+    "gen": 3
+  },
+  {
+    "name": "Assault Vest",
+    "num": 640,
+    "gen": 6
+  },
+  {
+    "name": "Audinite",
+    "num": 757,
+    "gen": 6
+  },
+  {
+    "name": "Auspicious Armor",
+    "num": 2344,
+    "gen": 9
+  },
+  {
+    "name": "Babiri Berry",
+    "num": 199,
+    "gen": 4
+  },
+  {
+    "name": "Banettite",
+    "num": 668,
+    "gen": 6
+  },
+  {
+    "name": "Beast Ball",
+    "num": 851,
+    "gen": 7
+  },
+  {
+    "name": "Beedrillite",
+    "num": 770,
+    "gen": 6
+  },
+  {
+    "name": "Belue Berry",
+    "num": 183,
+    "gen": 3
+  },
+  {
+    "name": "Berry Juice",
+    "num": 43,
+    "gen": 2
+  },
+  {
+    "name": "Berry Sweet",
+    "num": 1111,
+    "gen": 8
+  },
+  {
+    "name": "Big Nugget",
+    "num": 581,
+    "gen": 5
+  },
+  {
+    "name": "Big Root",
+    "num": 296,
+    "gen": 4
+  },
+  {
+    "name": "Binding Band",
+    "num": 544,
+    "gen": 5
+  },
+  {
+    "name": "Black Belt",
+    "num": 241,
+    "gen": 2
+  },
+  {
+    "name": "Black Glasses",
+    "num": 240,
+    "gen": 2
+  },
+  {
+    "name": "Black Sludge",
+    "num": 281,
+    "gen": 4
+  },
+  {
+    "name": "Blastoisinite",
+    "num": 661,
+    "gen": 6
+  },
+  {
+    "name": "Blazikenite",
+    "num": 664,
+    "gen": 6
+  },
+  {
+    "name": "Blue Orb",
+    "num": 535,
+    "gen": 6
+  },
+  {
+    "name": "Bluk Berry",
+    "num": 165,
+    "gen": 3
+  },
+  {
+    "name": "Blunder Policy",
+    "num": 1121,
+    "gen": 8
+  },
+  {
+    "name": "Booster Energy",
+    "num": 1880,
+    "gen": 9
+  },
+  {
+    "name": "Bottle Cap",
+    "num": 795,
+    "gen": 7
+  },
+  {
+    "name": "Bright Powder",
+    "num": 213,
+    "gen": 2
+  },
+  {
+    "name": "Bug Gem",
+    "num": 558,
+    "gen": 5
+  },
+  {
+    "name": "Bug Memory",
+    "num": 909,
+    "gen": 7
+  },
+  {
+    "name": "Buginium Z",
+    "num": 787,
+    "gen": 7
+  },
+  {
+    "name": "Burn Drive",
+    "num": 118,
+    "gen": 5
+  },
+  {
+    "name": "Cameruptite",
+    "num": 767,
+    "gen": 6
+  },
+  {
+    "name": "Cell Battery",
+    "num": 546,
+    "gen": 5
+  },
+  {
+    "name": "Charcoal",
+    "num": 249,
+    "gen": 2
+  },
+  {
+    "name": "Charizardite X",
+    "num": 660,
+    "gen": 6
+  },
+  {
+    "name": "Charizardite Y",
+    "num": 678,
+    "gen": 6
+  },
+  {
+    "name": "Charti Berry",
+    "num": 195,
+    "gen": 4
+  },
+  {
+    "name": "Cheri Berry",
+    "num": 149,
+    "gen": 3
+  },
+  {
+    "name": "Cherish Ball",
+    "num": 16,
+    "gen": 4
+  },
+  {
+    "name": "Chesto Berry",
+    "num": 150,
+    "gen": 3
+  },
+  {
+    "name": "Chilan Berry",
+    "num": 200,
+    "gen": 4
+  },
+  {
+    "name": "Chill Drive",
+    "num": 119,
+    "gen": 5
+  },
+  {
+    "name": "Chipped Pot",
+    "num": 1254,
+    "gen": 8
+  },
+  {
+    "name": "Choice Band",
+    "num": 220,
+    "gen": 3
+  },
+  {
+    "name": "Choice Scarf",
+    "num": 287,
+    "gen": 4
+  },
+  {
+    "name": "Choice Specs",
+    "num": 297,
+    "gen": 4
+  },
+  {
+    "name": "Chople Berry",
+    "num": 189,
+    "gen": 4
+  },
+  {
+    "name": "Claw Fossil",
+    "num": 100,
+    "gen": 3
+  },
+  {
+    "name": "Clear Amulet",
+    "num": 1882,
+    "gen": 9
+  },
+  {
+    "name": "Clover Sweet",
+    "num": 1112,
+    "gen": 8
+  },
+  {
+    "name": "Coba Berry",
+    "num": 192,
+    "gen": 4
+  },
+  {
+    "name": "Colbur Berry",
+    "num": 198,
+    "gen": 4
+  },
+  {
+    "name": "Cornerstone Mask",
+    "num": 2406,
+    "gen": 9
+  },
+  {
+    "name": "Cornn Berry",
+    "num": 175,
+    "gen": 3
+  },
+  {
+    "name": "Cover Fossil",
+    "num": 572,
+    "gen": 5
+  },
+  {
+    "name": "Covert Cloak",
+    "num": 1885,
+    "gen": 9
+  },
+  {
+    "name": "Cracked Pot",
+    "num": 1253,
+    "gen": 8
+  },
+  {
+    "name": "Custap Berry",
+    "num": 210,
+    "gen": 4
+  },
+  {
+    "name": "Damp Rock",
+    "num": 285,
+    "gen": 4
+  },
+  {
+    "name": "Dark Gem",
+    "num": 562,
+    "gen": 5
+  },
+  {
+    "name": "Dark Memory",
+    "num": 919,
+    "gen": 7
+  },
+  {
+    "name": "Darkinium Z",
+    "num": 791,
+    "gen": 7
+  },
+  {
+    "name": "Dawn Stone",
+    "num": 109,
+    "gen": 4
+  },
+  {
+    "name": "Decidium Z",
+    "num": 798,
+    "gen": 7
+  },
+  {
+    "name": "Deep Sea Scale",
+    "num": 227,
+    "gen": 3
+  },
+  {
+    "name": "Deep Sea Tooth",
+    "num": 226,
+    "gen": 3
+  },
+  {
+    "name": "Destiny Knot",
+    "num": 280,
+    "gen": 4
+  },
+  {
+    "name": "Diancite",
+    "num": 764,
+    "gen": 6
+  },
+  {
+    "name": "Dive Ball",
+    "num": 7,
+    "gen": 3
+  },
+  {
+    "name": "Dome Fossil",
+    "num": 102,
+    "gen": 3
+  },
+  {
+    "name": "Douse Drive",
+    "num": 116,
+    "gen": 5
+  },
+  {
+    "name": "Draco Plate",
+    "num": 311,
+    "gen": 4
+  },
+  {
+    "name": "Dragon Fang",
+    "num": 250,
+    "gen": 2
+  },
+  {
+    "name": "Dragon Gem",
+    "num": 561,
+    "gen": 5
+  },
+  {
+    "name": "Dragon Memory",
+    "num": 918,
+    "gen": 7
+  },
+  {
+    "name": "Dragon Scale",
+    "num": 235,
+    "gen": 2
+  },
+  {
+    "name": "Dragonium Z",
+    "num": 790,
+    "gen": 7
+  },
+  {
+    "name": "Dread Plate",
+    "num": 312,
+    "gen": 4
+  },
+  {
+    "name": "Dream Ball",
+    "num": 576,
+    "gen": 5
+  },
+  {
+    "name": "Dubious Disc",
+    "num": 324,
+    "gen": 4
+  },
+  {
+    "name": "Durin Berry",
+    "num": 182,
+    "gen": 3
+  },
+  {
+    "name": "Dusk Ball",
+    "num": 13,
+    "gen": 4
+  },
+  {
+    "name": "Dusk Stone",
+    "num": 108,
+    "gen": 4
+  },
+  {
+    "name": "Earth Plate",
+    "num": 305,
+    "gen": 4
+  },
+  {
+    "name": "Eevium Z",
+    "num": 805,
+    "gen": 7
+  },
+  {
+    "name": "Eject Button",
+    "num": 547,
+    "gen": 5
+  },
+  {
+    "name": "Eject Pack",
+    "num": 1119,
+    "gen": 8
+  },
+  {
+    "name": "Electirizer",
+    "num": 322,
+    "gen": 4
+  },
+  {
+    "name": "Electric Gem",
+    "num": 550,
+    "gen": 5
+  },
+  {
+    "name": "Electric Memory",
+    "num": 915,
+    "gen": 7
+  },
+  {
+    "name": "Electric Seed",
+    "num": 881,
+    "gen": 7
+  },
+  {
+    "name": "Electrium Z",
+    "num": 779,
+    "gen": 7
+  },
+  {
+    "name": "Enigma Berry",
+    "num": 208,
+    "gen": 3
+  },
+  {
+    "name": "Eviolite",
+    "num": 538,
+    "gen": 5
+  },
+  {
+    "name": "Expert Belt",
+    "num": 268,
+    "gen": 4
+  },
+  {
+    "name": "Fairium Z",
+    "num": 793,
+    "gen": 7
+  },
+  {
+    "name": "Fairy Feather",
+    "num": 2401,
+    "gen": 9
+  },
+  {
+    "name": "Fairy Gem",
+    "num": 715,
+    "gen": 6
+  },
+  {
+    "name": "Fairy Memory",
+    "num": 920,
+    "gen": 7
+  },
+  {
+    "name": "Fast Ball",
+    "num": 492,
+    "gen": 2
+  },
+  {
+    "name": "Fighting Gem",
+    "num": 553,
+    "gen": 5
+  },
+  {
+    "name": "Fighting Memory",
+    "num": 904,
+    "gen": 7
+  },
+  {
+    "name": "Fightinium Z",
+    "num": 782,
+    "gen": 7
+  },
+  {
+    "name": "Figy Berry",
+    "num": 159,
+    "gen": 3
+  },
+  {
+    "name": "Fire Gem",
+    "num": 548,
+    "gen": 5
+  },
+  {
+    "name": "Fire Memory",
+    "num": 912,
+    "gen": 7
+  },
+  {
+    "name": "Fire Stone",
+    "num": 82,
+    "gen": 1
+  },
+  {
+    "name": "Firium Z",
+    "num": 777,
+    "gen": 7
+  },
+  {
+    "name": "Fist Plate",
+    "num": 303,
+    "gen": 4
+  },
+  {
+    "name": "Flame Orb",
+    "num": 273,
+    "gen": 4
+  },
+  {
+    "name": "Flame Plate",
+    "num": 298,
+    "gen": 4
+  },
+  {
+    "name": "Float Stone",
+    "num": 539,
+    "gen": 5
+  },
+  {
+    "name": "Flower Sweet",
+    "num": 1113,
+    "gen": 8
+  },
+  {
+    "name": "Flying Gem",
+    "num": 556,
+    "gen": 5
+  },
+  {
+    "name": "Flying Memory",
+    "num": 905,
+    "gen": 7
+  },
+  {
+    "name": "Flyinium Z",
+    "num": 785,
+    "gen": 7
+  },
+  {
+    "name": "Focus Band",
+    "num": 230,
+    "gen": 2
+  },
+  {
+    "name": "Focus Sash",
+    "num": 275,
+    "gen": 4
+  },
+  {
+    "name": "Fossilized Bird",
+    "num": 1105,
+    "gen": 8
+  },
+  {
+    "name": "Fossilized Dino",
+    "num": 1108,
+    "gen": 8
+  },
+  {
+    "name": "Fossilized Drake",
+    "num": 1107,
+    "gen": 8
+  },
+  {
+    "name": "Fossilized Fish",
+    "num": 1106,
+    "gen": 8
+  },
+  {
+    "name": "Friend Ball",
+    "num": 497,
+    "gen": 2
+  },
+  {
+    "name": "Full Incense",
+    "num": 316,
+    "gen": 4
+  },
+  {
+    "name": "Galarica Cuff",
+    "num": 1582,
+    "gen": 8
+  },
+  {
+    "name": "Galarica Wreath",
+    "num": 1592,
+    "gen": 8
+  },
+  {
+    "name": "Galladite",
+    "num": 756,
+    "gen": 6
+  },
+  {
+    "name": "Ganlon Berry",
+    "num": 202,
+    "gen": 3
+  },
+  {
+    "name": "Garchompite",
+    "num": 683,
+    "gen": 6
+  },
+  {
+    "name": "Gardevoirite",
+    "num": 657,
+    "gen": 6
+  },
+  {
+    "name": "Gengarite",
+    "num": 656,
+    "gen": 6
+  },
+  {
+    "name": "Ghost Gem",
+    "num": 560,
+    "gen": 5
+  },
+  {
+    "name": "Ghost Memory",
+    "num": 910,
+    "gen": 7
+  },
+  {
+    "name": "Ghostium Z",
+    "num": 789,
+    "gen": 7
+  },
+  {
+    "name": "Glalitite",
+    "num": 763,
+    "gen": 6
+  },
+  {
+    "name": "Gold Bottle Cap",
+    "num": 796,
+    "gen": 7
+  },
+  {
+    "name": "Grass Gem",
+    "num": 551,
+    "gen": 5
+  },
+  {
+    "name": "Grass Memory",
+    "num": 914,
+    "gen": 7
+  },
+  {
+    "name": "Grassium Z",
+    "num": 780,
+    "gen": 7
+  },
+  {
+    "name": "Grassy Seed",
+    "num": 884,
+    "gen": 7
+  },
+  {
+    "name": "Great Ball",
+    "num": 3,
+    "gen": 1
+  },
+  {
+    "name": "Grepa Berry",
+    "num": 173,
+    "gen": 3
+  },
+  {
+    "name": "Grip Claw",
+    "num": 286,
+    "gen": 4
+  },
+  {
+    "name": "Griseous Core",
+    "num": 1779,
+    "gen": 8
+  },
+  {
+    "name": "Griseous Orb",
+    "num": 112,
+    "gen": 4
+  },
+  {
+    "name": "Ground Gem",
+    "num": 555,
+    "gen": 5
+  },
+  {
+    "name": "Ground Memory",
+    "num": 907,
+    "gen": 7
+  },
+  {
+    "name": "Groundium Z",
+    "num": 784,
+    "gen": 7
+  },
+  {
+    "name": "Gyaradosite",
+    "num": 676,
+    "gen": 6
+  },
+  {
+    "name": "Haban Berry",
+    "num": 197,
+    "gen": 4
+  },
+  {
+    "name": "Hard Stone",
+    "num": 238,
+    "gen": 2
+  },
+  {
+    "name": "Heal Ball",
+    "num": 14,
+    "gen": 4
+  },
+  {
+    "name": "Hearthflame Mask",
+    "num": 2408,
+    "gen": 9
+  },
+  {
+    "name": "Heat Rock",
+    "num": 284,
+    "gen": 4
+  },
+  {
+    "name": "Heavy Ball",
+    "num": 495,
+    "gen": 2
+  },
+  {
+    "name": "Heavy-Duty Boots",
+    "num": 1120,
+    "gen": 8
+  },
+  {
+    "name": "Helix Fossil",
+    "num": 101,
+    "gen": 3
+  },
+  {
+    "name": "Heracronite",
+    "num": 680,
+    "gen": 6
+  },
+  {
+    "name": "Hondew Berry",
+    "num": 172,
+    "gen": 3
+  },
+  {
+    "name": "Houndoominite",
+    "num": 666,
+    "gen": 6
+  },
+  {
+    "name": "Iapapa Berry",
+    "num": 163,
+    "gen": 3
+  },
+  {
+    "name": "Ice Gem",
+    "num": 552,
+    "gen": 5
+  },
+  {
+    "name": "Ice Memory",
+    "num": 917,
+    "gen": 7
+  },
+  {
+    "name": "Ice Stone",
+    "num": 849,
+    "gen": 7
+  },
+  {
+    "name": "Icicle Plate",
+    "num": 302,
+    "gen": 4
+  },
+  {
+    "name": "Icium Z",
+    "num": 781,
+    "gen": 7
+  },
+  {
+    "name": "Icy Rock",
+    "num": 282,
+    "gen": 4
+  },
+  {
+    "name": "Incinium Z",
+    "num": 799,
+    "gen": 7
+  },
+  {
+    "name": "Insect Plate",
+    "num": 308,
+    "gen": 4
+  },
+  {
+    "name": "Iron Ball",
+    "num": 278,
+    "gen": 4
+  },
+  {
+    "name": "Iron Plate",
+    "num": 313,
+    "gen": 4
+  },
+  {
+    "name": "Jaboca Berry",
+    "num": 211,
+    "gen": 4
+  },
+  {
+    "name": "Jaw Fossil",
+    "num": 710,
+    "gen": 6
+  },
+  {
+    "name": "Kasib Berry",
+    "num": 196,
+    "gen": 4
+  },
+  {
+    "name": "Kebia Berry",
+    "num": 190,
+    "gen": 4
+  },
+  {
+    "name": "Kee Berry",
+    "num": 687,
+    "gen": 6
+  },
+  {
+    "name": "Kelpsy Berry",
+    "num": 170,
+    "gen": 3
+  },
+  {
+    "name": "Kangaskhanite",
+    "num": 675,
+    "gen": 6
+  },
+  {
+    "name": "King's Rock",
+    "num": 221,
+    "gen": 2
+  },
+  {
+    "name": "Kommonium Z",
+    "num": 926,
+    "gen": 7
+  },
+  {
+    "name": "Lagging Tail",
+    "num": 279,
+    "gen": 4
+  },
+  {
+    "name": "Lansat Berry",
+    "num": 206,
+    "gen": 3
+  },
+  {
+    "name": "Latiasite",
+    "num": 684,
+    "gen": 6
+  },
+  {
+    "name": "Latiosite",
+    "num": 685,
+    "gen": 6
+  },
+  {
+    "name": "Lax Incense",
+    "num": 255,
+    "gen": 3
+  },
+  {
+    "name": "Leaf Stone",
+    "num": 85,
+    "gen": 1
+  },
+  {
+    "name": "Leek",
+    "num": 259,
+    "gen": 8
+  },
+  {
+    "name": "Leftovers",
+    "num": 234,
+    "gen": 2
+  },
+  {
+    "name": "Leppa Berry",
+    "num": 154,
+    "gen": 3
+  },
+  {
+    "name": "Level Ball",
+    "num": 493,
+    "gen": 2
+  },
+  {
+    "name": "Liechi Berry",
+    "num": 201,
+    "gen": 3
+  },
+  {
+    "name": "Life Orb",
+    "num": 270,
+    "gen": 4
+  },
+  {
+    "name": "Light Ball",
+    "num": 236,
+    "gen": 2
+  },
+  {
+    "name": "Light Clay",
+    "num": 269,
+    "gen": 4
+  },
+  {
+    "name": "Loaded Dice",
+    "num": 1886,
+    "gen": 9
+  },
+  {
+    "name": "Lopunnite",
+    "num": 768,
+    "gen": 6
+  },
+  {
+    "name": "Love Ball",
+    "num": 496,
+    "gen": 2
+  },
+  {
+    "name": "Love Sweet",
+    "num": 1110,
+    "gen": 8
+  },
+  {
+    "name": "Lucarionite",
+    "num": 673,
+    "gen": 6
+  },
+  {
+    "name": "Lucky Punch",
+    "num": 256,
+    "gen": 2
+  },
+  {
+    "name": "Lum Berry",
+    "num": 157,
+    "gen": 3
+  },
+  {
+    "name": "Luminous Moss",
+    "num": 648,
+    "gen": 6
+  },
+  {
+    "name": "Lunalium Z",
+    "num": 922,
+    "gen": 7
+  },
+  {
+    "name": "Lure Ball",
+    "num": 494,
+    "gen": 2
+  },
+  {
+    "name": "Lustrous Globe",
+    "num": 1778,
+    "gen": 8
+  },
+  {
+    "name": "Lustrous Orb",
+    "num": 136,
+    "gen": 4
+  },
+  {
+    "name": "Luxury Ball",
+    "num": 11,
+    "gen": 3
+  },
+  {
+    "name": "Lycanium Z",
+    "num": 925,
+    "gen": 7
+  },
+  {
+    "name": "Macho Brace",
+    "num": 215,
+    "gen": 3
+  },
+  {
+    "name": "Magmarizer",
+    "num": 323,
+    "gen": 4
+  },
+  {
+    "name": "Magnet",
+    "num": 242,
+    "gen": 2
+  },
+  {
+    "name": "Mago Berry",
+    "num": 161,
+    "gen": 3
+  },
+  {
+    "name": "Magost Berry",
+    "num": 176,
+    "gen": 3
+  },
+  {
+    "name": "Mail",
+    "num": 137,
+    "gen": 2
+  },
+  {
+    "name": "Malicious Armor",
+    "num": 1861,
+    "gen": 9
+  },
+  {
+    "name": "Manectite",
+    "num": 682,
+    "gen": 6
+  },
+  {
+    "name": "Maranga Berry",
+    "num": 688,
+    "gen": 6
+  },
+  {
+    "name": "Marshadium Z",
+    "num": 802,
+    "gen": 7
+  },
+  {
+    "name": "Master Ball",
+    "num": 1,
+    "gen": 1
+  },
+  {
+    "name": "Masterpiece Teacup",
+    "num": 2404,
+    "gen": 9
+  },
+  {
+    "name": "Mawilite",
+    "num": 681,
+    "gen": 6
+  },
+  {
+    "name": "Meadow Plate",
+    "num": 301,
+    "gen": 4
+  },
+  {
+    "name": "Medichamite",
+    "num": 665,
+    "gen": 6
+  },
+  {
+    "name": "Mental Herb",
+    "num": 219,
+    "gen": 3
+  },
+  {
+    "name": "Metagrossite",
+    "num": 758,
+    "gen": 6
+  },
+  {
+    "name": "Metal Alloy",
+    "num": 2482,
+    "gen": 9
+  },
+  {
+    "name": "Metal Coat",
+    "num": 233,
+    "gen": 2
+  },
+  {
+    "name": "Metal Powder",
+    "num": 257,
+    "gen": 2
+  },
+  {
+    "name": "Metronome",
+    "num": 277,
+    "gen": 4
+  },
+  {
+    "name": "Mewnium Z",
+    "num": 806,
+    "gen": 7
+  },
+  {
+    "name": "Mewtwonite X",
+    "num": 662,
+    "gen": 6
+  },
+  {
+    "name": "Mewtwonite Y",
+    "num": 663,
+    "gen": 6
+  },
+  {
+    "name": "Micle Berry",
+    "num": 209,
+    "gen": 4
+  },
+  {
+    "name": "Mimikium Z",
+    "num": 924,
+    "gen": 7
+  },
+  {
+    "name": "Mind Plate",
+    "num": 307,
+    "gen": 4
+  },
+  {
+    "name": "Miracle Seed",
+    "num": 239,
+    "gen": 2
+  },
+  {
+    "name": "Mirror Herb",
+    "num": 1883,
+    "gen": 9
+  },
+  {
+    "name": "Misty Seed",
+    "num": 883,
+    "gen": 7
+  },
+  {
+    "name": "Moon Ball",
+    "num": 498,
+    "gen": 2
+  },
+  {
+    "name": "Moon Stone",
+    "num": 81,
+    "gen": 1
+  },
+  {
+    "name": "Muscle Band",
+    "num": 266,
+    "gen": 4
+  },
+  {
+    "name": "Mystic Water",
+    "num": 243,
+    "gen": 2
+  },
+  {
+    "name": "Nanab Berry",
+    "num": 166,
+    "gen": 3
+  },
+  {
+    "name": "Nest Ball",
+    "num": 8,
+    "gen": 3
+  },
+  {
+    "name": "Net Ball",
+    "num": 6,
+    "gen": 3
+  },
+  {
+    "name": "Never-Melt Ice",
+    "num": 246,
+    "gen": 2
+  },
+  {
+    "name": "Nomel Berry",
+    "num": 178,
+    "gen": 3
+  },
+  {
+    "name": "Normal Gem",
+    "num": 564,
+    "gen": 5
+  },
+  {
+    "name": "Normalium Z",
+    "num": 776,
+    "gen": 7
+  },
+  {
+    "name": "Occa Berry",
+    "num": 184,
+    "gen": 4
+  },
+  {
+    "name": "Odd Incense",
+    "num": 314,
+    "gen": 4
+  },
+  {
+    "name": "Old Amber",
+    "num": 103,
+    "gen": 3
+  },
+  {
+    "name": "Oran Berry",
+    "num": 155,
+    "gen": 3
+  },
+  {
+    "name": "Oval Stone",
+    "num": 110,
+    "gen": 4
+  },
+  {
+    "name": "Pamtre Berry",
+    "num": 180,
+    "gen": 3
+  },
+  {
+    "name": "Park Ball",
+    "num": 500,
+    "gen": 4
+  },
+  {
+    "name": "Passho Berry",
+    "num": 185,
+    "gen": 4
+  },
+  {
+    "name": "Payapa Berry",
+    "num": 193,
+    "gen": 4
+  },
+  {
+    "name": "Pecha Berry",
+    "num": 151,
+    "gen": 3
+  },
+  {
+    "name": "Persim Berry",
+    "num": 156,
+    "gen": 3
+  },
+  {
+    "name": "Petaya Berry",
+    "num": 204,
+    "gen": 3
+  },
+  {
+    "name": "Pidgeotite",
+    "num": 762,
+    "gen": 6
+  },
+  {
+    "name": "Pikanium Z",
+    "num": 794,
+    "gen": 7
+  },
+  {
+    "name": "Pikashunium Z",
+    "num": 836,
+    "gen": 7
+  },
+  {
+    "name": "Pinap Berry",
+    "num": 168,
+    "gen": 3
+  },
+  {
+    "name": "Pinsirite",
+    "num": 671,
+    "gen": 6
+  },
+  {
+    "name": "Pixie Plate",
+    "num": 644,
+    "gen": 6
+  },
+  {
+    "name": "Plume Fossil",
+    "num": 573,
+    "gen": 5
+  },
+  {
+    "name": "Poison Barb",
+    "num": 245,
+    "gen": 2
+  },
+  {
+    "name": "Poison Gem",
+    "num": 554,
+    "gen": 5
+  },
+  {
+    "name": "Poison Memory",
+    "num": 906,
+    "gen": 7
+  },
+  {
+    "name": "Poisonium Z",
+    "num": 783,
+    "gen": 7
+  },
+  {
+    "name": "Poke Ball",
+    "num": 4,
+    "gen": 1
+  },
+  {
+    "name": "Pomeg Berry",
+    "num": 169,
+    "gen": 3
+  },
+  {
+    "name": "Power Anklet",
+    "num": 293,
+    "gen": 4
+  },
+  {
+    "name": "Power Band",
+    "num": 292,
+    "gen": 4
+  },
+  {
+    "name": "Power Belt",
+    "num": 290,
+    "gen": 4
+  },
+  {
+    "name": "Power Bracer",
+    "num": 289,
+    "gen": 4
+  },
+  {
+    "name": "Power Herb",
+    "num": 271,
+    "gen": 4
+  },
+  {
+    "name": "Power Lens",
+    "num": 291,
+    "gen": 4
+  },
+  {
+    "name": "Power Weight",
+    "num": 294,
+    "gen": 4
+  },
+  {
+    "name": "Premier Ball",
+    "num": 12,
+    "gen": 3
+  },
+  {
+    "name": "Primarium Z",
+    "num": 800,
+    "gen": 7
+  },
+  {
+    "name": "Prism Scale",
+    "num": 537,
+    "gen": 5
+  },
+  {
+    "name": "Protective Pads",
+    "num": 880,
+    "gen": 7
+  },
+  {
+    "name": "Protector",
+    "num": 321,
+    "gen": 4
+  },
+  {
+    "name": "Psychic Gem",
+    "num": 557,
+    "gen": 5
+  },
+  {
+    "name": "Psychic Memory",
+    "num": 916,
+    "gen": 7
+  },
+  {
+    "name": "Psychic Seed",
+    "num": 882,
+    "gen": 7
+  },
+  {
+    "name": "Psychium Z",
+    "num": 786,
+    "gen": 7
+  },
+  {
+    "name": "Punching Glove",
+    "num": 1884,
+    "gen": 9
+  },
+  {
+    "name": "Qualot Berry",
+    "num": 171,
+    "gen": 3
+  },
+  {
+    "name": "Quick Ball",
+    "num": 15,
+    "gen": 4
+  },
+  {
+    "name": "Quick Claw",
+    "num": 217,
+    "gen": 2
+  },
+  {
+    "name": "Quick Powder",
+    "num": 274,
+    "gen": 4
+  },
+  {
+    "name": "Rabuta Berry",
+    "num": 177,
+    "gen": 3
+  },
+  {
+    "name": "Rare Bone",
+    "num": 106,
+    "gen": 4
+  },
+  {
+    "name": "Rawst Berry",
+    "num": 152,
+    "gen": 3
+  },
+  {
+    "name": "Razor Claw",
+    "num": 326,
+    "gen": 4
+  },
+  {
+    "name": "Razor Fang",
+    "num": 327,
+    "gen": 4
+  },
+  {
+    "name": "Razz Berry",
+    "num": 164,
+    "gen": 3
+  },
+  {
+    "name": "Reaper Cloth",
+    "num": 325,
+    "gen": 4
+  },
+  {
+    "name": "Red Card",
+    "num": 542,
+    "gen": 5
+  },
+  {
+    "name": "Red Orb",
+    "num": 534,
+    "gen": 6
+  },
+  {
+    "name": "Repeat Ball",
+    "num": 9,
+    "gen": 3
+  },
+  {
+    "name": "Ribbon Sweet",
+    "num": 1115,
+    "gen": 8
+  },
+  {
+    "name": "Rindo Berry",
+    "num": 187,
+    "gen": 4
+  },
+  {
+    "name": "Ring Target",
+    "num": 543,
+    "gen": 5
+  },
+  {
+    "name": "Rock Gem",
+    "num": 559,
+    "gen": 5
+  },
+  {
+    "name": "Rock Incense",
+    "num": 315,
+    "gen": 4
+  },
+  {
+    "name": "Rock Memory",
+    "num": 908,
+    "gen": 7
+  },
+  {
+    "name": "Rockium Z",
+    "num": 788,
+    "gen": 7
+  },
+  {
+    "name": "Rocky Helmet",
+    "num": 540,
+    "gen": 5
+  },
+  {
+    "name": "Room Service",
+    "num": 1122,
+    "gen": 8
+  },
+  {
+    "name": "Root Fossil",
+    "num": 99,
+    "gen": 3
+  },
+  {
+    "name": "Rose Incense",
+    "num": 318,
+    "gen": 4
+  },
+  {
+    "name": "Roseli Berry",
+    "num": 686,
+    "gen": 6
+  },
+  {
+    "name": "Rowap Berry",
+    "num": 212,
+    "gen": 4
+  },
+  {
+    "name": "Rusted Shield",
+    "num": 1104,
+    "gen": 8
+  },
+  {
+    "name": "Rusted Sword",
+    "num": 1103,
+    "gen": 8
+  },
+  {
+    "name": "Sablenite",
+    "num": 754,
+    "gen": 6
+  },
+  {
+    "name": "Sachet",
+    "num": 647,
+    "gen": 6
+  },
+  {
+    "name": "Safari Ball",
+    "num": 5,
+    "gen": 1
+  },
+  {
+    "name": "Safety Goggles",
+    "num": 650,
+    "gen": 6
+  },
+  {
+    "name": "Sail Fossil",
+    "num": 711,
+    "gen": 6
+  },
+  {
+    "name": "Salac Berry",
+    "num": 203,
+    "gen": 3
+  },
+  {
+    "name": "Salamencite",
+    "num": 769,
+    "gen": 6
+  },
+  {
+    "name": "Sceptilite",
+    "num": 753,
+    "gen": 6
+  },
+  {
+    "name": "Scizorite",
+    "num": 670,
+    "gen": 6
+  },
+  {
+    "name": "Scope Lens",
+    "num": 232,
+    "gen": 2
+  },
+  {
+    "name": "Sea Incense",
+    "num": 254,
+    "gen": 3
+  },
+  {
+    "name": "Sharp Beak",
+    "num": 244,
+    "gen": 2
+  },
+  {
+    "name": "Sharpedonite",
+    "num": 759,
+    "gen": 6
+  },
+  {
+    "name": "Shed Shell",
+    "num": 295,
+    "gen": 4
+  },
+  {
+    "name": "Shell Bell",
+    "num": 253,
+    "gen": 3
+  },
+  {
+    "name": "Shiny Stone",
+    "num": 107,
+    "gen": 4
+  },
+  {
+    "name": "Shock Drive",
+    "num": 117,
+    "gen": 5
+  },
+  {
+    "name": "Shuca Berry",
+    "num": 191,
+    "gen": 4
+  },
+  {
+    "name": "Silk Scarf",
+    "num": 251,
+    "gen": 3
+  },
+  {
+    "name": "Silver Powder",
+    "num": 222,
+    "gen": 2
+  },
+  {
+    "name": "Sitrus Berry",
+    "num": 158,
+    "gen": 3
+  },
+  {
+    "name": "Skull Fossil",
+    "num": 105,
+    "gen": 4
+  },
+  {
+    "name": "Sky Plate",
+    "num": 306,
+    "gen": 4
+  },
+  {
+    "name": "Slowbronite",
+    "num": 760,
+    "gen": 6
+  },
+  {
+    "name": "Smooth Rock",
+    "num": 283,
+    "gen": 4
+  },
+  {
+    "name": "Snorlium Z",
+    "num": 804,
+    "gen": 7
+  },
+  {
+    "name": "Snowball",
+    "num": 649,
+    "gen": 6
+  },
+  {
+    "name": "Soft Sand",
+    "num": 237,
+    "gen": 2
+  },
+  {
+    "name": "Solganium Z",
+    "num": 921,
+    "gen": 7
+  },
+  {
+    "name": "Soul Dew",
+    "num": 225,
+    "gen": 3
+  },
+  {
+    "name": "Spell Tag",
+    "num": 247,
+    "gen": 2
+  },
+  {
+    "name": "Spelon Berry",
+    "num": 179,
+    "gen": 3
+  },
+  {
+    "name": "Splash Plate",
+    "num": 299,
+    "gen": 4
+  },
+  {
+    "name": "Spooky Plate",
+    "num": 310,
+    "gen": 4
+  },
+  {
+    "name": "Sport Ball",
+    "num": 499,
+    "gen": 2
+  },
+  {
+    "name": "Starf Berry",
+    "num": 207,
+    "gen": 3
+  },
+  {
+    "name": "Star Sweet",
+    "num": 1114,
+    "gen": 8
+  },
+  {
+    "name": "Steelixite",
+    "num": 761,
+    "gen": 6
+  },
+  {
+    "name": "Steel Gem",
+    "num": 563,
+    "gen": 5
+  },
+  {
+    "name": "Steel Memory",
+    "num": 911,
+    "gen": 7
+  },
+  {
+    "name": "Steelium Z",
+    "num": 792,
+    "gen": 7
+  },
+  {
+    "name": "Stick",
+    "num": 259,
+    "gen": 2
+  },
+  {
+    "name": "Sticky Barb",
+    "num": 288,
+    "gen": 4
+  },
+  {
+    "name": "Stone Plate",
+    "num": 309,
+    "gen": 4
+  },
+  {
+    "name": "Strange Ball",
+    "num": 1785,
+    "gen": 8
+  },
+  {
+    "name": "Strawberry Sweet",
+    "num": 1109,
+    "gen": 8
+  },
+  {
+    "name": "Sun Stone",
+    "num": 80,
+    "gen": 2
+  },
+  {
+    "name": "Swampertite",
+    "num": 752,
+    "gen": 6
+  },
+  {
+    "name": "Sweet Apple",
+    "num": 1116,
+    "gen": 8
+  },
+  {
+    "name": "Syrupy Apple",
+    "num": 2402,
+    "gen": 9
+  },
+  {
+    "name": "Tamato Berry",
+    "num": 174,
+    "gen": 3
+  },
+  {
+    "name": "Tanga Berry",
+    "num": 194,
+    "gen": 4
+  },
+  {
+    "name": "Tapunium Z",
+    "num": 801,
+    "gen": 7
+  },
+  {
+    "name": "Tart Apple",
+    "num": 1117,
+    "gen": 8
+  },
+  {
+    "name": "Terrain Extender",
+    "num": 879,
+    "gen": 7
+  },
+  {
+    "name": "Thick Club",
+    "num": 258,
+    "gen": 2
+  },
+  {
+    "name": "Throat Spray",
+    "num": 1118,
+    "gen": 8
+  },
+  {
+    "name": "Thunder Stone",
+    "num": 83,
+    "gen": 1
+  },
+  {
+    "name": "Timer Ball",
+    "num": 10,
+    "gen": 3
+  },
+  {
+    "name": "Toxic Orb",
+    "num": 272,
+    "gen": 4
+  },
+  {
+    "name": "Toxic Plate",
+    "num": 304,
+    "gen": 4
+  },
+  {
+    "name": "TR00",
+    "num": 1130,
+    "gen": 8
+  },
+  {
+    "name": "TR01",
+    "num": 1131,
+    "gen": 8
+  },
+  {
+    "name": "TR02",
+    "num": 1132,
+    "gen": 8
+  },
+  {
+    "name": "TR03",
+    "num": 1133,
+    "gen": 8
+  },
+  {
+    "name": "TR04",
+    "num": 1134,
+    "gen": 8
+  },
+  {
+    "name": "TR05",
+    "num": 1135,
+    "gen": 8
+  },
+  {
+    "name": "TR06",
+    "num": 1136,
+    "gen": 8
+  },
+  {
+    "name": "TR07",
+    "num": 1137,
+    "gen": 8
+  },
+  {
+    "name": "TR08",
+    "num": 1138,
+    "gen": 8
+  },
+  {
+    "name": "TR09",
+    "num": 1139,
+    "gen": 8
+  },
+  {
+    "name": "TR10",
+    "num": 1140,
+    "gen": 8
+  },
+  {
+    "name": "TR11",
+    "num": 1141,
+    "gen": 8
+  },
+  {
+    "name": "TR12",
+    "num": 1142,
+    "gen": 8
+  },
+  {
+    "name": "TR13",
+    "num": 1143,
+    "gen": 8
+  },
+  {
+    "name": "TR14",
+    "num": 1144,
+    "gen": 8
+  },
+  {
+    "name": "TR15",
+    "num": 1145,
+    "gen": 8
+  },
+  {
+    "name": "TR16",
+    "num": 1146,
+    "gen": 8
+  },
+  {
+    "name": "TR17",
+    "num": 1147,
+    "gen": 8
+  },
+  {
+    "name": "TR18",
+    "num": 1148,
+    "gen": 8
+  },
+  {
+    "name": "TR19",
+    "num": 1149,
+    "gen": 8
+  },
+  {
+    "name": "TR20",
+    "num": 1150,
+    "gen": 8
+  },
+  {
+    "name": "TR21",
+    "num": 1151,
+    "gen": 8
+  },
+  {
+    "name": "TR22",
+    "num": 1152,
+    "gen": 8
+  },
+  {
+    "name": "TR23",
+    "num": 1153,
+    "gen": 8
+  },
+  {
+    "name": "TR24",
+    "num": 1154,
+    "gen": 8
+  },
+  {
+    "name": "TR25",
+    "num": 1155,
+    "gen": 8
+  },
+  {
+    "name": "TR26",
+    "num": 1156,
+    "gen": 8
+  },
+  {
+    "name": "TR27",
+    "num": 1157,
+    "gen": 8
+  },
+  {
+    "name": "TR28",
+    "num": 1158,
+    "gen": 8
+  },
+  {
+    "name": "TR29",
+    "num": 1159,
+    "gen": 8
+  },
+  {
+    "name": "TR30",
+    "num": 1160,
+    "gen": 8
+  },
+  {
+    "name": "TR31",
+    "num": 1161,
+    "gen": 8
+  },
+  {
+    "name": "TR32",
+    "num": 1162,
+    "gen": 8
+  },
+  {
+    "name": "TR33",
+    "num": 1163,
+    "gen": 8
+  },
+  {
+    "name": "TR34",
+    "num": 1164,
+    "gen": 8
+  },
+  {
+    "name": "TR35",
+    "num": 1165,
+    "gen": 8
+  },
+  {
+    "name": "TR36",
+    "num": 1166,
+    "gen": 8
+  },
+  {
+    "name": "TR37",
+    "num": 1167,
+    "gen": 8
+  },
+  {
+    "name": "TR38",
+    "num": 1168,
+    "gen": 8
+  },
+  {
+    "name": "TR39",
+    "num": 1169,
+    "gen": 8
+  },
+  {
+    "name": "TR40",
+    "num": 1170,
+    "gen": 8
+  },
+  {
+    "name": "TR41",
+    "num": 1171,
+    "gen": 8
+  },
+  {
+    "name": "TR42",
+    "num": 1172,
+    "gen": 8
+  },
+  {
+    "name": "TR43",
+    "num": 1173,
+    "gen": 8
+  },
+  {
+    "name": "TR44",
+    "num": 1174,
+    "gen": 8
+  },
+  {
+    "name": "TR45",
+    "num": 1175,
+    "gen": 8
+  },
+  {
+    "name": "TR46",
+    "num": 1176,
+    "gen": 8
+  },
+  {
+    "name": "TR47",
+    "num": 1177,
+    "gen": 8
+  },
+  {
+    "name": "TR48",
+    "num": 1178,
+    "gen": 8
+  },
+  {
+    "name": "TR49",
+    "num": 1179,
+    "gen": 8
+  },
+  {
+    "name": "TR50",
+    "num": 1180,
+    "gen": 8
+  },
+  {
+    "name": "TR51",
+    "num": 1181,
+    "gen": 8
+  },
+  {
+    "name": "TR52",
+    "num": 1182,
+    "gen": 8
+  },
+  {
+    "name": "TR53",
+    "num": 1183,
+    "gen": 8
+  },
+  {
+    "name": "TR54",
+    "num": 1184,
+    "gen": 8
+  },
+  {
+    "name": "TR55",
+    "num": 1185,
+    "gen": 8
+  },
+  {
+    "name": "TR56",
+    "num": 1186,
+    "gen": 8
+  },
+  {
+    "name": "TR57",
+    "num": 1187,
+    "gen": 8
+  },
+  {
+    "name": "TR58",
+    "num": 1188,
+    "gen": 8
+  },
+  {
+    "name": "TR59",
+    "num": 1189,
+    "gen": 8
+  },
+  {
+    "name": "TR60",
+    "num": 1190,
+    "gen": 8
+  },
+  {
+    "name": "TR61",
+    "num": 1191,
+    "gen": 8
+  },
+  {
+    "name": "TR62",
+    "num": 1192,
+    "gen": 8
+  },
+  {
+    "name": "TR63",
+    "num": 1193,
+    "gen": 8
+  },
+  {
+    "name": "TR64",
+    "num": 1194,
+    "gen": 8
+  },
+  {
+    "name": "TR65",
+    "num": 1195,
+    "gen": 8
+  },
+  {
+    "name": "TR66",
+    "num": 1196,
+    "gen": 8
+  },
+  {
+    "name": "TR67",
+    "num": 1197,
+    "gen": 8
+  },
+  {
+    "name": "TR68",
+    "num": 1198,
+    "gen": 8
+  },
+  {
+    "name": "TR69",
+    "num": 1199,
+    "gen": 8
+  },
+  {
+    "name": "TR70",
+    "num": 1200,
+    "gen": 8
+  },
+  {
+    "name": "TR71",
+    "num": 1201,
+    "gen": 8
+  },
+  {
+    "name": "TR72",
+    "num": 1202,
+    "gen": 8
+  },
+  {
+    "name": "TR73",
+    "num": 1203,
+    "gen": 8
+  },
+  {
+    "name": "TR74",
+    "num": 1204,
+    "gen": 8
+  },
+  {
+    "name": "TR75",
+    "num": 1205,
+    "gen": 8
+  },
+  {
+    "name": "TR76",
+    "num": 1206,
+    "gen": 8
+  },
+  {
+    "name": "TR77",
+    "num": 1207,
+    "gen": 8
+  },
+  {
+    "name": "TR78",
+    "num": 1208,
+    "gen": 8
+  },
+  {
+    "name": "TR79",
+    "num": 1209,
+    "gen": 8
+  },
+  {
+    "name": "TR80",
+    "num": 1210,
+    "gen": 8
+  },
+  {
+    "name": "TR81",
+    "num": 1211,
+    "gen": 8
+  },
+  {
+    "name": "TR82",
+    "num": 1212,
+    "gen": 8
+  },
+  {
+    "name": "TR83",
+    "num": 1213,
+    "gen": 8
+  },
+  {
+    "name": "TR84",
+    "num": 1214,
+    "gen": 8
+  },
+  {
+    "name": "TR85",
+    "num": 1215,
+    "gen": 8
+  },
+  {
+    "name": "TR86",
+    "num": 1216,
+    "gen": 8
+  },
+  {
+    "name": "TR87",
+    "num": 1217,
+    "gen": 8
+  },
+  {
+    "name": "TR88",
+    "num": 1218,
+    "gen": 8
+  },
+  {
+    "name": "TR89",
+    "num": 1219,
+    "gen": 8
+  },
+  {
+    "name": "TR90",
+    "num": 1220,
+    "gen": 8
+  },
+  {
+    "name": "TR91",
+    "num": 1221,
+    "gen": 8
+  },
+  {
+    "name": "TR92",
+    "num": 1222,
+    "gen": 8
+  },
+  {
+    "name": "TR93",
+    "num": 1223,
+    "gen": 8
+  },
+  {
+    "name": "TR94",
+    "num": 1224,
+    "gen": 8
+  },
+  {
+    "name": "TR95",
+    "num": 1225,
+    "gen": 8
+  },
+  {
+    "name": "TR96",
+    "num": 1226,
+    "gen": 8
+  },
+  {
+    "name": "TR97",
+    "num": 1227,
+    "gen": 8
+  },
+  {
+    "name": "TR98",
+    "num": 1228,
+    "gen": 8
+  },
+  {
+    "name": "TR99",
+    "num": 1229,
+    "gen": 8
+  },
+  {
+    "name": "Twisted Spoon",
+    "num": 248,
+    "gen": 2
+  },
+  {
+    "name": "Tyranitarite",
+    "num": 669,
+    "gen": 6
+  },
+  {
+    "name": "Ultra Ball",
+    "num": 2,
+    "gen": 1
+  },
+  {
+    "name": "Ultranecrozium Z",
+    "num": 923,
+    "gen": 7
+  },
+  {
+    "name": "Unremarkable Teacup",
+    "num": 2403,
+    "gen": 9
+  },
+  {
+    "name": "Up-Grade",
+    "num": 252,
+    "gen": 2
+  },
+  {
+    "name": "Utility Umbrella",
+    "num": 1123,
+    "gen": 8
+  },
+  {
+    "name": "Venusaurite",
+    "num": 659,
+    "gen": 6
+  },
+  {
+    "name": "Wacan Berry",
+    "num": 186,
+    "gen": 4
+  },
+  {
+    "name": "Water Gem",
+    "num": 549,
+    "gen": 5
+  },
+  {
+    "name": "Water Memory",
+    "num": 913,
+    "gen": 7
+  },
+  {
+    "name": "Water Stone",
+    "num": 84,
+    "gen": 1
+  },
+  {
+    "name": "Waterium Z",
+    "num": 778,
+    "gen": 7
+  },
+  {
+    "name": "Watmel Berry",
+    "num": 181,
+    "gen": 3
+  },
+  {
+    "name": "Wave Incense",
+    "num": 317,
+    "gen": 4
+  },
+  {
+    "name": "Weakness Policy",
+    "num": 639,
+    "gen": 6
+  },
+  {
+    "name": "Wellspring Mask",
+    "num": 2407,
+    "gen": 9
+  },
+  {
+    "name": "Wepear Berry",
+    "num": 167,
+    "gen": 3
+  },
+  {
+    "name": "Whipped Dream",
+    "num": 646,
+    "gen": 6
+  },
+  {
+    "name": "White Herb",
+    "num": 214,
+    "gen": 3
+  },
+  {
+    "name": "Wide Lens",
+    "num": 265,
+    "gen": 4
+  },
+  {
+    "name": "Wiki Berry",
+    "num": 160,
+    "gen": 3
+  },
+  {
+    "name": "Wise Glasses",
+    "num": 267,
+    "gen": 4
+  },
+  {
+    "name": "Yache Berry",
+    "num": 188,
+    "gen": 4
+  },
+  {
+    "name": "Zap Plate",
+    "num": 300,
+    "gen": 4
+  },
+  {
+    "name": "Zoom Lens",
+    "num": 276,
+    "gen": 4
+  },
+  {
+    "name": "Berserk Gene",
+    "num": 0,
+    "gen": 2
+  },
+  {
+    "name": "Berry",
+    "num": 155,
+    "gen": 2
+  },
+  {
+    "name": "Bitter Berry",
+    "num": 156,
+    "gen": 2
+  },
+  {
+    "name": "Burnt Berry",
+    "num": 153,
+    "gen": 2
+  },
+  {
+    "name": "Gold Berry",
+    "num": 158,
+    "gen": 2
+  },
+  {
+    "name": "Ice Berry",
+    "num": 152,
+    "gen": 2
+  },
+  {
+    "name": "Mint Berry",
+    "num": 150,
+    "gen": 2
+  },
+  {
+    "name": "Miracle Berry",
+    "num": 157,
+    "gen": 2
+  },
+  {
+    "name": "Mystery Berry",
+    "num": 154,
+    "gen": 2
+  },
+  {
+    "name": "Pink Bow",
+    "num": 251,
+    "gen": 2
+  },
+  {
+    "name": "Polkadot Bow",
+    "num": 251,
+    "gen": 2
+  },
+  {
+    "name": "PRZ Cure Berry",
+    "num": 149,
+    "gen": 2
+  },
+  {
+    "name": "PSN Cure Berry",
+    "num": 151,
+    "gen": 2
+  },
+  {
+    "name": "Crucibellite",
+    "num": -1,
+    "gen": 6
+  },
+  {
+    "name": "Vile Vial",
+    "num": -2,
+    "gen": 8
+  }
+]

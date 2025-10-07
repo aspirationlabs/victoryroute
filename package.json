@@ -1,0 +1,14 @@
+{
+  "name": "game_data",
+  "version": "1.0.0",
+  "description": "Pokemon game data extraction and sync",
+  "private": true,
+  "scripts": {
+    "sync": "ts-node typescript/scripts/extract_showdown_data.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.0"
+  }
+}

@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: python-checks
+        name: Python checks (pyrefly, ruff)
+        entry: python python/scripts/pycheck.py
+        language: system
+        files: \.py$
+        pass_filenames: true
