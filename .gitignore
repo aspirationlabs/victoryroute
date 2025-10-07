@@ -208,3 +208,5 @@ __marimo__/
 
 .tmp/*
 node_modules/*
+
+.claude/settings.local.json
