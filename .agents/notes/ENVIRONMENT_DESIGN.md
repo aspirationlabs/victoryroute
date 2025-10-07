@@ -221,30 +221,70 @@ Manages WebSocket connection to Pokémon Showdown server.
 - `async disconnect()` - Clean shutdown
 - `async reconnect()` - Attempt reconnection on failure
 
-### `BattleStream`
+### `BattleStream` ✅ **IMPLEMENTED**
 
-Async iterator that provides `BattleEvent` objects to the environment.
+Async iterator that provides batches of `BattleEvent` objects to the environment.
+
+**Location:** `python/game/protocol/battle_stream.py`
 
 **Responsibilities:**
 - Consume raw messages from `ShowdownClient`
 - Parse messages via `MessageParser`
-- Buffer events between `RequestEvent` occurrences
+- Buffer events between decision points
 - Provide async iteration over event batches
+- Support both live battles and replay analysis
 - Handle battle-specific message filtering (if multiple battles active)
+
+**Dual Mode Support:**
+
+The stream operates in two modes depending on the use case:
+
+1. **Live Mode** (default):
+   - Batches events until `|request|` message appears
+   - `RequestEvent` contains JSON payload with available moves/switches
+   - Used for real-time battles where agent needs to make decisions
+   - Decision point = agent's turn to choose action
+
+2. **Replay Mode**:
+   - Batches events until next `|turn|` message appears
+   - Used for replay analysis where no decisions are needed
+   - Decision point = start of each turn
+   - Note: `|request|` messages don't appear in replays/spectator logs
 
 **Usage Pattern:**
 ```python
-# Conceptual - not actual implementation
-async for event_batch in battle_stream:
-    # event_batch contains all events until next RequestEvent
+# Live battle (wait for agent decisions)
+stream = BattleStream(client, mode="live")
+async for event_batch in stream:
+    # event_batch contains all events until RequestEvent
+    # Last event is always RequestEvent with available actions
     # Apply events to get new state
-    # When RequestEvent arrives, yield control to agent
+    # Agent chooses action based on RequestEvent
+
+# Replay analysis (process turn-by-turn)
+stream = BattleStream(client, mode="replay")
+async for event_batch in stream:
+    # event_batch contains all events until next TurnEvent
+    # Process events to update state
+    # No RequestEvent in replays
 ```
 
 **Key Methods:**
+- `__init__(client, parser=None, mode="live", battle_id=None)` - Initialize stream
 - `async __aiter__()` - Async iterator protocol
 - `async __anext__() -> List[BattleEvent]` - Return events until next decision point
-- `filter_battle(battle_id: str)` - Only emit events for specific battle
+- `async close()` - Mark stream as done
+
+**Message Handling:**
+- Splits multiline messages (common in Showdown protocol)
+- Skips empty lines automatically
+- Filters by battle ID if specified (for multi-battle support)
+- Gracefully handles client disconnection
+
+**Implementation Notes:**
+- **Type-safe**: Client parameter accepts any object with `is_connected` and `receive_message()`
+- **Tested**: 5 comprehensive async tests covering both modes and edge cases
+- **Immutable**: Returns new lists on each iteration, original data unchanged
 
 ## State Transition Engine
 
