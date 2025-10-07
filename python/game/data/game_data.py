@@ -11,6 +11,7 @@ from python.game.data.type_chart import TypeChart
 
 T = TypeVar("T")
 
+
 class GameData:
     def __init__(self, data_dir: str = "data/game"):
         self.data_dir = Path(data_dir)

@@ -1,0 +1,15 @@
+py_library(
+    name = "protocol",
+    srcs = ["message_parser.py"],
+    visibility = ["//visibility:public"],
+    deps = ["//python/game/events"],
+)
+
+py_test(
+    name = "message_parser_test",
+    srcs = ["message_parser_test.py"],
+    deps = [
+        ":protocol",
+        "//python/game/events",
+    ],
+)
