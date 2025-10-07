@@ -17,9 +17,7 @@ class ShowdownClient:
         self._username: str = ""
         self._authenticated: bool = False
 
-    async def connect(
-        self, server_url: str, username: str, password: str = ""
-    ) -> None:
+    async def connect(self, server_url: str, username: str, password: str = "") -> None:
         """Connect to the Showdown server and authenticate.
 
         Args:
@@ -70,13 +68,16 @@ class ShowdownClient:
                 return parts[1].strip()
         raise RuntimeError("Failed to receive challstr from server")
 
-    async def _get_assertion(
-        self, username: str, password: str, challstr: str
-    ) -> str:
+    async def _get_assertion(self, username: str, password: str, challstr: str) -> str:
         """Get assertion token from the login server."""
         login_url = "https://play.pokemonshowdown.com/action.php"
 
-        form_data = {"act": "login", "name": username, "pass": password, "challstr": challstr}
+        form_data = {
+            "act": "login",
+            "name": username,
+            "pass": password,
+            "challstr": challstr,
+        }
 
         logging.info("Sending login request with name=%s to %s", username, login_url)
         async with httpx.AsyncClient() as client:
