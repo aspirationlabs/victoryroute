@@ -1,19 +1,32 @@
+from typing import Optional
+
 from absl.testing import absltest, parameterized
 
 from python.game.events.battle_event import (
     BoostEvent,
+    ClearPokeEvent,
+    CritEvent,
     DamageEvent,
     FaintEvent,
     GenEvent,
     HealEvent,
+    HitCountEvent,
+    ImmuneEvent,
+    MissEvent,
     MoveEvent,
     PlayerEvent,
+    PokeEvent,
+    RequestEvent,
+    ResistedEvent,
     StatusEvent,
+    SuperEffectiveEvent,
     SwitchEvent,
+    TeamPreviewEvent,
     TeamSizeEvent,
     TierEvent,
     TurnEvent,
     UnboostEvent,
+    UpkeepEvent,
 )
 from python.game.protocol.message_parser import MessageParser
 
@@ -719,6 +732,164 @@ class MessageParserTest(parameterized.TestCase):
         self.assertEqual(event.pokemon_name, expected_name)
         self.assertEqual(event.stat, expected_stat)
         self.assertEqual(event.amount, expected_amount)
+
+    @parameterized.parameters(
+        ("|-supereffective|p2a: kommo-o", "p2", "a", "kommo-o"),
+        ("|-supereffective|p1a: landorus", "p1", "a", "landorus"),
+        ("|-supereffective|p2a: dragonite", "p2", "a", "dragonite"),
+    )
+    def test_parse_supereffective(
+        self,
+        raw_message: str,
+        expected_player: str,
+        expected_position: str,
+        expected_name: str,
+    ) -> None:
+        parser = MessageParser()
+        event = parser.parse(raw_message)
+        self.assertIsInstance(event, SuperEffectiveEvent)
+        self.assertEqual(event.player_id, expected_player)
+        self.assertEqual(event.position, expected_position)
+        self.assertEqual(event.pokemon_name, expected_name)
+
+    @parameterized.parameters(
+        ("|-resisted|p2a: gholdengo", "p2", "a", "gholdengo"),
+        ("|-resisted|p1a: raging bolt", "p1", "a", "raging bolt"),
+        ("|-resisted|p2a: rotom", "p2", "a", "rotom"),
+    )
+    def test_parse_resisted(
+        self,
+        raw_message: str,
+        expected_player: str,
+        expected_position: str,
+        expected_name: str,
+    ) -> None:
+        parser = MessageParser()
+        event = parser.parse(raw_message)
+        self.assertIsInstance(event, ResistedEvent)
+        self.assertEqual(event.player_id, expected_player)
+        self.assertEqual(event.position, expected_position)
+        self.assertEqual(event.pokemon_name, expected_name)
+
+    @parameterized.parameters(
+        ("|-immune|p2a: enamorus", "p2", "a", "enamorus"),
+        ("|-immune|p1a: corviknight", "p1", "a", "corviknight"),
+        ("|-immune|p1a: dragapult", "p1", "a", "dragapult"),
+    )
+    def test_parse_immune(
+        self,
+        raw_message: str,
+        expected_player: str,
+        expected_position: str,
+        expected_name: str,
+    ) -> None:
+        parser = MessageParser()
+        event = parser.parse(raw_message)
+        self.assertIsInstance(event, ImmuneEvent)
+        self.assertEqual(event.player_id, expected_player)
+        self.assertEqual(event.position, expected_position)
+        self.assertEqual(event.pokemon_name, expected_name)
+
+    @parameterized.parameters(
+        ("|-crit|p1a: zamazenta", "p1", "a", "zamazenta"),
+        ("|-crit|p1a: darkrai", "p1", "a", "darkrai"),
+        ("|-crit|p1a: iron treads", "p1", "a", "iron treads"),
+    )
+    def test_parse_crit(
+        self,
+        raw_message: str,
+        expected_player: str,
+        expected_position: str,
+        expected_name: str,
+    ) -> None:
+        parser = MessageParser()
+        event = parser.parse(raw_message)
+        self.assertIsInstance(event, CritEvent)
+        self.assertEqual(event.player_id, expected_player)
+        self.assertEqual(event.position, expected_position)
+        self.assertEqual(event.pokemon_name, expected_name)
+
+    @parameterized.parameters(
+        ("|-miss|p2a: kyurem|p1a: heatran", "p2", "a", "kyurem"),
+        ("|-miss|p1a: heatran|p2a: cinderace", "p1", "a", "heatran"),
+    )
+    def test_parse_miss(
+        self,
+        raw_message: str,
+        expected_player: str,
+        expected_position: str,
+        expected_name: str,
+    ) -> None:
+        parser = MessageParser()
+        event = parser.parse(raw_message)
+        self.assertIsInstance(event, MissEvent)
+        self.assertEqual(event.player_id, expected_player)
+        self.assertEqual(event.position, expected_position)
+        self.assertEqual(event.pokemon_name, expected_name)
+
+    @parameterized.parameters(
+        ("|-hitcount|p2a: rotom|2", "p2", "a", "rotom", 2),
+        ("|-hitcount|p1a: heatran|5", "p1", "a", "heatran", 5),
+        ("|-hitcount|p1a: dondozo|4", "p1", "a", "dondozo", 4),
+    )
+    def test_parse_hitcount(
+        self,
+        raw_message: str,
+        expected_player: str,
+        expected_position: str,
+        expected_name: str,
+        expected_count: int,
+    ) -> None:
+        parser = MessageParser()
+        event = parser.parse(raw_message)
+        self.assertIsInstance(event, HitCountEvent)
+        self.assertEqual(event.player_id, expected_player)
+        self.assertEqual(event.position, expected_position)
+        self.assertEqual(event.pokemon_name, expected_name)
+        self.assertEqual(event.count, expected_count)
+
+    @parameterized.parameters(
+        ("|poke|p1|landorus-therian, m|", "p1", "landorus-therian", "m", False),
+        ("|poke|p1|ogerpon-wellspring, f|", "p1", "ogerpon-wellspring", "f", False),
+        ("|poke|p1|raging bolt|", "p1", "raging bolt", None, False),
+    )
+    def test_parse_poke(
+        self,
+        raw_message: str,
+        expected_player: str,
+        expected_species: str,
+        expected_gender: Optional[str],
+        expected_shiny: bool,
+    ) -> None:
+        parser = MessageParser()
+        event = parser.parse(raw_message)
+        self.assertIsInstance(event, PokeEvent)
+        self.assertEqual(event.player_id, expected_player)
+        self.assertEqual(event.species, expected_species)
+        self.assertEqual(event.gender, expected_gender)
+        self.assertEqual(event.shiny, expected_shiny)
+
+    def test_parse_clearpoke(self) -> None:
+        parser = MessageParser()
+        event = parser.parse("|clearpoke")
+        self.assertIsInstance(event, ClearPokeEvent)
+
+    def test_parse_teampreview(self) -> None:
+        parser = MessageParser()
+        event = parser.parse("|teampreview")
+        self.assertIsInstance(event, TeamPreviewEvent)
+
+    def test_parse_upkeep(self) -> None:
+        parser = MessageParser()
+        event = parser.parse("|upkeep")
+        self.assertIsInstance(event, UpkeepEvent)
+
+    def test_parse_request(self) -> None:
+        parser = MessageParser()
+        request_json = '{"active":[{"moves":[{"move":"Thunderbolt"}]}]}'
+        event = parser.parse(f"|request|{request_json}")
+        self.assertIsInstance(event, RequestEvent)
+        self.assertEqual(event.request_json, request_json)
 
 
 if __name__ == "__main__":

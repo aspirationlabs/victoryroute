@@ -1251,6 +1251,413 @@ class CantEvent(BattleEvent):
 
 
 @dataclass(frozen=True)
+class SuperEffectiveEvent(BattleEvent):
+    raw_message: str
+    player_id: str
+    position: str
+    pokemon_name: str
+    timestamp: Optional[datetime] = None
+
+    @classmethod
+    def parse_raw_message(cls, raw_message: str) -> "SuperEffectiveEvent":
+        parts = raw_message.split("|")
+        ident_parts = parts[2].split(": ")
+        player_id = ident_parts[0][:2]
+        position = ident_parts[0][2:]
+        pokemon_name = ident_parts[1] if len(ident_parts) > 1 else ""
+
+        return cls(
+            raw_message=raw_message,
+            player_id=player_id,
+            position=position,
+            pokemon_name=pokemon_name,
+        )
+
+
+@dataclass(frozen=True)
+class ResistedEvent(BattleEvent):
+    raw_message: str
+    player_id: str
+    position: str
+    pokemon_name: str
+    timestamp: Optional[datetime] = None
+
+    @classmethod
+    def parse_raw_message(cls, raw_message: str) -> "ResistedEvent":
+        parts = raw_message.split("|")
+        ident_parts = parts[2].split(": ")
+        player_id = ident_parts[0][:2]
+        position = ident_parts[0][2:]
+        pokemon_name = ident_parts[1] if len(ident_parts) > 1 else ""
+
+        return cls(
+            raw_message=raw_message,
+            player_id=player_id,
+            position=position,
+            pokemon_name=pokemon_name,
+        )
+
+
+@dataclass(frozen=True)
+class ImmuneEvent(BattleEvent):
+    raw_message: str
+    player_id: str
+    position: str
+    pokemon_name: str
+    timestamp: Optional[datetime] = None
+
+    @classmethod
+    def parse_raw_message(cls, raw_message: str) -> "ImmuneEvent":
+        parts = raw_message.split("|")
+        ident_parts = parts[2].split(": ")
+        player_id = ident_parts[0][:2]
+        position = ident_parts[0][2:]
+        pokemon_name = ident_parts[1] if len(ident_parts) > 1 else ""
+
+        return cls(
+            raw_message=raw_message,
+            player_id=player_id,
+            position=position,
+            pokemon_name=pokemon_name,
+        )
+
+
+@dataclass(frozen=True)
+class CritEvent(BattleEvent):
+    raw_message: str
+    player_id: str
+    position: str
+    pokemon_name: str
+    timestamp: Optional[datetime] = None
+
+    @classmethod
+    def parse_raw_message(cls, raw_message: str) -> "CritEvent":
+        parts = raw_message.split("|")
+        ident_parts = parts[2].split(": ")
+        player_id = ident_parts[0][:2]
+        position = ident_parts[0][2:]
+        pokemon_name = ident_parts[1] if len(ident_parts) > 1 else ""
+
+        return cls(
+            raw_message=raw_message,
+            player_id=player_id,
+            position=position,
+            pokemon_name=pokemon_name,
+        )
+
+
+@dataclass(frozen=True)
+class MissEvent(BattleEvent):
+    raw_message: str
+    player_id: str
+    position: str
+    pokemon_name: str
+    timestamp: Optional[datetime] = None
+
+    @classmethod
+    def parse_raw_message(cls, raw_message: str) -> "MissEvent":
+        parts = raw_message.split("|")
+        ident_parts = parts[2].split(": ")
+        player_id = ident_parts[0][:2]
+        position = ident_parts[0][2:]
+        pokemon_name = ident_parts[1] if len(ident_parts) > 1 else ""
+
+        return cls(
+            raw_message=raw_message,
+            player_id=player_id,
+            position=position,
+            pokemon_name=pokemon_name,
+        )
+
+
+@dataclass(frozen=True)
+class FailEvent(BattleEvent):
+    raw_message: str
+    player_id: str
+    position: str
+    pokemon_name: str
+    timestamp: Optional[datetime] = None
+
+    @classmethod
+    def parse_raw_message(cls, raw_message: str) -> "FailEvent":
+        parts = raw_message.split("|")
+        ident_parts = parts[2].split(": ")
+        player_id = ident_parts[0][:2]
+        position = ident_parts[0][2:]
+        pokemon_name = ident_parts[1] if len(ident_parts) > 1 else ""
+
+        return cls(
+            raw_message=raw_message,
+            player_id=player_id,
+            position=position,
+            pokemon_name=pokemon_name,
+        )
+
+
+@dataclass(frozen=True)
+class HitCountEvent(BattleEvent):
+    raw_message: str
+    player_id: str
+    position: str
+    pokemon_name: str
+    count: int
+    timestamp: Optional[datetime] = None
+
+    @classmethod
+    def parse_raw_message(cls, raw_message: str) -> "HitCountEvent":
+        parts = raw_message.split("|")
+        ident_parts = parts[2].split(": ")
+        player_id = ident_parts[0][:2]
+        position = ident_parts[0][2:]
+        pokemon_name = ident_parts[1] if len(ident_parts) > 1 else ""
+
+        count = int(parts[3])
+
+        return cls(
+            raw_message=raw_message,
+            player_id=player_id,
+            position=position,
+            pokemon_name=pokemon_name,
+            count=count,
+        )
+
+
+@dataclass(frozen=True)
+class SetHpEvent(BattleEvent):
+    raw_message: str
+    player_id: str
+    position: str
+    pokemon_name: str
+    hp_current: int
+    hp_max: int
+    status: Optional[str]
+    timestamp: Optional[datetime] = None
+
+    @classmethod
+    def parse_raw_message(cls, raw_message: str) -> "SetHpEvent":
+        parts = raw_message.split("|")
+        ident_parts = parts[2].split(": ")
+        player_id = ident_parts[0][:2]
+        position = ident_parts[0][2:]
+        pokemon_name = ident_parts[1] if len(ident_parts) > 1 else ""
+
+        hp_parts = parts[3].split("/")
+        hp_status_parts = hp_parts[1].split(" ") if len(hp_parts) > 1 else ["100", ""]
+        hp_current = int(hp_parts[0])
+        hp_max = int(hp_status_parts[0]) if hp_status_parts[0] else 100
+        status = (
+            hp_status_parts[1]
+            if len(hp_status_parts) > 1 and hp_status_parts[1]
+            else None
+        )
+
+        return cls(
+            raw_message=raw_message,
+            player_id=player_id,
+            position=position,
+            pokemon_name=pokemon_name,
+            hp_current=hp_current,
+            hp_max=hp_max,
+            status=status,
+        )
+
+
+@dataclass(frozen=True)
+class ReplaceEvent(BattleEvent):
+    raw_message: str
+    player_id: str
+    position: str
+    pokemon_name: str
+    species: str
+    level: int
+    gender: Optional[str]
+    shiny: bool
+    hp_current: int
+    hp_max: int
+    status: Optional[str]
+    timestamp: Optional[datetime] = None
+
+    @classmethod
+    def parse_raw_message(cls, raw_message: str) -> "ReplaceEvent":
+        parts = raw_message.split("|")
+        ident_parts = parts[2].split(": ")
+        player_id = ident_parts[0][:2]
+        position = ident_parts[0][2:]
+        pokemon_name = ident_parts[1] if len(ident_parts) > 1 else ""
+
+        details_parts = parts[3].split(", ")
+        species = details_parts[0]
+        gender = None
+        shiny = False
+        level = 100
+
+        for detail in details_parts[1:]:
+            if detail.upper() in ["M", "F"]:
+                gender = detail
+            elif detail == "shiny":
+                shiny = True
+            elif detail.startswith("L"):
+                level = int(detail[1:])
+
+        hp_parts = parts[4].split("/")
+        hp_status_parts = hp_parts[1].split(" ") if "/" in parts[4] else ["100", ""]
+        hp_current = (
+            int(hp_parts[0]) if hp_parts[0] != "0" and hp_parts[0] != "fnt" else 0
+        )
+        hp_max = (
+            int(hp_status_parts[0])
+            if hp_status_parts[0] and hp_status_parts[0] != "fnt"
+            else 100
+        )
+        status = (
+            hp_status_parts[1]
+            if len(hp_status_parts) > 1 and hp_status_parts[1]
+            else None
+        )
+
+        return cls(
+            raw_message=raw_message,
+            player_id=player_id,
+            position=position,
+            pokemon_name=pokemon_name,
+            species=species,
+            level=level,
+            gender=gender,
+            shiny=shiny,
+            hp_current=hp_current,
+            hp_max=hp_max,
+            status=status,
+        )
+
+
+@dataclass(frozen=True)
+class DetailsChangeEvent(BattleEvent):
+    raw_message: str
+    player_id: str
+    position: str
+    pokemon_name: str
+    new_details: str
+    hp_current: int
+    hp_max: int
+    status: Optional[str]
+    timestamp: Optional[datetime] = None
+
+    @classmethod
+    def parse_raw_message(cls, raw_message: str) -> "DetailsChangeEvent":
+        parts = raw_message.split("|")
+        ident_parts = parts[2].split(": ")
+        player_id = ident_parts[0][:2]
+        position = ident_parts[0][2:]
+        pokemon_name = ident_parts[1] if len(ident_parts) > 1 else ""
+
+        new_details = parts[3]
+
+        hp_parts = parts[4].split("/") if len(parts) > 4 else ["100", "100"]
+        hp_status_parts = hp_parts[1].split(" ") if len(hp_parts) > 1 else ["100", ""]
+        hp_current = int(hp_parts[0]) if hp_parts[0] else 100
+        hp_max = int(hp_status_parts[0]) if hp_status_parts[0] else 100
+        status = (
+            hp_status_parts[1]
+            if len(hp_status_parts) > 1 and hp_status_parts[1]
+            else None
+        )
+
+        return cls(
+            raw_message=raw_message,
+            player_id=player_id,
+            position=position,
+            pokemon_name=pokemon_name,
+            new_details=new_details,
+            hp_current=hp_current,
+            hp_max=hp_max,
+            status=status,
+        )
+
+
+@dataclass(frozen=True)
+class PokeEvent(BattleEvent):
+    raw_message: str
+    player_id: str
+    species: str
+    gender: Optional[str]
+    shiny: bool
+    item: Optional[str]
+    timestamp: Optional[datetime] = None
+
+    @classmethod
+    def parse_raw_message(cls, raw_message: str) -> "PokeEvent":
+        parts = raw_message.split("|")
+        player_id = parts[2]
+
+        details_parts = parts[3].split(", ")
+        species = details_parts[0]
+        gender = None
+        shiny = False
+        item = None
+
+        for detail in details_parts[1:]:
+            if detail.upper() in ["M", "F"]:
+                gender = detail
+            elif detail == "shiny":
+                shiny = True
+
+        if len(parts) > 4 and parts[4]:
+            item = parts[4]
+
+        return cls(
+            raw_message=raw_message,
+            player_id=player_id,
+            species=species,
+            gender=gender,
+            shiny=shiny,
+            item=item,
+        )
+
+
+@dataclass(frozen=True)
+class ClearPokeEvent(BattleEvent):
+    raw_message: str
+    timestamp: Optional[datetime] = None
+
+    @classmethod
+    def parse_raw_message(cls, raw_message: str) -> "ClearPokeEvent":
+        return cls(raw_message=raw_message)
+
+
+@dataclass(frozen=True)
+class TeamPreviewEvent(BattleEvent):
+    raw_message: str
+    timestamp: Optional[datetime] = None
+
+    @classmethod
+    def parse_raw_message(cls, raw_message: str) -> "TeamPreviewEvent":
+        return cls(raw_message=raw_message)
+
+
+@dataclass(frozen=True)
+class UpkeepEvent(BattleEvent):
+    raw_message: str
+    timestamp: Optional[datetime] = None
+
+    @classmethod
+    def parse_raw_message(cls, raw_message: str) -> "UpkeepEvent":
+        return cls(raw_message=raw_message)
+
+
+@dataclass(frozen=True)
+class RequestEvent(BattleEvent):
+    raw_message: str
+    request_json: str
+    timestamp: Optional[datetime] = None
+
+    @classmethod
+    def parse_raw_message(cls, raw_message: str) -> "RequestEvent":
+        parts = raw_message.split("|")
+        request_json = parts[2] if len(parts) > 2 else "{}"
+        return cls(raw_message=raw_message, request_json=request_json)
+
+
+@dataclass(frozen=True)
 class UnknownEvent(BattleEvent):
     raw_message: str
     message_type: Optional[str] = None
