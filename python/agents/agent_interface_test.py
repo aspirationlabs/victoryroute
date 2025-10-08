@@ -110,7 +110,7 @@ class AgentInterfaceTest(unittest.IsolatedAsyncioTestCase):
 
         state = BattleState(available_moves=[], available_switches=[])
 
-        with self.assertRaises(ValueError) as context:
+        with self.assertRaises(ValueError):
             await agent.choose_action(state, game_data)
 
 
