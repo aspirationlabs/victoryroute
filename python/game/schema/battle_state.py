@@ -64,6 +64,78 @@ class BattleState:
         team = self.get_team(player)
         return team.get_active_pokemon()
 
+    def _infer_available_moves(self, player: str) -> List[str]:
+        """Infer available moves from battle state (for replay mode).
+
+        Args:
+            player: Player ID (p1 or p2)
+
+        Returns:
+            List of move names with PP > 0, accounting for Encore and Disable
+        """
+        active = self.get_active_pokemon(player)
+        if not active or not active.is_alive():
+            return []
+
+        # Check for Encore - only the encored move is available
+        if "encore" in active.volatile_conditions:
+            encore_data = active.volatile_conditions["encore"]
+            # Handle both {'move': 'MoveName'} and 'MoveName' formats
+            encored_move = (
+                encore_data.get("move") if isinstance(encore_data, dict) else encore_data
+            )
+            # Verify the encored move is still in moveset with PP
+            for move in active.moves:
+                if move.name == encored_move and move.current_pp > 0:
+                    return [move.name]
+            # If encored move not available, return empty (shouldn't happen normally)
+            return []
+
+        # Check for Disable - exclude the disabled move
+        disabled_move = None
+        if "disable" in active.volatile_conditions:
+            disable_data = active.volatile_conditions["disable"]
+            # Handle both {'move': 'MoveName'} and 'MoveName' formats
+            disabled_move = (
+                disable_data.get("move") if isinstance(disable_data, dict) else disable_data
+            )
+
+        available = []
+        for move in active.moves:
+            if move.current_pp > 0 and move.name != disabled_move:
+                available.append(move.name)
+
+        return available
+
+    def _infer_available_switches(self, player: str) -> List[int]:
+        """Infer available switches from battle state (for replay mode).
+
+        Args:
+            player: Player ID (p1 or p2)
+
+        Returns:
+            List of indices of Pokemon that can be switched in
+        """
+        team = self.get_team(player)
+        active = team.get_active_pokemon()
+
+        available = []
+        for i, pokemon in enumerate(team.get_pokemon_team()):
+            # Can switch if: alive, not active, not trapped
+            if pokemon.is_alive():
+                # Check if this is the active Pokemon
+                if (
+                    active
+                    and pokemon.species == active.species
+                    and pokemon.nickname == active.nickname
+                ):
+                    continue
+                # Check if can switch (not trapped)
+                if pokemon.can_switch():
+                    available.append(i)
+
+        return available
+
     def get_available_moves(self, player: str = "p1") -> List[str]:
         """Get available moves for a player.
 
@@ -81,9 +153,7 @@ class BattleState:
             return self.available_moves
 
         # Otherwise, infer from state
-        from python.game.environment.state_transition import StateTransition
-
-        return StateTransition._infer_available_moves(self, player)
+        return self._infer_available_moves(player)
 
     def get_available_switches(self, player: str = "p1") -> List[int]:
         """Get available switches for a player.
@@ -102,9 +172,7 @@ class BattleState:
             return self.available_switches
 
         # Otherwise, infer from state
-        from python.game.environment.state_transition import StateTransition
-
-        return StateTransition._infer_available_switches(self, player)
+        return self._infer_available_switches(player)
 
     def get_pokemon_battle_state(
         self, pokemon: PokemonState, base_stats: Optional[Dict[Stat, int]] = None

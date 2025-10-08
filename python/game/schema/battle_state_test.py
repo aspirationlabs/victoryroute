@@ -12,7 +12,7 @@ from python.game.schema.enums import (
     Weather,
 )
 from python.game.schema.field_state import FieldState
-from python.game.schema.pokemon_state import PokemonState
+from python.game.schema.pokemon_state import PokemonMove, PokemonState
 from python.game.schema.team_state import TeamState
 
 
@@ -551,6 +551,167 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(stats["def"], 172)
         # -1 Spe: 35 * (2/3) = 23.33 -> 23
         self.assertEqual(stats["spe"], 23)
+
+    def test_infer_available_moves(self) -> None:
+        """Test move inference from battle state."""
+        # Create Pokemon with moves
+        pikachu = PokemonState(
+            species="Pikachu",
+            current_hp=100,
+            max_hp=100,
+            moves=[
+                PokemonMove(name="Thunderbolt", current_pp=15, max_pp=15),
+                PokemonMove(name="Volt Switch", current_pp=20, max_pp=20),
+                PokemonMove(name="Thunder Wave", current_pp=0, max_pp=20),  # No PP
+            ],
+            is_active=True,
+        )
+        team = TeamState(pokemon=[pikachu], active_pokemon_index=0)
+        state = BattleState(p1_team=team, p2_team=TeamState())
+
+        # Get available moves - should exclude Thunder Wave (no PP)
+        moves = state.get_available_moves("p1")
+        self.assertEqual(set(moves), {"Thunderbolt", "Volt Switch"})
+
+    def test_infer_available_switches(self) -> None:
+        """Test switch inference from battle state."""
+        pikachu = PokemonState(
+            species="Pikachu", current_hp=100, max_hp=100, is_active=True
+        )
+        charizard = PokemonState(species="Charizard", current_hp=80, max_hp=100)
+        fainted = PokemonState(species="Blastoise", current_hp=0, max_hp=100)
+
+        team = TeamState(pokemon=[pikachu, charizard, fainted], active_pokemon_index=0)
+        state = BattleState(p1_team=team, p2_team=TeamState())
+
+        switches = state.get_available_switches("p1")
+        self.assertEqual(switches, [1])
+
+    def test_infer_available_moves_with_encore(self) -> None:
+        """Test that Encore forces only the encored move to be available."""
+        # Create Pokemon with multiple moves, but Encored on Thunderbolt
+        pikachu = PokemonState(
+            species="Pikachu",
+            current_hp=100,
+            max_hp=100,
+            moves=[
+                PokemonMove(name="Thunderbolt", current_pp=15, max_pp=15),
+                PokemonMove(name="Volt Switch", current_pp=20, max_pp=20),
+                PokemonMove(name="Quick Attack", current_pp=10, max_pp=30),
+                PokemonMove(name="Thunder Wave", current_pp=5, max_pp=20),
+            ],
+            volatile_conditions={"encore": {"move": "Thunderbolt"}},
+            is_active=True,
+        )
+        team = TeamState(pokemon=[pikachu], active_pokemon_index=0)
+        state = BattleState(p1_team=team, p2_team=TeamState())
+
+        # Only Thunderbolt should be available due to Encore
+        moves = state.get_available_moves("p1")
+        self.assertEqual(moves, ["Thunderbolt"])
+
+    def test_infer_available_moves_with_encore_string_format(self) -> None:
+        """Test Encore with string format (backward compatibility)."""
+        pikachu = PokemonState(
+            species="Pikachu",
+            current_hp=100,
+            max_hp=100,
+            moves=[
+                PokemonMove(name="Thunderbolt", current_pp=15, max_pp=15),
+                PokemonMove(name="Volt Switch", current_pp=20, max_pp=20),
+            ],
+            volatile_conditions={"encore": "Thunderbolt"},  # String format
+            is_active=True,
+        )
+        team = TeamState(pokemon=[pikachu], active_pokemon_index=0)
+        state = BattleState(p1_team=team, p2_team=TeamState())
+
+        moves = state.get_available_moves("p1")
+        self.assertEqual(moves, ["Thunderbolt"])
+
+    def test_infer_available_moves_with_encore_no_pp(self) -> None:
+        """Test that Encore returns empty when encored move has no PP."""
+        pikachu = PokemonState(
+            species="Pikachu",
+            current_hp=100,
+            max_hp=100,
+            moves=[
+                PokemonMove(name="Thunderbolt", current_pp=0, max_pp=15),  # No PP!
+                PokemonMove(name="Volt Switch", current_pp=20, max_pp=20),
+            ],
+            volatile_conditions={"encore": {"move": "Thunderbolt"}},
+            is_active=True,
+        )
+        team = TeamState(pokemon=[pikachu], active_pokemon_index=0)
+        state = BattleState(p1_team=team, p2_team=TeamState())
+
+        # Should return empty since encored move has no PP
+        moves = state.get_available_moves("p1")
+        self.assertEqual(moves, [])
+
+    def test_infer_available_moves_with_disable(self) -> None:
+        """Test that Disable excludes the disabled move from available moves."""
+        pikachu = PokemonState(
+            species="Pikachu",
+            current_hp=100,
+            max_hp=100,
+            moves=[
+                PokemonMove(name="Thunderbolt", current_pp=15, max_pp=15),
+                PokemonMove(name="Volt Switch", current_pp=20, max_pp=20),
+                PokemonMove(name="Quick Attack", current_pp=10, max_pp=30),
+                PokemonMove(name="Thunder Wave", current_pp=5, max_pp=20),
+            ],
+            volatile_conditions={"disable": {"move": "Thunderbolt"}},
+            is_active=True,
+        )
+        team = TeamState(pokemon=[pikachu], active_pokemon_index=0)
+        state = BattleState(p1_team=team, p2_team=TeamState())
+
+        # All moves except Thunderbolt should be available
+        moves = state.get_available_moves("p1")
+        self.assertEqual(
+            set(moves), {"Volt Switch", "Quick Attack", "Thunder Wave"}
+        )
+
+    def test_infer_available_moves_with_disable_string_format(self) -> None:
+        """Test Disable with string format (backward compatibility)."""
+        pikachu = PokemonState(
+            species="Pikachu",
+            current_hp=100,
+            max_hp=100,
+            moves=[
+                PokemonMove(name="Thunderbolt", current_pp=15, max_pp=15),
+                PokemonMove(name="Volt Switch", current_pp=20, max_pp=20),
+            ],
+            volatile_conditions={"disable": "Thunderbolt"},  # String format
+            is_active=True,
+        )
+        team = TeamState(pokemon=[pikachu], active_pokemon_index=0)
+        state = BattleState(p1_team=team, p2_team=TeamState())
+
+        moves = state.get_available_moves("p1")
+        self.assertEqual(moves, ["Volt Switch"])
+
+    def test_infer_available_moves_with_disable_and_no_pp(self) -> None:
+        """Test that Disable works correctly when disabled move has no PP anyway."""
+        pikachu = PokemonState(
+            species="Pikachu",
+            current_hp=100,
+            max_hp=100,
+            moves=[
+                PokemonMove(name="Thunderbolt", current_pp=0, max_pp=15),  # No PP
+                PokemonMove(name="Volt Switch", current_pp=20, max_pp=20),
+                PokemonMove(name="Quick Attack", current_pp=10, max_pp=30),
+            ],
+            volatile_conditions={"disable": {"move": "Thunderbolt"}},
+            is_active=True,
+        )
+        team = TeamState(pokemon=[pikachu], active_pokemon_index=0)
+        state = BattleState(p1_team=team, p2_team=TeamState())
+
+        # Thunderbolt already has no PP, so same result as without Disable
+        moves = state.get_available_moves("p1")
+        self.assertEqual(set(moves), {"Volt Switch", "Quick Attack"})
 
     def test_json_serialization(self) -> None:
         """Test complete battle state JSON serialization."""

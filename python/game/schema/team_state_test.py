@@ -3,7 +3,7 @@
 import json
 import unittest
 
-from python.game.schema.enums import SideCondition, Stat, Status
+from python.game.schema.enums import SideCondition, Status
 from python.game.schema.pokemon_state import PokemonState
 from python.game.schema.team_state import TeamState
 

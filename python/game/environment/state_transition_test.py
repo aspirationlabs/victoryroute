@@ -15,6 +15,7 @@ from python.game.events.battle_event import (
     DetailsChangeEvent,
     DragEvent,
     FaintEvent,
+    FieldStartEvent,
     HealEvent,
     ReplaceEvent,
     SetBoostEvent,
@@ -22,10 +23,12 @@ from python.game.events.battle_event import (
     StatusEvent,
     SwitchEvent,
     UnboostEvent,
+    UpkeepEvent,
+    WeatherEvent,
 )
 from python.game.schema.battle_state import BattleState
-from python.game.schema.enums import Stat, Status
-from python.game.schema.pokemon_state import PokemonState
+from python.game.schema.enums import Stat, Status, Terrain, Weather
+from python.game.schema.pokemon_state import PokemonMove, PokemonState
 from python.game.schema.team_state import TeamState
 
 
@@ -642,9 +645,6 @@ class StateTransitionTest(parameterized.TestCase):
 
     def test_apply_switch_preserves_tera_type(self) -> None:
         """Test that switch preserves tera type when Pokemon is terastallized."""
-        # Create a terastallized Pikachu with moves, item, and ability
-        from python.game.schema.pokemon_state import PokemonMove
-
         pikachu_tera = PokemonState(
             species="Pikachu",
             level=50,
@@ -696,91 +696,38 @@ class StateTransitionTest(parameterized.TestCase):
 
     def test_apply_upkeep_decrements_terrain(self) -> None:
         """Test that upkeep decrements terrain turns."""
-        from python.game.events.battle_event import FieldStartEvent, UpkeepEvent
-        from python.game.schema.enums import Terrain
-
-        # Start with grassy terrain (5 turns)
         field_event = FieldStartEvent(
             raw_message="|-fieldstart|move: grassy terrain",
             effect="Grassy Terrain",
         )
         state = StateTransition.apply(self.initial_state, field_event)
 
-        # Verify terrain is set to 5 turns
         self.assertEqual(state.field_state.terrain, Terrain.GRASSY)
         self.assertEqual(state.field_state.terrain_turns_remaining, 5)
 
-        # Apply upkeep - should decrement to 4
         upkeep_event = UpkeepEvent(raw_message="|upkeep")
         state = StateTransition.apply(state, upkeep_event)
         self.assertEqual(state.field_state.terrain_turns_remaining, 4)
 
-        # Apply upkeep again - should decrement to 3
         state = StateTransition.apply(state, upkeep_event)
         self.assertEqual(state.field_state.terrain_turns_remaining, 3)
 
     def test_apply_upkeep_decrements_weather(self) -> None:
         """Test that upkeep decrements weather turns."""
-        from python.game.events.battle_event import UpkeepEvent, WeatherEvent
-        from python.game.schema.enums import Weather
-
-        # Start with rain (5 turns)
         weather_event = WeatherEvent(
             raw_message="|-weather|rain", weather="Rain", upkeep=False
         )
         state = StateTransition.apply(self.initial_state, weather_event)
 
-        # Verify weather is set to 5 turns
         self.assertEqual(state.field_state.weather, Weather.RAIN)
         self.assertEqual(state.field_state.weather_turns_remaining, 5)
 
-        # Apply upkeep - should decrement to 4
         upkeep_event = UpkeepEvent(raw_message="|upkeep")
         state = StateTransition.apply(state, upkeep_event)
         self.assertEqual(state.field_state.weather_turns_remaining, 4)
 
-        # Apply upkeep again - should decrement to 3
         state = StateTransition.apply(state, upkeep_event)
         self.assertEqual(state.field_state.weather_turns_remaining, 3)
-
-    def test_infer_available_moves(self) -> None:
-        """Test move inference from battle state."""
-        from python.game.schema.pokemon_state import PokemonMove
-
-        # Create Pokemon with moves
-        pikachu = PokemonState(
-            species="Pikachu",
-            current_hp=100,
-            max_hp=100,
-            moves=[
-                PokemonMove(name="Thunderbolt", current_pp=15, max_pp=15),
-                PokemonMove(name="Volt Switch", current_pp=20, max_pp=20),
-                PokemonMove(name="Thunder Wave", current_pp=0, max_pp=20),  # No PP
-            ],
-            is_active=True,
-        )
-        team = TeamState(pokemon=[pikachu], active_pokemon_index=0)
-        state = BattleState(p1_team=team, p2_team=TeamState())
-
-        # Get available moves - should exclude Thunder Wave (no PP)
-        moves = state.get_available_moves("p1")
-        self.assertEqual(set(moves), {"Thunderbolt", "Volt Switch"})
-
-    def test_infer_available_switches(self) -> None:
-        """Test switch inference from battle state."""
-        # Create team with 3 Pokemon
-        pikachu = PokemonState(
-            species="Pikachu", current_hp=100, max_hp=100, is_active=True
-        )
-        charizard = PokemonState(species="Charizard", current_hp=80, max_hp=100)
-        fainted = PokemonState(species="Blastoise", current_hp=0, max_hp=100)
-
-        team = TeamState(pokemon=[pikachu, charizard, fainted], active_pokemon_index=0)
-        state = BattleState(p1_team=team, p2_team=TeamState())
-
-        # Get available switches - should only include Charizard (index 1)
-        switches = state.get_available_switches("p1")
-        self.assertEqual(switches, [1])
 
 
 if __name__ == "__main__":

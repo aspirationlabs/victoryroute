@@ -7,8 +7,9 @@ immutable battle states. The main entry point is StateTransition.apply().
 import json
 from dataclasses import replace
 
+from typing import Tuple
+
 from absl import logging
-from typing import List, Tuple
 
 from python.game.events.battle_event import (
     BattleEvent,
@@ -1060,7 +1061,6 @@ class StateTransition:
                 else False
             )
 
-        # Validate inference logic
         if set(inferred_moves) != set(available_moves):
             logging.info(
                 f"Move inference diff for {player_id} - "
@@ -1116,56 +1116,3 @@ class StateTransition:
         )
 
         return replace(state, field_state=new_field)
-
-    @staticmethod
-    def _infer_available_moves(state: BattleState, player: str) -> List[str]:
-        """Infer available moves from battle state (for replay mode).
-
-        Args:
-            state: Current battle state
-            player: Player ID (p1 or p2)
-
-        Returns:
-            List of move names with PP > 0
-        """
-        active = state.get_active_pokemon(player)
-        if not active or not active.is_alive():
-            return []
-
-        available = []
-        for move in active.moves:
-            if move.current_pp > 0:
-                available.append(move.name)
-
-        return available
-
-    @staticmethod
-    def _infer_available_switches(state: BattleState, player: str) -> List[int]:
-        """Infer available switches from battle state (for replay mode).
-
-        Args:
-            state: Current battle state
-            player: Player ID (p1 or p2)
-
-        Returns:
-            List of indices of Pokemon that can be switched in
-        """
-        team = state.get_team(player)
-        active = team.get_active_pokemon()
-
-        available = []
-        for i, pokemon in enumerate(team.get_pokemon_team()):
-            # Can switch if: alive, not active, not trapped
-            if pokemon.is_alive():
-                # Check if this is the active Pokemon
-                if (
-                    active
-                    and pokemon.species == active.species
-                    and pokemon.nickname == active.nickname
-                ):
-                    continue
-                # Check if can switch (not trapped)
-                if pokemon.can_switch():
-                    available.append(i)
-
-        return available
