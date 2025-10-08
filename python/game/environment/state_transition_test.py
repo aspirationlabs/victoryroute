@@ -6,6 +6,7 @@ from absl.testing import parameterized
 
 from python.game.environment.state_transition import StateTransition
 from python.game.events.battle_event import (
+    BattleEndEvent,
     BoostEvent,
     ClearAllBoostEvent,
     ClearBoostEvent,
@@ -17,7 +18,9 @@ from python.game.events.battle_event import (
     FaintEvent,
     FieldStartEvent,
     HealEvent,
+    PlayerEvent,
     ReplaceEvent,
+    RequestEvent,
     SetBoostEvent,
     SetHpEvent,
     StatusEvent,
@@ -731,8 +734,6 @@ class StateTransitionTest(parameterized.TestCase):
 
     def test_apply_player_event_p1(self) -> None:
         """Test that PlayerEvent updates p1_username."""
-        from python.game.events.battle_event import PlayerEvent
-
         event = PlayerEvent(
             raw_message="|player|p1|Alice|1|1500",
             player_id="p1",
@@ -746,8 +747,6 @@ class StateTransitionTest(parameterized.TestCase):
 
     def test_apply_player_event_p2(self) -> None:
         """Test that PlayerEvent updates p2_username."""
-        from python.game.events.battle_event import PlayerEvent
-
         event = PlayerEvent(
             raw_message="|player|p2|Bob|2|1400",
             player_id="p2",
@@ -761,8 +760,6 @@ class StateTransitionTest(parameterized.TestCase):
 
     def test_apply_battle_end_victory(self) -> None:
         """Test that BattleEndEvent marks battle as over with winner."""
-        from python.game.events.battle_event import BattleEndEvent
-
         event = BattleEndEvent(raw_message="|win|Alice", winner="Alice")
         state = StateTransition.apply(self.initial_state, event)
         self.assertTrue(state.battle_over)
@@ -770,8 +767,6 @@ class StateTransitionTest(parameterized.TestCase):
 
     def test_apply_battle_end_tie(self) -> None:
         """Test that tie marks battle as over with no winner."""
-        from python.game.events.battle_event import BattleEndEvent
-
         event = BattleEndEvent(raw_message="|tie", winner="")
         state = StateTransition.apply(self.initial_state, event)
         self.assertTrue(state.battle_over)
@@ -779,8 +774,6 @@ class StateTransitionTest(parameterized.TestCase):
 
     def test_apply_request_with_wait(self) -> None:
         """Test that wait requests maintain current state."""
-        from python.game.events.battle_event import RequestEvent
-
         initial_state = BattleState(
             available_moves=["Move1", "Move2"],
             available_switches=[1, 2],

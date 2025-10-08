@@ -3,8 +3,6 @@
 import unittest
 from typing import List
 
-from absl.testing import absltest
-
 from python.game.environment.battle_environment import BattleEnvironment
 from python.game.interface.battle_action import ActionType, BattleAction
 from python.game.schema.battle_state import BattleState
@@ -50,7 +48,7 @@ class FakeShowdownClient:
         self.sent_messages.append(message)
 
 
-class BattleEnvironmentTest(unittest.IsolatedAsyncioTestCase, absltest.TestCase):
+class BattleEnvironmentTest(unittest.IsolatedAsyncioTestCase):
     """Tests for BattleEnvironment class."""
 
     def test_initialization(self) -> None:
@@ -341,4 +339,4 @@ class BattleEnvironmentTest(unittest.IsolatedAsyncioTestCase, absltest.TestCase)
 
 
 if __name__ == "__main__":
-    absltest.main()
+    unittest.main()

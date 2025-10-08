@@ -82,7 +82,7 @@ from python.game.schema.enums import (
     Terrain,
     Weather,
 )
-from python.game.schema.pokemon_state import PokemonState
+from python.game.schema.pokemon_state import PokemonMove, PokemonState
 from python.game.schema.team_state import TeamState
 
 
@@ -1197,8 +1197,6 @@ class StateTransition:
             active_data = request_data["active"][0]
             if "moves" in active_data:
                 try:
-                    from python.game.schema.pokemon_state import PokemonMove
-
                     # Get active Pokemon
                     active_pokemon = state.get_active_pokemon(player_id)
                     if active_pokemon:
@@ -1232,7 +1230,9 @@ class StateTransition:
                                 updated_state = replace(state, p2_team=updated_team)
                 except Exception as e:
                     logging.error(
-                        "Error updating Pokemon moves from request: %s", e, exc_info=True
+                        "Error updating Pokemon moves from request: %s",
+                        e,
+                        exc_info=True,
                     )
 
         return replace(

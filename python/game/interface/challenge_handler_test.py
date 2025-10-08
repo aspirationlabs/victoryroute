@@ -1,5 +1,6 @@
 """Tests for ChallengeHandler."""
 
+import asyncio
 import unittest
 from typing import List
 
@@ -33,8 +34,6 @@ class FakeShowdownClient:
         Raises:
             IndexError: If no more messages available
         """
-        import asyncio
-
         if self._message_delay > 0:
             await asyncio.sleep(self._message_delay)
 

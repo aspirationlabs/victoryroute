@@ -4,12 +4,16 @@ from typing import Any, AsyncIterator, List, Literal, Optional
 
 from absl import logging
 
-from python.game.events.battle_event import BattleEvent, RequestEvent, TurnEvent
+from python.game.events.battle_event import (
+    BattleEndEvent,
+    BattleEvent,
+    ErrorEvent,
+    PlayerEvent,
+    RequestEvent,
+    TurnEvent,
+)
+from python.game.protocol.battle_event_logger import BattleEventLogger
 from python.game.protocol.message_parser import MessageParser
-
-TYPE_CHECKING = False
-if TYPE_CHECKING:
-    from python.game.protocol.battle_event_logger import BattleEventLogger
 
 
 class BattleStream:
@@ -100,11 +104,10 @@ class BattleStream:
                 event = self._parser.parse(line)
                 batch.append(event)
 
-                # Log error events at ERROR level
-                from python.game.events.battle_event import ErrorEvent, PlayerEvent
-
                 if isinstance(event, ErrorEvent):
-                    logging.error("[%s] Server error: %s", self._battle_id, event.error_text)
+                    logging.error(
+                        "[%s] Server error: %s", self._battle_id, event.error_text
+                    )
 
                 if self._logger:
                     self._logger.log_event(event)
@@ -116,7 +119,6 @@ class BattleStream:
                     decision_event_found = True
                     break
 
-            # If we found a decision point, return the batch
             if decision_event_found:
                 return batch
 
@@ -150,7 +152,6 @@ class BattleStream:
         Returns:
             True if this event signals a decision point
         """
-        from python.game.events.battle_event import BattleEndEvent
 
         if self._mode == "live":
             return isinstance(event, (RequestEvent, BattleEndEvent))

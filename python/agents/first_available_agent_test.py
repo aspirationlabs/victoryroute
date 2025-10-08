@@ -32,7 +32,9 @@ class FirstAvailableAgentTest(unittest.IsolatedAsyncioTestCase):
         Returns:
             BattleState with proper Pokemon setup
         """
-        pokemon_moves = [PokemonMove(name=move, current_pp=10, max_pp=10) for move in available_moves]
+        pokemon_moves = [
+            PokemonMove(name=move, current_pp=10, max_pp=10) for move in available_moves
+        ]
 
         active_pokemon = PokemonState(
             species="TestMon",

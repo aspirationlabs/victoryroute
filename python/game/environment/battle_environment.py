@@ -6,12 +6,9 @@ from absl import logging
 
 from python.game.environment.state_transition import StateTransition
 from python.game.interface.battle_action import BattleAction
+from python.game.protocol.battle_event_logger import BattleEventLogger
 from python.game.protocol.battle_stream import BattleStream
 from python.game.schema.battle_state import BattleState
-
-TYPE_CHECKING = False
-if TYPE_CHECKING:
-    from python.game.protocol.battle_event_logger import BattleEventLogger
 
 
 class BattleEnvironment:
@@ -171,13 +168,11 @@ class BattleEnvironment:
             RuntimeError: If client disconnected or stream ended
             ValueError: If action conversion or state transition fails
         """
-        # Convert action to Showdown protocol command
         try:
             command = action.to_showdown_command()
         except Exception as e:
             raise ValueError(f"Failed to convert action to command: {e}") from e
 
-        # Send action to server with battle room prefix
         message = f"{self._battle_room}|{command}"
         logging.info("[%s] Sending action: %s", self._battle_room, command)
         try:
@@ -185,7 +180,6 @@ class BattleEnvironment:
         except Exception as e:
             raise RuntimeError(f"Failed to send action to server: {e}") from e
 
-        # Collect events until next RequestEvent
         try:
             event_batch = await self._stream.__anext__()
         except StopAsyncIteration:
@@ -198,7 +192,6 @@ class BattleEnvironment:
             "[%s] Received %d events from action", self._battle_room, len(event_batch)
         )
 
-        # Apply all events sequentially
         current_state = self._state
         for event in event_batch:
             try:
@@ -209,10 +202,8 @@ class BattleEnvironment:
                 )
                 raise ValueError(f"State transition failed: {e}") from e
 
-        # Update internal state
         self._state = current_state
 
-        # Append to history if tracking
         if self._track_history:
             self._history.append(current_state)
 

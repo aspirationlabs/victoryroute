@@ -1,6 +1,6 @@
 """Tests for agent registry."""
 
-from absl.testing import absltest
+import unittest
 
 from python.agents.agent_interface import Agent
 from python.agents.agent_registry import AgentRegistry
@@ -11,7 +11,7 @@ from python.game.interface.battle_action import ActionType, BattleAction
 from python.game.schema.battle_state import BattleState
 
 
-class AgentRegistryTest(absltest.TestCase):
+class AgentRegistryTest(unittest.TestCase):
     """Test cases for AgentRegistry class."""
 
     def test_get_available_agents_returns_sorted_list(self) -> None:
@@ -115,4 +115,4 @@ class AgentRegistryTest(absltest.TestCase):
 
 
 if __name__ == "__main__":
-    absltest.main()
+    unittest.main()

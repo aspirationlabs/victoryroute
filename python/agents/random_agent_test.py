@@ -63,7 +63,9 @@ class RandomAgentTest(unittest.IsolatedAsyncioTestCase):
         with patch(
             "python.agents.random_agent.random.random", return_value=0.5
         ):  # > switch_probability
-            with patch("python.agents.random_agent.random.choice", return_value="move3"):
+            with patch(
+                "python.agents.random_agent.random.choice", return_value="move3"
+            ):
                 action = await self.agent.choose_action(state, self.game_data)
 
         self.assertIsInstance(action, BattleAction)

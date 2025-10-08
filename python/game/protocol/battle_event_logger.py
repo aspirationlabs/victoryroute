@@ -9,18 +9,20 @@ from python.game.events.battle_event import BattleEvent
 class BattleEventLogger:
     """Logs battle stream events to a file."""
 
-    def __init__(self, agent_name: str, epoch_secs: int) -> None:
+    def __init__(self, agent_name: str, epoch_secs: int, battle_room: str) -> None:
         """Initialize the event logger.
 
         Args:
             agent_name: Name of the agent being used
             epoch_secs: Timestamp in epoch seconds for the log filename
+            battle_room: Battle room ID
         """
         self._agent_name = agent_name
         self._epoch_secs = epoch_secs
         self._opponent_name: Optional[str] = None
         self._file: Optional[TextIO] = None
         self._log_dir = "/tmp/logs"
+        self._battle_room = battle_room
 
     def set_opponent_name(self, opponent_name: str) -> None:
         """Set opponent name and open log file.
@@ -34,7 +36,7 @@ class BattleEventLogger:
         self._opponent_name = opponent_name
         os.makedirs(self._log_dir, exist_ok=True)
 
-        filename = f"{self._agent_name}_{self._opponent_name}_{self._epoch_secs}.txt"
+        filename = f"{self._agent_name}_{self._opponent_name}_{self._battle_room}_{self._epoch_secs}.txt"
         filepath = os.path.join(self._log_dir, filename)
         self._file = open(filepath, "w")
 

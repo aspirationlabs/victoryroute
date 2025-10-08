@@ -143,7 +143,7 @@ async def run_battle() -> None:
 
             logger = None
             if FLAGS.log_events:
-                logger = BattleEventLogger(FLAGS.agent, int(time.time()))
+                logger = BattleEventLogger(FLAGS.agent, int(time.time()), battle_room)
                 logging.info("Event logging enabled")
 
             env = BattleEnvironment(
