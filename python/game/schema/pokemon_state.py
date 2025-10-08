@@ -4,7 +4,7 @@ import json
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
-from python.game.schema.enums import Stat, Status, VolatileCondition
+from python.game.schema.enums import Stat, Status
 
 
 # Stat stage multipliers for stages -6 to +6

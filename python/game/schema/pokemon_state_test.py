@@ -6,7 +6,6 @@ import unittest
 from python.game.schema.enums import Stat, Status
 from python.game.schema.pokemon_state import (
     STAT_STAGE_MULTIPLIERS,
-    PokemonMove,
     PokemonState,
 )
 
