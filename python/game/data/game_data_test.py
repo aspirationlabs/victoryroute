@@ -79,21 +79,22 @@ class GameDataTest(parameterized.TestCase):
         self.assertEqual(move.accuracy, expected_accuracy)
 
     @parameterized.parameters(
-        ("Intimidate",),
-        ("Poison Heal",),
-        ("Quark Drive",),
-        ("Supreme Overlord",),
-        ("Toxic Debris",),
-        ("Dauntless Shield",),
-        ("Protosynthesis",),
-        ("Good as Gold",),
-        ("Orichalcum Pulse",),
-        ("Contrary",),
+        ("Intimidate", "On switch-in, this Pokemon lowers the Attack of opponents by 1 stage."),
+        ("Poison Heal", "This Pokemon is healed by 1/8 of its max HP each turn when poisoned; no HP loss."),
+        ("Quark Drive", "Electric Terrain active or Booster Energy used: highest stat is 1.3x, or 1.5x if Speed."),
+        ("Supreme Overlord", "This Pokemon's moves have 10% more power for each fainted ally, up to 5 allies."),
+        ("Toxic Debris", "If this Pokemon is hit by a physical attack, Toxic Spikes are set on the opposing side."),
+        ("Dauntless Shield", "On switch-in, this Pokemon's Defense is raised by 1 stage. Once per battle."),
+        ("Protosynthesis", "Sunny Day active or Booster Energy used: highest stat is 1.3x, or 1.5x if Speed."),
+        ("Good as Gold", "This Pokemon is immune to Status moves."),
+        ("Orichalcum Pulse", "On switch-in, summons Sunny Day. During Sunny Day, Attack is 1.3333x."),
+        ("Contrary", "If this Pokemon has a stat stage raised it is lowered instead, and vice versa."),
     )
-    def test_get_ability(self, name: str) -> None:
+    def test_get_ability(self, name: str, expected_description: str) -> None:
         ability = self.game_data.get_ability(name)
         self.assertIsNotNone(ability)
         self.assertEqual(ability.name, name)
+        self.assertEqual(ability.description, expected_description)
 
     @parameterized.parameters(
         ("Leftovers",),

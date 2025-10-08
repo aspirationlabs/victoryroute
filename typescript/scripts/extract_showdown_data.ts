@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-const SHOWDOWN_PATH = path.join(process.env.HOME!, 'workspace', 'pokemon-showdown');
+const SHOWDOWN_PATH = path.join(process.env.HOME!, 'workspace', 'third_party', 'pokemon-showdown');
 const OUTPUT_DIR = path.join(__dirname, '..', '..', 'data', 'game');
 
 require('ts-node').register({
@@ -22,6 +22,7 @@ const { Moves } = require(path.join(SHOWDOWN_PATH, 'data', 'moves.ts'));
 const { Abilities } = require(path.join(SHOWDOWN_PATH, 'data', 'abilities.ts'));
 const { Items } = require(path.join(SHOWDOWN_PATH, 'data', 'items.ts'));
 const { Pokedex } = require(path.join(SHOWDOWN_PATH, 'data', 'pokedex.ts'));
+const { AbilitiesText } = require(path.join(SHOWDOWN_PATH, 'data', 'text', 'abilities.ts'));
 
 const DAMAGE_MULTIPLIERS: Record<number, number> = {
     0: 1.0,
@@ -93,13 +94,17 @@ function transformMoves(raw: any): any[] {
     return moves;
 }
 
-function transformAbilities(raw: any): any[] {
+function transformAbilities(raw: any, textData: any): any[] {
     const abilities: any[] = [];
     for (const [abilityId, abilityData] of Object.entries<any>(raw)) {
+        const textEntry = textData[abilityId];
+        const description = textEntry?.shortDesc || textEntry?.desc || '';
+
         abilities.push({
             name: abilityData.name,
             num: abilityData.num,
             rating: abilityData.rating ?? 0.0,
+            description: description,
         });
     }
     return abilities;
@@ -154,7 +159,7 @@ fs.writeFileSync(
 console.log('Transforming and writing abilities...');
 fs.writeFileSync(
     path.join(OUTPUT_DIR, 'abilities.json'),
-    JSON.stringify(transformAbilities(Abilities), null, 2)
+    JSON.stringify(transformAbilities(Abilities, AbilitiesText), null, 2)
 );
 
 console.log('Transforming and writing items...');
