@@ -82,9 +82,9 @@ async def run_raw_mode(client: ShowdownClient) -> None:
     while client.is_connected:
         try:
             message = await client.receive_message()
-            print(f"\n{'='*80}")
+            print(f"\n{'=' * 80}")
             print(message)
-            print(f"{'='*80}\n")
+            print(f"{'=' * 80}\n")
         except asyncio.CancelledError:
             break
         except Exception as e:
@@ -122,7 +122,7 @@ async def run_batch_mode(client: ShowdownClient) -> None:
     """Run in batch mode - use BattleStream to batch events."""
     logging.info(
         "Running in BATCH mode (%s) - showing event batches until decision points",
-        FLAGS.batch_mode
+        FLAGS.batch_mode,
     )
 
     stream = BattleStream(client, mode=FLAGS.batch_mode)
@@ -131,9 +131,9 @@ async def run_batch_mode(client: ShowdownClient) -> None:
     try:
         async for event_batch in stream:
             batch_num += 1
-            print(f"\n{'='*80}")
+            print(f"\n{'=' * 80}")
             print(f"📦 BATCH #{batch_num} ({len(event_batch)} events)")
-            print(f"{'='*80}")
+            print(f"{'=' * 80}")
 
             for event in event_batch:
                 print(format_event(event))

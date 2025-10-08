@@ -42,7 +42,9 @@ class TeamState:
             return None
         if 0 <= self.active_pokemon_index < len(self.pokemon):
             return self.pokemon[self.active_pokemon_index]
-        raise ValueError(f"Active pokemon index {self.active_pokemon_index} is out of bounds")
+        raise ValueError(
+            f"Active pokemon index {self.active_pokemon_index} is out of bounds"
+        )
 
     def get_side_conditions(self) -> Dict[SideCondition, int]:
         """Get all active side conditions.

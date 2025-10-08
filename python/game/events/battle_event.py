@@ -1658,6 +1658,28 @@ class RequestEvent(BattleEvent):
 
 
 @dataclass(frozen=True)
+class PrivateMessageEvent(BattleEvent):
+    raw_message: str
+    sender: str
+    recipient: str
+    message: str
+    timestamp: Optional[datetime] = None
+
+    @classmethod
+    def parse_raw_message(cls, raw_message: str) -> "PrivateMessageEvent":
+        parts = raw_message.split("|")
+        sender = parts[2] if len(parts) > 2 else ""
+        recipient = parts[3] if len(parts) > 3 else ""
+        message = parts[4] if len(parts) > 4 else ""
+        return cls(
+            raw_message=raw_message,
+            sender=sender,
+            recipient=recipient,
+            message=message,
+        )
+
+
+@dataclass(frozen=True)
 class UnknownEvent(BattleEvent):
     raw_message: str
     message_type: Optional[str] = None

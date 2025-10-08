@@ -26,9 +26,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
         - P1 has Stealth Rock active
         - P2's Gholdengo has -1 Atk from Intimidate
         """
-        p1_pokemon = [
-            PokemonState(species="Iron Crown", current_hp=94, max_hp=100)
-        ]
+        p1_pokemon = [PokemonState(species="Iron Crown", current_hp=94, max_hp=100)]
         p1_team = TeamState(
             player_id="p1",
             pokemon=p1_pokemon,
@@ -76,9 +74,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
         - Both sides have Stealth Rock
         - P1 has Future Sight pending
         """
-        p1_pokemon = [
-            PokemonState(species="Iron Crown", current_hp=58, max_hp=100)
-        ]
+        p1_pokemon = [PokemonState(species="Iron Crown", current_hp=58, max_hp=100)]
         p1_team = TeamState(
             player_id="p1",
             pokemon=p1_pokemon,
@@ -86,9 +82,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
             side_conditions={SideCondition.STEALTH_ROCK: 1},
         )
 
-        p2_pokemon = [
-            PokemonState(species="Gholdengo", current_hp=50, max_hp=100)
-        ]
+        p2_pokemon = [PokemonState(species="Gholdengo", current_hp=50, max_hp=100)]
         p2_team = TeamState(
             player_id="p2",
             pokemon=p2_pokemon,
@@ -177,9 +171,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
             active_pokemon_index=0,
         )
 
-        p1_pokemon = [
-            PokemonState(species="Zamazenta", current_hp=37, max_hp=100)
-        ]
+        p1_pokemon = [PokemonState(species="Zamazenta", current_hp=37, max_hp=100)]
         p1_team = TeamState(
             player_id="p1",
             pokemon=p1_pokemon,
@@ -225,9 +217,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
             active_pokemon_index=0,
         )
 
-        p2_pokemon = [
-            PokemonState(species="Glimmora", current_hp=73, max_hp=100)
-        ]
+        p2_pokemon = [PokemonState(species="Glimmora", current_hp=73, max_hp=100)]
         p2_team = TeamState(
             player_id="p2",
             pokemon=p2_pokemon,
@@ -254,9 +244,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
         Scenario from logs (lines 2732-2743):
         - Both screens active on P1's side with turns remaining
         """
-        p1_pokemon = [
-            PokemonState(species="Deoxys", current_hp=11, max_hp=100)
-        ]
+        p1_pokemon = [PokemonState(species="Deoxys", current_hp=11, max_hp=100)]
         p1_team = TeamState(
             player_id="p1",
             pokemon=p1_pokemon,
@@ -267,9 +255,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
             },
         )
 
-        p2_pokemon = [
-            PokemonState(species="Darkrai", current_hp=100, max_hp=100)
-        ]
+        p2_pokemon = [PokemonState(species="Darkrai", current_hp=100, max_hp=100)]
         p2_team = TeamState(
             player_id="p2",
             pokemon=p2_pokemon,
@@ -311,9 +297,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
             active_pokemon_index=0,
         )
 
-        p1_pokemon = [
-            PokemonState(species="Dondozo", current_hp=56, max_hp=100)
-        ]
+        p1_pokemon = [PokemonState(species="Dondozo", current_hp=56, max_hp=100)]
         p1_team = TeamState(
             player_id="p1",
             pokemon=p1_pokemon,
@@ -360,9 +344,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
             active_pokemon_index=0,
         )
 
-        p1_pokemon = [
-            PokemonState(species="Dondozo", current_hp=72, max_hp=100)
-        ]
+        p1_pokemon = [PokemonState(species="Dondozo", current_hp=72, max_hp=100)]
         p1_team = TeamState(
             player_id="p1",
             pokemon=p1_pokemon,
@@ -403,9 +385,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
             active_pokemon_index=0,
         )
 
-        p1_pokemon = [
-            PokemonState(species="Toxapex", current_hp=28, max_hp=100)
-        ]
+        p1_pokemon = [PokemonState(species="Toxapex", current_hp=28, max_hp=100)]
         p1_team = TeamState(
             player_id="p1",
             pokemon=p1_pokemon,
@@ -433,9 +413,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
 
     def test_tailwind(self) -> None:
         """Test Case 10: Line 71646 - Tailwind side condition."""
-        p1_pokemon = [
-            PokemonState(species="Ribombee", current_hp=100, max_hp=100)
-        ]
+        p1_pokemon = [PokemonState(species="Ribombee", current_hp=100, max_hp=100)]
         p1_team = TeamState(
             player_id="p1",
             pokemon=p1_pokemon,
@@ -443,9 +421,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
             side_conditions={SideCondition.TAILWIND: 4},
         )
 
-        p2_pokemon = [
-            PokemonState(species="Kingambit", current_hp=100, max_hp=100)
-        ]
+        p2_pokemon = [PokemonState(species="Kingambit", current_hp=100, max_hp=100)]
         p2_team = TeamState(
             player_id="p2",
             pokemon=p2_pokemon,
@@ -465,18 +441,14 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
 
     def test_trick_room(self) -> None:
         """Test Case 11: Line 23544 - Trick Room field effect."""
-        p2_pokemon = [
-            PokemonState(species="Hatterene", current_hp=100, max_hp=100)
-        ]
+        p2_pokemon = [PokemonState(species="Hatterene", current_hp=100, max_hp=100)]
         p2_team = TeamState(
             player_id="p2",
             pokemon=p2_pokemon,
             active_pokemon_index=0,
         )
 
-        p1_pokemon = [
-            PokemonState(species="Cinderace", current_hp=80, max_hp=100)
-        ]
+        p1_pokemon = [PokemonState(species="Cinderace", current_hp=80, max_hp=100)]
         p1_team = TeamState(
             player_id="p1",
             pokemon=p1_pokemon,
@@ -521,9 +493,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
             active_pokemon_index=0,
         )
 
-        p2_pokemon = [
-            PokemonState(species="Kingambit", current_hp=81, max_hp=100)
-        ]
+        p2_pokemon = [PokemonState(species="Kingambit", current_hp=81, max_hp=100)]
         p2_team = TeamState(
             player_id="p2",
             pokemon=p2_pokemon,
@@ -725,9 +695,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
             side_conditions={SideCondition.STEALTH_ROCK: 1},
         )
 
-        p2_pokemon = [
-            PokemonState(species="Kommo-o", current_hp=100, max_hp=100)
-        ]
+        p2_pokemon = [PokemonState(species="Kommo-o", current_hp=100, max_hp=100)]
         p2_team = TeamState(
             player_id="p2",
             pokemon=p2_pokemon,

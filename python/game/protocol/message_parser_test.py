@@ -16,6 +16,7 @@ from python.game.events.battle_event import (
     MoveEvent,
     PlayerEvent,
     PokeEvent,
+    PrivateMessageEvent,
     RequestEvent,
     ResistedEvent,
     StatusEvent,
@@ -890,6 +891,46 @@ class MessageParserTest(parameterized.TestCase):
         event = parser.parse(f"|request|{request_json}")
         self.assertIsInstance(event, RequestEvent)
         self.assertEqual(event.request_json, request_json)
+
+    @parameterized.parameters(
+        (
+            "|pm|~Challenger| BotPlayer|/challenge gen9ou",
+            "~Challenger",
+            " BotPlayer",
+            "/challenge gen9ou",
+        ),
+        (
+            "|pm| HumanPlayer|~RandomAgent|Hello there!",
+            " HumanPlayer",
+            "~RandomAgent",
+            "Hello there!",
+        ),
+        (
+            "|pm|+VoiceUser| BotPlayer|/challenge gen9vgc2024regh",
+            "+VoiceUser",
+            " BotPlayer",
+            "/challenge gen9vgc2024regh",
+        ),
+        (
+            "|pm|@Moderator| TestBot|Are you online?",
+            "@Moderator",
+            " TestBot",
+            "Are you online?",
+        ),
+    )
+    def test_parse_pm(
+        self,
+        raw_message: str,
+        expected_sender: str,
+        expected_recipient: str,
+        expected_message: str,
+    ) -> None:
+        parser = MessageParser()
+        event = parser.parse(raw_message)
+        self.assertIsInstance(event, PrivateMessageEvent)
+        self.assertEqual(event.sender, expected_sender)
+        self.assertEqual(event.recipient, expected_recipient)
+        self.assertEqual(event.message, expected_message)
 
 
 if __name__ == "__main__":
