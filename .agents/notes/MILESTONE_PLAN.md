@@ -1,5 +1,34 @@
 # Milestone Plan: Random Agent Battle System
 
+## Current Progress Summary
+
+**Overall Progress: ~90% Complete** 🎉
+
+✅ **Completed (13 milestones):**
+- 1.1: Game Data Foundation
+- 1.2: Protocol & Events
+- 1.3: Battle State Model
+- 1.4: State Transitions (all event handlers)
+- 1.5a: Battle Environment - Core
+- 1.5b: Battle Environment - Action Loop
+- 1.6a: Battle Actions
+- 1.6b: Agent Interface
+- 1.6c: Team Loader
+- 1.7a: Random Agent
+- 1.7b: Team Download Script
+- 1.7c-d: Challenge Handler
+- **BONUS:** FirstAvailableAgent (deterministic baseline agent)
+
+⏳ **Remaining (1 milestone set):**
+- 1.8a-d: Integration script (run_battle.py for end-to-end battles)
+
+**Next Steps:**
+1. Create run_battle.py integration script with CLI args
+2. Test full end-to-end battle flow with local Showdown server
+3. Add logging and error handling polish
+
+---
+
 ## Overview
 
 This document breaks down the first major milestone into actionable sub-milestones. The goal is to have a locally hosted Pokémon Showdown server where a human can challenge and battle against a RandomAgent that makes randomized moves.
@@ -31,212 +60,40 @@ This document breaks down the first major milestone into actionable sub-mileston
 - BattleState includes available_moves, available_switches, can_mega, can_tera flags
 - All tests passing for state construction and immutability
 
+### Milestone 1.4: State Transitions ✅ **COMPLETE**
+- StateTransition class with event dispatcher
+- All event handlers implemented (HP, Pokemon changes, stats/status, field effects, request parsing)
+- Comprehensive tests
+
+### Milestone 1.6a-c: Battle Actions & Agent Interface ✅ **COMPLETE**
+- BattleAction dataclass with Showdown command generation
+- Agent abstract base class with async choose_action method
+- TeamLoader for parsing and loading team files
+
+### Milestone 1.5a-b: Battle Environment ✅ **COMPLETE**
+- `python/game/environment/battle_environment.py` - BattleEnvironment class
+- `reset()` method: initialize battle state from event stream
+- `step(action)` method: execute actions and advance battle
+- `get_state()`, `is_battle_over()`, `get_history()` methods
+- Comprehensive tests in `battle_environment_test.py`
+
+### Milestone 1.7a: Random Agent ✅ **COMPLETE**
+- `python/agents/random_agent.py` - RandomAgent class
+- Picks random moves/switches with configurable probability
+- Tests in `random_agent_test.py`
+
+### Milestone 1.7b, 1.7c-d: Team Download & Challenge Handler ✅ **COMPLETE**
+- Team download script
+- Challenge handler with filtering and timeout logic
+
+### BONUS: First Available Agent ✅ **COMPLETE**
+- `python/agents/first_available_agent.py` - FirstAvailableAgent class
+- Deterministic agent for testing (always picks first move/switch)
+- Tests in `first_available_agent_test.py`
+
 ---
 
 ## Remaining Milestones
-
-### Milestone 1.4a: State Transitions - Core Framework
-
-**Goal**: StateTransition class with basic HP changes
-
-**Deliverables:**
-- `python/game/environment/state_transition.py` - `StateTransition` class
-- `apply(state: BattleState, event: BattleEvent) -> BattleState` - Main dispatcher
-- Handlers for: `DamageEvent`, `HealEvent`, `SetHpEvent`
-- Tests for immutability (original state unchanged)
-- Tests with simple event sequences
-
----
-
-### Milestone 1.4b: State Transitions - Pokemon Changes
-
-**Goal**: Switch and faint mechanics
-
-**Deliverables:**
-- Handlers for: `SwitchEvent`, `DragEvent` (clear volatile conditions)
-- Handler for: `FaintEvent` (mark Pokemon as fainted)
-- Handlers for: `ReplaceEvent`, `DetailsChangeEvent`
-- Tests for switch scenarios (volatiles cleared, stat boosts preserved)
-- Tests for faint handling
-
----
-
-### Milestone 1.4c: State Transitions - Stats & Status
-
-**Goal**: Stat boosts and status conditions
-
-**Deliverables:**
-- Handlers for: `BoostEvent`, `UnboostEvent`, `SetBoostEvent`, `ClearBoostEvent`, `ClearAllBoostEvent`, `ClearNegativeBoostEvent`
-- Stat boost clamping to ±6
-- Handlers for: `StatusEvent`, `CureStatusEvent`
-- Tests for stat modifications
-- Tests for status conditions
-
----
-
-### Milestone 1.4d: State Transitions - Field Effects
-
-**Goal**: Weather, terrain, and side conditions
-
-**Deliverables:**
-- Handlers for: `WeatherEvent`, `FieldStartEvent`, `FieldEndEvent`
-- Handlers for: `SideStartEvent`, `SideEndEvent`
-- Weather/terrain expiration tracking
-- Side condition stacking (Spikes layers, etc.)
-- Tests for field effect interactions
-
----
-
-### Milestone 1.4e: State Transitions - Request Parsing
-
-**Goal**: Parse available actions from RequestEvent
-
-**Deliverables:**
-- Handler for: `RequestEvent` → parse JSON payload
-- Populate `BattleState.available_moves` (list of move indices)
-- Populate `BattleState.available_switches` (list of Pokemon indices)
-- Populate `BattleState.can_mega`, `can_tera`, `is_forced_switch`, `is_trapped`
-- Tests verifying available actions correctly extracted from JSON
-- **KEY**: This ensures agents get valid actions directly from Showdown
-
----
-
-### Milestone 1.5a: Battle Environment - Core
-
-**Goal**: BattleEnvironment class with state tracking
-
-**Deliverables:**
-- `python/game/environment/battle_environment.py` - `BattleEnvironment` class
-- Constructor: accepts `ShowdownClient`, `StateTransition`, optional history tracking
-- `reset()` method: initialize battle state
-- Apply events sequentially via `StateTransition.apply()`
-- `get_state()` accessor (read-only)
-- `is_battle_over()` detection
-- Basic tests with mock event sequences
-
----
-
-### Milestone 1.5b: Battle Environment - Action Loop
-
-**Goal**: Full step() cycle
-
-**Deliverables:**
-- `step(action: BattleAction) -> BattleState` method:
-  1. Send action to ShowdownClient
-  2. Collect event batch from BattleStream (until next RequestEvent)
-  3. Apply all events via StateTransition
-  4. Update internal state
-  5. Optionally append to history
-  6. Return new state
-- Error handling (connection errors, state transition errors)
-- Integration tests with mock ShowdownClient
-
----
-
-### Milestone 1.6a: Battle Actions
-
-**Goal**: Action dataclass and Showdown command generation
-
-**Deliverables:**
-- `python/game/interface/battle_action.py` - `BattleAction` dataclass
-  - `action_type: ActionType` (MOVE, SWITCH)
-  - `move_index: Optional[int]` (0-3 for moves)
-  - `switch_index: Optional[int]` (0-5 for switches)
-  - `target_index: Optional[int]` (for doubles)
-  - `mega: bool`, `tera: bool` flags
-- `to_showdown_command() -> str` - Convert to protocol command:
-  - MOVE → `/choose move {move_index + 1}`
-  - SWITCH → `/choose switch {switch_index + 1}`
-  - MEGA → `/choose move {move_index + 1} mega`
-  - TERA → `/choose move {move_index + 1} tera`
-- Tests for command conversion
-- **NO validation needed**: Agent picks from state.available_moves/switches
-
----
-
-### Milestone 1.6b: Agent Interface
-
-**Goal**: Abstract base class for agents
-
-**Deliverables:**
-- `python/agents/agent_interface.py` - `Agent` abstract class
-- `async choose_action(state: BattleState, game_data: GameData) -> BattleAction`
-- All agents implement this method
-- Documentation for agent implementation
-- **Note**: Agent receives BattleState and GameData directly (no wrapper class)
-
----
-
-### Milestone 1.6c: Team Loader
-
-**Goal**: Load and parse team files
-
-**Deliverables:**
-- `python/game/interface/team_loader.py` - `TeamLoader` class
-- Parse Showdown .team format from data/teams/{format}/*.team
-- Convert to /utm protocol command format
-- Team selection strategies:
-  - Explicit: `--team-index N` → load data/teams/{format}/{N}.team
-  - Random: pick random .team file from directory
-  - Default format: gen9ou
-- Tests with sample team files
-
----
-
-### Milestone 1.7a: Random Agent
-
-**Goal**: Agent that picks random valid actions
-
-**Deliverables:**
-- `python/agents/random_agent.py` - `RandomAgent` class
-- `async choose_action(state: BattleState, game_data: GameData) -> BattleAction`:
-  - Randomly pick from `state.available_moves` or `state.available_switches`
-  - Return valid `BattleAction`
-- No validation needed (picks from what RequestEvent provided)
-- Tests ensuring always returns valid action from available options
-
----
-
-### Milestone 1.7b: Team Download Script
-
-**Goal**: Script to download teams into data/teams/{format}/
-
-**Deliverables:**
-- `python/scripts/download_teams.py` - Script to download/organize teams
-- Support common formats: gen9ou, gen9vgc, gen8ou, etc.
-- Save as .team files (Showdown export format)
-- Documentation for usage
-
----
-
-### Milestone 1.7c: Challenge Handler - Basic
-
-**Goal**: Listen for and accept challenges
-
-**Deliverables:**
-- `python/game/interface/challenge_handler.py` - `ChallengeHandler` class
-- Listen for `|pm|` messages with `/challenge` format
-- Parse challenger username from message
-- Accept challenge via `/accept USERNAME` command
-- Join battle room when challenge accepted
-- Tests with mock PM messages
-
----
-
-### Milestone 1.7d: Challenge Handler - Filtering & Timeout
-
-**Goal**: Filter challenges and send proactive challenges
-
-**Deliverables:**
-- `--opponent USERNAME` filter (case insensitive matching)
-- `--challenge-timeout SECONDS` (default 120)
-- Logic:
-  - If opponent specified: only accept matching challenges
-  - If timeout expires and opponent specified: send `/challenge USERNAME,{format}`
-  - If no opponent: accept all challenges, never send
-- Tests for filtering and timeout behavior
-
----
 
 ### Milestone 1.8a: Integration - Connection & Team
 
@@ -322,35 +179,31 @@ This document breaks down the first major milestone into actionable sub-mileston
 ## Dependency Tree
 
 ```
-1.1 ✅ → 1.2 ✅ → 1.3 ✅
-                    ↓
-                1.4a → 1.4b → 1.4c → 1.4d → 1.4e
-                                                ↓
-                                            1.5a → 1.5b
-                                                      ↓
-                                                  1.6a (BattleAction)
-                                                      ↓
-            1.6b (Agent Interface) ← ─ ─ ─ ─ ─ ─ ─ ─ ┘
-                    ↓
-            1.6c (Team Loader)
-                    ↓
-            1.7a (RandomAgent)
-                    ↓
-        ┌─→ 1.7b (Download Teams)
-        │
-        └─→ 1.7c → 1.7d (Challenge Handler)
-                    ↓
-            1.8a → 1.8b → 1.8c → 1.8d
+1.1 ✅ → 1.2 ✅ → 1.3 ✅ → 1.4 ✅
+                              ↓
+                          1.5a-b ✅
+                              ↓
+                          1.6a ✅ (BattleAction)
+                              ↓
+                          1.6b ✅ (Agent Interface)
+                              ↓
+                          1.6c ✅ (Team Loader)
+                              ↓
+                          1.7a ✅ (RandomAgent)
+                              ↓
+                    ┌─→ 1.7b ✅ (Download Teams)
+                    │
+                    └─→ 1.7c-d ✅ (Challenge Handler)
+                              ↓
+                      1.8a → 1.8b → 1.8c → 1.8d ⏳
 ```
 
-**Parallelization Opportunities:**
-- 1.4a-1.4e can be developed incrementally but sequentially
-- 1.6a-1.6c can overlap with 1.5b completion
-- 1.7b (team download) can happen anytime after 1.6c is designed
-- 1.7c-1.7d can be developed in parallel with 1.7a
+**Current Status:**
+- ✅ Completed: 1.1, 1.2, 1.3, 1.4, 1.5a-b, 1.6a, 1.6b, 1.6c, 1.7a, 1.7b, 1.7c-d (13 milestones)
+- ⏳ Remaining: 1.8a-d (Integration script)
 
 **Critical Path:**
-1.1 ✅ → 1.2 ✅ → 1.3 ✅ → 1.4a-e → 1.5a-b → 1.6a-c → 1.7a-d → 1.8a-d
+1.1 ✅ → 1.2 ✅ → 1.3 ✅ → 1.4 ✅ → 1.5a-b ✅ → 1.6a-c ✅ → 1.7a ✅ → 1.7b-d ✅ → 1.8a-d ⏳
 
 ## What's NOT Included (Deferred to Later Milestones)
 
@@ -406,8 +259,8 @@ The first milestone is **complete** when:
 4. ✅ Events are applied to create new states with basic game logic
 5. ✅ Environment orchestrates event stream and state updates
 6. ✅ Agents can query state and output actions
-7. ✅ Random agent and human CLI agent are implemented
-8. ✅ **A human can play a full battle against a random agent on a local Showdown server**
+7. ✅ Random agent is implemented (+ FirstAvailableAgent bonus!)
+8. ⏳ **A human can play a full battle against a random agent on a local Showdown server** (NEEDS run_battle.py)
 
 **Acceptance Test:**
 - Start local Showdown server
