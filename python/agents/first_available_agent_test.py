@@ -1,11 +1,15 @@
 """Unit tests for FirstAvailableAgent."""
 
 import unittest
+from dataclasses import replace
+from typing import List
 
 from python.agents.first_available_agent import FirstAvailableAgent
 from python.game.data.game_data import GameData
 from python.game.interface.battle_action import ActionType, BattleAction
 from python.game.schema.battle_state import BattleState
+from python.game.schema.pokemon_state import PokemonMove, PokemonState
+from python.game.schema.team_state import TeamState
 
 
 class FirstAvailableAgentTest(unittest.IsolatedAsyncioTestCase):
@@ -16,9 +20,40 @@ class FirstAvailableAgentTest(unittest.IsolatedAsyncioTestCase):
         self.agent = FirstAvailableAgent()
         self.game_data = GameData()
 
+    def _create_test_state(
+        self, available_moves: List[str], available_switches: List[int] = []
+    ) -> BattleState:
+        """Create a test battle state with Pokemon that have the specified moves.
+
+        Args:
+            available_moves: List of move names that should be available
+            available_switches: List of switch indices
+
+        Returns:
+            BattleState with proper Pokemon setup
+        """
+        pokemon_moves = [PokemonMove(name=move, current_pp=10, max_pp=10) for move in available_moves]
+
+        active_pokemon = PokemonState(
+            species="TestMon",
+            moves=pokemon_moves,
+            is_active=True,
+            current_hp=100,
+            max_hp=100,
+        )
+
+        # Create team with active Pokemon at index 0
+        team = TeamState(pokemon=[active_pokemon], active_pokemon_index=0)
+
+        return BattleState(
+            p1_team=team,
+            available_moves=available_moves,
+            available_switches=available_switches,
+        )
+
     async def test_agent_returns_first_move(self) -> None:
         """Test that agent returns first move when moves are available."""
-        state = BattleState(available_moves=["move1", "move2", "move3", "move4"])
+        state = self._create_test_state(["move1", "move2", "move3", "move4"])
 
         action = await self.agent.choose_action(state, self.game_data)
 
@@ -38,8 +73,8 @@ class FirstAvailableAgentTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_agent_chooses_first_move_consistently(self) -> None:
         """Test that agent consistently chooses first move across multiple calls."""
-        state = BattleState(
-            available_moves=["thunderbolt", "earthquake", "protect", "volt switch"]
+        state = self._create_test_state(
+            ["thunderbolt", "earthquake", "protect", "volt switch"]
         )
 
         # Call multiple times and verify consistency
@@ -84,7 +119,8 @@ class FirstAvailableAgentTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_agent_never_mega_evolves(self) -> None:
         """Test that agent never chooses to mega evolve."""
-        state = BattleState(available_moves=["move1", "move2"], can_mega=True)
+        state = self._create_test_state(["move1", "move2"])
+        state = replace(state, can_mega=True)
 
         action = await self.agent.choose_action(state, self.game_data)
 
@@ -94,7 +130,8 @@ class FirstAvailableAgentTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_agent_never_terastallizes(self) -> None:
         """Test that agent never chooses to terastallize."""
-        state = BattleState(available_moves=["move1", "move2"], can_tera=True)
+        state = self._create_test_state(["move1", "move2"])
+        state = replace(state, can_tera=True)
 
         action = await self.agent.choose_action(state, self.game_data)
 
@@ -104,9 +141,8 @@ class FirstAvailableAgentTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_agent_never_uses_mega_or_tera_when_both_available(self) -> None:
         """Test that agent never uses mega or tera even when both are available."""
-        state = BattleState(
-            available_moves=["move1", "move2"], can_mega=True, can_tera=True
-        )
+        state = self._create_test_state(["move1", "move2"])
+        state = replace(state, can_mega=True, can_tera=True)
 
         action = await self.agent.choose_action(state, self.game_data)
 
@@ -117,7 +153,7 @@ class FirstAvailableAgentTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_agent_with_single_move(self) -> None:
         """Test agent with only one available move."""
-        state = BattleState(available_moves=["tackle"])
+        state = self._create_test_state(["tackle"])
 
         action = await self.agent.choose_action(state, self.game_data)
 
@@ -135,7 +171,7 @@ class FirstAvailableAgentTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_agent_prefers_move_over_switch(self) -> None:
         """Test that agent prefers moves over switches when both available."""
-        state = BattleState(
+        state = self._create_test_state(
             available_moves=["move1", "move2"], available_switches=[1, 2, 3]
         )
 
@@ -162,7 +198,7 @@ class FirstAvailableAgentTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_agent_deterministic_across_different_states(self) -> None:
         """Test that agent behavior is deterministic for the same state."""
-        state = BattleState(available_moves=["move1", "move2", "move3"])
+        state = self._create_test_state(["move1", "move2", "move3"])
 
         # Same state should always produce same result
         actions = [

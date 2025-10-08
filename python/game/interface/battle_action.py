@@ -10,6 +10,7 @@ class ActionType(Enum):
 
     MOVE = "move"
     SWITCH = "switch"
+    TEAM_ORDER = "team_order"
 
 
 @dataclass(frozen=True)
@@ -67,6 +68,7 @@ class BattleAction:
     )
     mega: bool = False
     tera: bool = False
+    team_order: Optional[str] = None  # For team preview: "123456" format
 
     def to_showdown_command(self) -> str:
         """Convert this action to a Showdown protocol command.
@@ -127,6 +129,12 @@ class BattleAction:
             # Convert 0-indexed to 1-indexed
             switch_num = self.switch_index + 1
             return f"/choose switch {switch_num}"
+
+        elif self.action_type == ActionType.TEAM_ORDER:
+            if self.team_order is None:
+                raise ValueError("TEAM_ORDER action requires team_order")
+
+            return f"/choose team {self.team_order}"
 
         else:
             raise ValueError(f"Unknown action type: {self.action_type}")

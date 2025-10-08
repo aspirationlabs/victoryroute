@@ -150,6 +150,10 @@ class StateTransition:
             return StateTransition._apply_request(state, event)
         elif isinstance(event, UpkeepEvent):
             return StateTransition._apply_upkeep(state, event)
+        elif isinstance(event, PlayerEvent):
+            return StateTransition._apply_player(state, event)
+        elif isinstance(event, BattleEndEvent):
+            return StateTransition._apply_battle_end(state, event)
         # Informational events that don't modify battle state
         elif isinstance(
             event,
@@ -157,9 +161,7 @@ class StateTransition:
                 # Battle flow events
                 TurnEvent,
                 BattleStartEvent,
-                BattleEndEvent,
                 # Metadata events
-                PlayerEvent,
                 TeamSizeEvent,
                 GenEvent,
                 TierEvent,
@@ -1130,6 +1132,12 @@ class StateTransition:
         """
         request_data = json.loads(event.request_json)
 
+        if request_data.get("wait", False):
+            logging.debug("Received wait request - maintaining current state")
+            return state
+
+        team_preview = request_data.get("teamPreview", False)
+
         # Infer values from state for validation (assume p1)
         player_id = "p1"
         inferred_moves = state._infer_available_moves(player_id)
@@ -1147,8 +1155,9 @@ class StateTransition:
 
             if "moves" in active_data:
                 for i, move in enumerate(active_data["moves"]):
-                    if not move.get("disabled", False):
-                        available_moves.append(move.get("move", ""))
+                    move_name = move.get("move", "")
+                    if not move.get("disabled", False) and move_name:
+                        available_moves.append(move_name)
 
             can_mega = active_data.get("canMegaEvo", False)
             can_tera = bool(active_data.get("canTerastallize"))
@@ -1181,14 +1190,60 @@ class StateTransition:
                 f"Inferred: {inferred_switches}, Actual: {available_switches}"
             )
 
+        # Update active Pokemon's moves from request data (for p1 only)
+        # This ensures agents can map move names to indices
+        updated_state = state
+        if "active" in request_data and request_data["active"]:
+            active_data = request_data["active"][0]
+            if "moves" in active_data:
+                try:
+                    from python.game.schema.pokemon_state import PokemonMove
+
+                    # Get active Pokemon
+                    active_pokemon = state.get_active_pokemon(player_id)
+                    if active_pokemon:
+                        # Create PokemonMove objects from request data
+                        pokemon_moves = []
+                        for move_data in active_data["moves"]:
+                            move_name = move_data.get("move", "")
+                            if move_name:
+                                pokemon_moves.append(
+                                    PokemonMove(
+                                        name=move_name,
+                                        current_pp=move_data.get("pp", 0),
+                                        max_pp=move_data.get("maxpp", 0),
+                                    )
+                                )
+
+                        # Update the Pokemon with moves
+                        updated_pokemon = replace(active_pokemon, moves=pokemon_moves)
+
+                        # Update the team
+                        team = state.get_team(player_id)
+                        team_pokemon = list(team.pokemon)
+                        if team.active_pokemon_index is not None:
+                            team_pokemon[team.active_pokemon_index] = updated_pokemon
+                            updated_team = replace(team, pokemon=team_pokemon)
+
+                            # Update the state
+                            if player_id == "p1":
+                                updated_state = replace(state, p1_team=updated_team)
+                            else:
+                                updated_state = replace(state, p2_team=updated_team)
+                except Exception as e:
+                    logging.error(
+                        "Error updating Pokemon moves from request: %s", e, exc_info=True
+                    )
+
         return replace(
-            state,
+            updated_state,
             available_moves=available_moves,
             available_switches=available_switches,
             can_mega=can_mega,
             can_tera=can_tera,
             can_dynamax=can_dynamax,
             force_switch=force_switch,
+            team_preview=team_preview,
         )
 
     @staticmethod
@@ -1224,3 +1279,34 @@ class StateTransition:
         )
 
         return replace(state, field_state=new_field)
+
+    @staticmethod
+    def _apply_player(state: BattleState, event: "PlayerEvent") -> BattleState:
+        """Apply player event - track player usernames.
+
+        Args:
+            state: Current battle state
+            event: Player event
+
+        Returns:
+            New battle state with player username recorded
+        """
+        if event.player_id == "p1":
+            return replace(state, p1_username=event.username)
+        elif event.player_id == "p2":
+            return replace(state, p2_username=event.username)
+        else:
+            return state
+
+    @staticmethod
+    def _apply_battle_end(state: BattleState, event: "BattleEndEvent") -> BattleState:
+        """Apply battle end event - mark battle as over with winner.
+
+        Args:
+            state: Current battle state
+            event: Battle end event
+
+        Returns:
+            New battle state with battle_over=True and winner set
+        """
+        return replace(state, battle_over=True, winner=event.winner)

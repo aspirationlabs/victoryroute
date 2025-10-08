@@ -1687,6 +1687,38 @@ class PrivateMessageEvent(BattleEvent):
 
 
 @dataclass(frozen=True)
+class PopupEvent(BattleEvent):
+    """Event for popup messages from the server (usually errors or notifications)."""
+
+    raw_message: str
+    popup_text: str
+    timestamp: Optional[datetime] = None
+
+    @classmethod
+    def parse_raw_message(cls, raw_message: str) -> "PopupEvent":
+        parts = raw_message.split("|")
+        # Join all parts after |popup| to get the full message including newlines
+        popup_text = "|".join(parts[2:]) if len(parts) > 2 else ""
+        return cls(raw_message=raw_message, popup_text=popup_text)
+
+
+@dataclass(frozen=True)
+class ErrorEvent(BattleEvent):
+    """Event for error messages from the server."""
+
+    raw_message: str
+    error_text: str
+    timestamp: Optional[datetime] = None
+
+    @classmethod
+    def parse_raw_message(cls, raw_message: str) -> "ErrorEvent":
+        parts = raw_message.split("|")
+        # Join all parts after |error| to get the full error message
+        error_text = "|".join(parts[2:]) if len(parts) > 2 else ""
+        return cls(raw_message=raw_message, error_text=error_text)
+
+
+@dataclass(frozen=True)
 class UnknownEvent(BattleEvent):
     raw_message: str
     message_type: Optional[str] = None

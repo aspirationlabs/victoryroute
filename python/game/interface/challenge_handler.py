@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional
 
 from absl import logging
 
-from python.game.events.battle_event import PrivateMessageEvent
+from python.game.events.battle_event import PopupEvent, PrivateMessageEvent
 from python.game.protocol.message_parser import MessageParser
 
 
@@ -18,6 +18,7 @@ class ChallengeHandler:
         format: str = "gen9ou",
         opponent: Optional[str] = None,
         challenge_timeout: int = 120,
+        team_data: Optional[str] = None,
     ) -> None:
         """Initialize the challenge handler.
 
@@ -26,11 +27,13 @@ class ChallengeHandler:
             format: Battle format (e.g., 'gen9ou', 'gen9vgc2024regh')
             opponent: Optional opponent username filter (case insensitive)
             challenge_timeout: Timeout in seconds before sending proactive challenge
+            team_data: Packed team data to send before accepting/sending challenges
         """
         self._client = client
         self._format = format
         self._opponent = opponent.lower() if opponent else None
         self._challenge_timeout = challenge_timeout
+        self._team_data = team_data
         self._parser = MessageParser()
         self._pending_challenges: Dict[str, str] = {}
         self._accepted_battle: Optional[str] = None
@@ -45,6 +48,9 @@ class ChallengeHandler:
         Raises:
             RuntimeError: If client is not connected
         """
+        # Reset battle state for each new challenge round
+        self._accepted_battle = None
+
         if self._opponent and self._challenge_timeout > 0:
             self._timeout_task = asyncio.create_task(self._handle_challenge_timeout())
 
@@ -72,6 +78,9 @@ class ChallengeHandler:
 
                     if isinstance(event, PrivateMessageEvent):
                         await self._handle_pm(event)
+                    elif isinstance(event, PopupEvent):
+                        logging.warning("Server popup:\n%s", event.popup_text)
+                        logging.debug("Raw popup message: %s", event.raw_message)
 
         except asyncio.CancelledError:
             raise
@@ -104,6 +113,15 @@ class ChallengeHandler:
 
         if self._should_accept_challenge(challenger):
             logging.info("Accepting challenge from %s", challenger)
+
+            # Send team before accepting (as per Showdown protocol)
+            if self._team_data:
+                logging.info("Sending team before accepting challenge...")
+                await self._client.send_message(f"|/utm {self._team_data}")
+
+                # Give server a moment to process the team
+                await asyncio.sleep(0.1)
+
             await self.accept_challenge(challenger)
 
     def _is_challenge_message(self, message: str) -> bool:
@@ -175,6 +193,14 @@ class ChallengeHandler:
         Args:
             username: Username to challenge
         """
+        # Send team before challenging (as per Showdown protocol)
+        if self._team_data:
+            logging.info("Sending team before challenging...")
+            await self._client.send_message(f"|/utm {self._team_data}")
+
+            # Give server a moment to process the team
+            await asyncio.sleep(0.1)
+
         await self._client.send_message(f"|/challenge {username}, {self._format}")
         logging.info("Sent challenge to %s with format %s", username, self._format)
 

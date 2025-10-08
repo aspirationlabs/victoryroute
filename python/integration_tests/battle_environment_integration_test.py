@@ -118,7 +118,10 @@ class BattleEnvironmentIntegrationTest(
             matches_name = (
                 pokemon.species.lower() == pokemon_name.lower()
                 or species_base == pokemon_name_base
-                or (pokemon.nickname and pokemon.nickname.lower() == pokemon_name.lower())
+                or (
+                    pokemon.nickname
+                    and pokemon.nickname.lower() == pokemon_name.lower()
+                )
             )
 
             if matches_name:

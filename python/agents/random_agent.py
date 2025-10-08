@@ -60,8 +60,9 @@ class RandomAgent(Agent):
         """Choose a random action from available moves and switches.
 
         Decision logic:
-        1. If force_switch or no moves available: pick random switch
-        2. Otherwise: 90% chance pick random move, 10% chance pick random switch
+        1. If team_preview: choose random lead Pokemon (e.g., "3" for Pokemon #3)
+        2. If force_switch or no moves available: pick random switch
+        3. Otherwise: 90% chance pick random move, 10% chance pick random switch
 
         Args:
             state: Current battle state with available actions
@@ -88,6 +89,14 @@ class RandomAgent(Agent):
             >>> action.action_type == ActionType.SWITCH
             True
         """
+        if state.team_preview:
+            positions = list(range(1, 7))  # [1, 2, 3, 4, 5, 6]
+            random.shuffle(positions)
+            team_order = "".join(str(p) for p in positions)
+            return BattleAction(
+                action_type=ActionType.TEAM_ORDER, team_order=team_order
+            )
+
         if state.force_switch or not state.available_moves:
             if not state.available_switches:
                 raise ValueError("No available switches when switch is required")
@@ -109,7 +118,9 @@ class RandomAgent(Agent):
                 switch_index=switch_index,
             )
 
-        move_index = random.randint(0, len(state.available_moves) - 1)
+        # Pick a random available move and map it to its index
+        random_move_name = random.choice(state.available_moves)
+        move_index = state.get_move_index(random_move_name)
 
         return BattleAction(
             action_type=ActionType.MOVE,

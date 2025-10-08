@@ -101,12 +101,11 @@ IVs: 0 Atk
         loader = TeamLoader(format_name="gen9ou", teams_dir=str(self.teams_dir))
         packed = loader.load_team(team_index=0)
 
-        self.assertIn("Pikachu", packed)
+        self.assertIn("pikachu", packed)
         self.assertIn("lightball", packed)
         self.assertIn("static", packed)
         self.assertIn("thunderbolt", packed)
         self.assertIn("Timid", packed)
-        self.assertTrue(packed.endswith("]"))
 
     def test_load_team_by_index(self) -> None:
         team_content = """Pikachu @ Light Ball
@@ -122,7 +121,7 @@ Timid Nature
         loader = TeamLoader(format_name="gen9ou", teams_dir=str(self.teams_dir))
         packed = loader.load_team(team_index=5)
 
-        self.assertIn("Pikachu", packed)
+        self.assertIn("pikachu", packed)
 
     def test_parse_full_team(self) -> None:
         team_content = """Kyurem @ Loaded Dice

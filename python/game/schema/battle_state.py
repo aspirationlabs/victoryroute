@@ -35,6 +35,13 @@ class BattleState:
     can_tera: bool = False
     can_dynamax: bool = False
     force_switch: bool = False
+    team_preview: bool = False
+
+    # Battle outcome
+    battle_over: bool = False
+    winner: Optional[str] = None  # Username of winner, or None for tie
+    p1_username: Optional[str] = None
+    p2_username: Optional[str] = None
 
     def get_team(self, player: str) -> TeamState:
         """Get team state for a player.
@@ -82,22 +89,23 @@ class BattleState:
             encore_data = active.volatile_conditions["encore"]
             # Handle both {'move': 'MoveName'} and 'MoveName' formats
             encored_move = (
-                encore_data.get("move") if isinstance(encore_data, dict) else encore_data
+                encore_data.get("move")
+                if isinstance(encore_data, dict)
+                else encore_data
             )
-            # Verify the encored move is still in moveset with PP
             for move in active.moves:
                 if move.name == encored_move and move.current_pp > 0:
                     return [move.name]
-            # If encored move not available, return empty (shouldn't happen normally)
             return []
 
         # Check for Disable - exclude the disabled move
         disabled_move = None
         if "disable" in active.volatile_conditions:
             disable_data = active.volatile_conditions["disable"]
-            # Handle both {'move': 'MoveName'} and 'MoveName' formats
             disabled_move = (
-                disable_data.get("move") if isinstance(disable_data, dict) else disable_data
+                disable_data.get("move")
+                if isinstance(disable_data, dict)
+                else disable_data
             )
 
         available = []
@@ -173,6 +181,31 @@ class BattleState:
 
         # Otherwise, infer from state
         return self._infer_available_switches(player)
+
+    def get_move_index(self, move_name: str, player: str = "p1") -> int:
+        """Get the index of a move in the active Pokemon's moveset.
+
+        Args:
+            move_name: Name of the move to find
+            player: Player ID ("p1" or "p2")
+
+        Returns:
+            Index of the move (0-3)
+
+        Raises:
+            ValueError: If the move is not found in the Pokemon's moveset
+        """
+        active_pokemon = self.get_active_pokemon(player)
+        if not active_pokemon:
+            raise ValueError(f"No active Pokemon for player {player}")
+
+        for i, move in enumerate(active_pokemon.moves):
+            if move.name == move_name:
+                return i
+
+        raise ValueError(
+            f"Move '{move_name}' not found in {active_pokemon.species}'s moveset"
+        )
 
     def get_pokemon_battle_state(
         self, pokemon: PokemonState, base_stats: Optional[Dict[Stat, int]] = None

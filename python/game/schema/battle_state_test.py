@@ -639,9 +639,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
 
         # All moves except Thunderbolt should be available
         moves = state.get_available_moves("p1")
-        self.assertEqual(
-            set(moves), {"Volt Switch", "Quick Attack", "Thunder Wave"}
-        )
+        self.assertEqual(set(moves), {"Volt Switch", "Quick Attack", "Thunder Wave"})
 
     def test_infer_available_moves_with_disable_string_format(self) -> None:
         """Test Disable with string format (backward compatibility)."""
