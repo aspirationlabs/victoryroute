@@ -1024,8 +1024,8 @@ class StateTransition:
 
         # Infer values from state for validation (assume p1)
         player_id = "p1"
-        inferred_moves = StateTransition._infer_available_moves(state, player_id)
-        inferred_switches = StateTransition._infer_available_switches(state, player_id)
+        inferred_moves = state._infer_available_moves(player_id)
+        inferred_switches = state._infer_available_switches(player_id)
 
         available_moves = []
         available_switches = []
