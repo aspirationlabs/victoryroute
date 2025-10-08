@@ -1,0 +1,196 @@
+|j|☆mrblue270
+|j|☆helloiamarandom
+|t:|1726927795
+|gametype|singles
+|player|p1|mrblue270|lucas|1043
+|player|p2|helloiamarandom|psychic-gen4|1066
+|teamsize|p1|6
+|teamsize|p2|6
+|gen|9
+|tier|[gen 9] ou
+|rated|
+|rule|species clause: limit one of each pokémon
+|rule|ohko clause: ohko moves are banned
+|rule|evasion items clause: evasion items are banned
+|rule|evasion moves clause: evasion moves are banned
+|rule|endless battle clause: forcing endless battles is banned
+|rule|hp percentage mod: hp is shown in percentages
+|rule|sleep moves clause: sleep-inducing moves are banned
+|clearpoke
+|poke|p1|feraligatr, m|
+|poke|p1|ceruledge, f|
+|poke|p1|torterra, m|
+|poke|p1|sylveon, m|
+|poke|p1|gliscor, f|
+|poke|p1|heracross, f|
+|poke|p2|cacnea, f|
+|poke|p2|pikachu, f|
+|poke|p2|raichu, f|
+|poke|p2|cyclizar, f|
+|poke|p2|weavile, f|
+|poke|p2|ogerpon-cornerstone, f|
+|teampreview
+|inactive|battle timer is on: inactive players will automatically lose when time's up. (requested by helloiamarandom)
+|
+|t:|1726927800
+|start
+|switch|p1a: ceruledge|ceruledge, f|100/100
+|switch|p2a: cacnea|cacnea, f|100/100
+|-item|p1a: ceruledge|air balloon
+|turn|1
+|
+|t:|1726927813
+|move|p2a: cacnea|endure|p2a: cacnea
+|-singleturn|p2a: cacnea|move: endure
+|move|p1a: ceruledge|swords dance|p1a: ceruledge
+|-boost|p1a: ceruledge|atk|2
+|
+|upkeep
+|turn|2
+|
+|t:|1726927818
+|move|p1a: ceruledge|swords dance|p1a: ceruledge
+|-boost|p1a: ceruledge|atk|2
+|move|p2a: cacnea|destiny bond|p2a: cacnea
+|-singlemove|p2a: cacnea|destiny bond
+|
+|upkeep
+|turn|3
+|
+|t:|1726927824
+|move|p1a: ceruledge|swords dance|p1a: ceruledge
+|-boost|p1a: ceruledge|atk|2
+|move|p2a: cacnea|toxic spikes|p1a: ceruledge
+|-sidestart|p1: mrblue270|move: toxic spikes
+|
+|upkeep
+|turn|4
+|
+|t:|1726927832
+|-terastallize|p1a: ceruledge|fire
+|move|p2a: cacnea|endure|p2a: cacnea
+|-singleturn|p2a: cacnea|move: endure
+|move|p1a: ceruledge|fire blast|p2a: cacnea
+|-supereffective|p2a: cacnea
+|-activate|p2a: cacnea|move: endure
+|-damage|p2a: cacnea|1/100
+|-status|p2a: cacnea|brn
+|-enditem|p2a: cacnea|salac berry|[eat]
+|-boost|p2a: cacnea|spe|1|[from] item: salac berry
+|
+|-damage|p2a: cacnea|0 fnt|[from] brn
+|faint|p2a: cacnea
+|upkeep
+|
+|t:|1726927841
+|switch|p2a: ogerpon|ogerpon-cornerstone, f|100/100
+|turn|5
+|
+|t:|1726927849
+|move|p1a: ceruledge|disable||[still]
+|-fail|p1a: ceruledge
+|move|p2a: ogerpon|counter||[still]
+|-fail|p2a: ogerpon
+|
+|upkeep
+|turn|6
+|
+|t:|1726927857
+|switch|p1a: feraligatr|feraligatr, m|100/100
+|-status|p1a: feraligatr|psn
+|move|p2a: ogerpon|ivy cudgel|p1a: feraligatr|[anim] ivy cudgel rock
+|-crit|p1a: feraligatr
+|-damage|p1a: feraligatr|9/100 psn
+|
+|-damage|p1a: feraligatr|0 fnt|[from] psn
+|faint|p1a: feraligatr
+|upkeep
+|
+|t:|1726927866
+|switch|p1a: gliscor|gliscor, f|100/100
+|turn|7
+|
+|t:|1726927872
+|move|p2a: ogerpon|swords dance|p2a: ogerpon
+|-boost|p2a: ogerpon|atk|2
+|move|p1a: gliscor|toxic|p2a: ogerpon
+|-status|p2a: ogerpon|tox
+|
+|-damage|p2a: ogerpon|95/100 tox|[from] psn
+|-status|p1a: gliscor|tox|[from] item: toxic orb
+|upkeep
+|turn|8
+|
+|t:|1726927882
+|move|p2a: ogerpon|swords dance|p2a: ogerpon
+|-boost|p2a: ogerpon|atk|2
+|move|p1a: gliscor|knock off|p2a: ogerpon
+|-damage|p2a: ogerpon|75/100 tox
+|
+|-damage|p2a: ogerpon|63/100 tox|[from] psn
+|upkeep
+|turn|9
+|
+|t:|1726927890
+|move|p2a: ogerpon|ivy cudgel|p1a: gliscor|[anim] ivy cudgel rock
+|-damage|p1a: gliscor|0 fnt
+|faint|p1a: gliscor
+|
+|-damage|p2a: ogerpon|45/100 tox|[from] psn
+|upkeep
+|
+|t:|1726927897
+|switch|p1a: torterra|torterra, m|100/100
+|-status|p1a: torterra|psn
+|turn|10
+|
+|t:|1726927902
+|move|p2a: ogerpon|horn leech|p1a: torterra
+|-damage|p1a: torterra|0 fnt
+|-heal|p2a: ogerpon|100/100 tox|[from] drain|[of] p1a: torterra
+|faint|p1a: torterra
+|
+|-damage|p2a: ogerpon|77/100 tox|[from] psn
+|upkeep
+|
+|t:|1726927910
+|switch|p1a: sylveon|sylveon, m, shiny|100/100
+|-status|p1a: sylveon|psn
+|turn|11
+|
+|t:|1726927914
+|move|p2a: ogerpon|ivy cudgel|p1a: sylveon|[anim] ivy cudgel rock
+|-damage|p1a: sylveon|0 fnt
+|faint|p1a: sylveon
+|
+|-damage|p2a: ogerpon|47/100 tox|[from] psn
+|upkeep
+|
+|t:|1726927920
+|switch|p1a: heracross|heracross, f|100/100
+|-status|p1a: heracross|psn
+|turn|12
+|
+|t:|1726927928
+|move|p2a: ogerpon|ivy cudgel|p1a: heracross|[anim] ivy cudgel rock
+|-damage|p1a: heracross|0 fnt
+|faint|p1a: heracross
+|
+|-damage|p2a: ogerpon|11/100 tox|[from] psn
+|upkeep
+|
+|t:|1726927933
+|switch|p1a: ceruledge|ceruledge, f, tera:fire|100/100
+|-item|p1a: ceruledge|air balloon
+|turn|13
+|
+|t:|1726927939
+|move|p2a: ogerpon|ivy cudgel|p1a: ceruledge|[anim] ivy cudgel rock
+|-supereffective|p1a: ceruledge
+|-damage|p1a: ceruledge|0 fnt
+|-enditem|p1a: ceruledge|air balloon
+|faint|p1a: ceruledge
+|
+|win|helloiamarandom
+|raw|mrblue270's rating: 1043 &rarr; <strong>1028</strong><br />(-15 for losing)
+|raw|helloiamarandom's rating: 1066 &rarr; <strong>1094</strong><br />(+28 for winning)

@@ -1,0 +1,291 @@
+|badge|p2|bronze|gen9ou|100-2
+|uhtml|medal-msg|<div class="broadcast-blue">curious what those medals under the avatar are? ps now has ladder seasons! for more information, check out the <a href="https://www.smogon.com/forums/threads/3740067/">thread on smogon.</a></div>
+|j|☆oz of the og
+|j|☆flyingtaco42
+|t:|1727200054
+|gametype|singles
+|player|p1|oz of the og|morty-gen2|1642
+|player|p2|flyingtaco42|elesa|1864
+|teamsize|p1|6
+|teamsize|p2|6
+|gen|9
+|tier|[gen 9] ou
+|rated|
+|rule|species clause: limit one of each pokémon
+|rule|ohko clause: ohko moves are banned
+|rule|evasion items clause: evasion items are banned
+|rule|evasion moves clause: evasion moves are banned
+|rule|endless battle clause: forcing endless battles is banned
+|rule|hp percentage mod: hp is shown in percentages
+|rule|sleep moves clause: sleep-inducing moves are banned
+|clearpoke
+|poke|p1|darkrai|
+|poke|p1|gliscor, m|
+|poke|p1|raging bolt|
+|poke|p1|iron treads|
+|poke|p1|zamazenta-*|
+|poke|p1|samurott-hisui, f|
+|poke|p2|iron crown|
+|poke|p2|samurott-hisui, m|
+|poke|p2|dragonite, m|
+|poke|p2|great tusk|
+|poke|p2|cinderace, m|
+|poke|p2|enamorus, f|
+|teampreview
+|inactive|battle timer is on: inactive players will automatically lose when time's up. (requested by oz of the og)
+|j| blizzardz 101
+|inactive|flyingtaco42 has 120 seconds left.
+|
+|t:|1727200087
+|start
+|switch|p1a: samurott|samurott-hisui, f|100/100
+|switch|p2a: samurott|samurott-hisui, m|100/100
+|turn|1
+|
+|t:|1727200105
+|switch|p2a: great tusk|great tusk|100/100
+|move|p1a: samurott|ceaseless edge|p2a: great tusk
+|-resisted|p2a: great tusk
+|-damage|p2a: great tusk|82/100
+|-damage|p1a: samurott|84/100|[from] item: rocky helmet|[of] p2a: great tusk
+|-sidestart|p2: flyingtaco42|spikes
+|
+|upkeep
+|turn|2
+|
+|t:|1727200113
+|move|p2a: great tusk|headlong rush|p1a: samurott
+|-damage|p1a: samurott|0 fnt
+|-unboost|p2a: great tusk|def|1
+|-unboost|p2a: great tusk|spd|1
+|faint|p1a: samurott
+|
+|upkeep
+|
+|t:|1727200122
+|switch|p1a: darkrai|darkrai|100/100
+|turn|3
+|
+|t:|1727200134
+|-end|p2a: great tusk|protosynthesis|[silent]
+|switch|p2a: samurott|samurott-hisui, m|100/100
+|move|p1a: darkrai|ice beam|p2a: samurott
+|-resisted|p2a: samurott
+|-damage|p2a: samurott|77/100
+|
+|upkeep
+|turn|4
+|
+|t:|1727200140
+|move|p1a: darkrai|sludge bomb|p2a: samurott
+|-damage|p2a: samurott|33/100
+|move|p2a: samurott|razor shell|p1a: darkrai
+|-damage|p1a: darkrai|31/100
+|
+|upkeep
+|turn|5
+|
+|t:|1727200156
+|move|p1a: darkrai|dark pulse|p2a: samurott
+|-resisted|p2a: samurott
+|-damage|p2a: samurott|6/100
+|cant|p2a: samurott|flinch
+|
+|upkeep
+|turn|6
+|
+|t:|1727200161
+|move|p1a: darkrai|dark pulse|p2a: samurott
+|-resisted|p2a: samurott
+|-damage|p2a: samurott|0 fnt
+|faint|p2a: samurott
+|
+|upkeep
+|
+|t:|1727200166
+|switch|p2a: enamorus|enamorus, f|100/100
+|turn|7
+|
+|t:|1727200173
+|move|p2a: enamorus|earth power|p1a: darkrai
+|-crit|p1a: darkrai
+|-damage|p1a: darkrai|0 fnt
+|faint|p1a: darkrai
+|
+|upkeep
+|
+|t:|1727200178
+|switch|p1a: raging bolt|raging bolt|100/100
+|-enditem|p1a: raging bolt|booster energy
+|-activate|p1a: raging bolt|ability: protosynthesis|[fromitem]
+|-start|p1a: raging bolt|protosynthesisspa
+|turn|8
+|inactive|flyingtaco42 has 120 seconds left.
+|j| bobby palestina
+|
+|t:|1727200232
+|switch|p2a: cinderace|cinderace, m|100/100
+|-terastallize|p1a: raging bolt|fairy
+|move|p1a: raging bolt|calm mind|p1a: raging bolt
+|-boost|p1a: raging bolt|spa|1
+|-boost|p1a: raging bolt|spd|1
+|
+|upkeep
+|turn|9
+|
+|t:|1727200238
+|move|p2a: cinderace|gunk shot|p1a: raging bolt
+|-start|p2a: cinderace|typechange|poison|[from] ability: libero
+|-supereffective|p1a: raging bolt
+|-damage|p1a: raging bolt|0 fnt
+|faint|p1a: raging bolt
+|-end|p1a: raging bolt|protosynthesis|[silent]
+|
+|upkeep
+|
+|t:|1727200243
+|switch|p1a: iron treads|iron treads|100/100
+|-enditem|p1a: iron treads|booster energy
+|-activate|p1a: iron treads|ability: quark drive|[fromitem]
+|-start|p1a: iron treads|quarkdrivespe
+|turn|10
+|inactive|flyingtaco42 has 120 seconds left.
+|
+|t:|1727200252
+|move|p1a: iron treads|earthquake|p2a: cinderace
+|-supereffective|p2a: cinderace
+|-damage|p2a: cinderace|0 fnt
+|faint|p2a: cinderace
+|
+|upkeep
+|
+|t:|1727200255
+|switch|p2a: great tusk|great tusk|82/100
+|-damage|p2a: great tusk|70/100|[from] spikes
+|turn|11
+|
+|t:|1727200260
+|move|p1a: iron treads|ice spinner|p2a: great tusk
+|-supereffective|p2a: great tusk
+|-damage|p2a: great tusk|31/100
+|-damage|p1a: iron treads|84/100|[from] item: rocky helmet|[of] p2a: great tusk
+|move|p2a: great tusk|headlong rush|p1a: iron treads
+|-supereffective|p1a: iron treads
+|-crit|p1a: iron treads
+|-damage|p1a: iron treads|0 fnt
+|-unboost|p2a: great tusk|def|1
+|-unboost|p2a: great tusk|spd|1
+|faint|p1a: iron treads
+|-end|p1a: iron treads|quark drive|[silent]
+|
+|upkeep
+|
+|t:|1727200264
+|switch|p1a: zamazenta|zamazenta|100/100
+|-ability|p1a: zamazenta|dauntless shield|boost
+|-boost|p1a: zamazenta|def|1
+|turn|12
+|
+|t:|1727200272
+|move|p1a: zamazenta|body press|p2a: great tusk
+|-damage|p2a: great tusk|0 fnt
+|-damage|p1a: zamazenta|84/100|[from] item: rocky helmet|[of] p2a: great tusk
+|faint|p2a: great tusk
+|-end|p2a: great tusk|protosynthesis|[silent]
+|
+|-heal|p1a: zamazenta|90/100|[from] item: leftovers
+|upkeep
+|
+|t:|1727200275
+|switch|p2a: enamorus|enamorus, f|100/100
+|turn|13
+|
+|t:|1727200278
+|move|p2a: enamorus|moonblast|p1a: zamazenta
+|-supereffective|p1a: zamazenta
+|-damage|p1a: zamazenta|14/100
+|move|p1a: zamazenta|heavy slam|p2a: enamorus
+|-supereffective|p2a: enamorus
+|-damage|p2a: enamorus|22/100
+|
+|-heal|p1a: zamazenta|20/100|[from] item: leftovers
+|upkeep
+|turn|14
+|
+|t:|1727200282
+|move|p2a: enamorus|moonblast|p1a: zamazenta
+|-supereffective|p1a: zamazenta
+|-damage|p1a: zamazenta|0 fnt
+|faint|p1a: zamazenta
+|
+|upkeep
+|
+|t:|1727200284
+|switch|p1a: gliscor|gliscor, m|100/100
+|turn|15
+|
+|t:|1727200287
+|move|p1a: gliscor|protect|p1a: gliscor
+|-singleturn|p1a: gliscor|protect
+|move|p2a: enamorus|moonblast|p1a: gliscor
+|-activate|p1a: gliscor|move: protect
+|
+|-status|p1a: gliscor|tox|[from] item: toxic orb
+|upkeep
+|turn|16
+|
+|t:|1727200289
+|move|p2a: enamorus|moonblast|p1a: gliscor
+|-damage|p1a: gliscor|39/100 tox
+|move|p1a: gliscor|knock off|p2a: enamorus
+|-resisted|p2a: enamorus
+|-damage|p2a: enamorus|5/100
+|-enditem|p2a: enamorus|choice scarf|[from] move: knock off|[of] p1a: gliscor
+|
+|-heal|p1a: gliscor|51/100 tox|[from] ability: poison heal
+|upkeep
+|turn|17
+|
+|t:|1727200293
+|move|p1a: gliscor|protect|p1a: gliscor
+|-singleturn|p1a: gliscor|protect
+|move|p2a: enamorus|moonblast|p1a: gliscor
+|-activate|p1a: gliscor|move: protect
+|
+|-heal|p1a: gliscor|64/100 tox|[from] ability: poison heal
+|upkeep
+|turn|18
+|
+|t:|1727200296
+|move|p2a: enamorus|moonblast|p1a: gliscor
+|-damage|p1a: gliscor|1/100 tox
+|move|p1a: gliscor|knock off|p2a: enamorus
+|-resisted|p2a: enamorus
+|-damage|p2a: enamorus|0 fnt
+|faint|p2a: enamorus
+|
+|-heal|p1a: gliscor|13/100 tox|[from] ability: poison heal
+|upkeep
+|
+|t:|1727200298
+|switch|p2a: iron crown|iron crown|100/100
+|-damage|p2a: iron crown|88/100|[from] spikes
+|turn|19
+|
+|t:|1727200313
+|-terastallize|p2a: iron crown|steel
+|move|p2a: iron crown|tachyon cutter|p1a: gliscor
+|-damage|p1a: gliscor|0 fnt
+|faint|p1a: gliscor
+|-hitcount|p1: gliscor|1
+|
+|win|flyingtaco42
+|raw|oz of the og's rating: 1642 &rarr; <strong>1633</strong><br />(-9 for losing)
+|raw|flyingtaco42's rating: 1864 &rarr; <strong>1873</strong><br />(+9 for winning)
+|l|☆oz of the og
+|player|p1|
+|c|☆flyingtaco42|gg
+|l|☆flyingtaco42
+|player|p2|
+|l| blizzardz 101
+|l| bobby palestina

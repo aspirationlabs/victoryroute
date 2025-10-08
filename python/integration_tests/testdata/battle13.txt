@@ -1,0 +1,393 @@
+|j|☆jazerrr
+|j|☆woodyostrich
+|t:|1725389449
+|gametype|singles
+|player|p1|jazerrr|brock|1130
+|player|p2|woodyostrich|fisherman|1105
+|teamsize|p1|6
+|teamsize|p2|6
+|gen|9
+|tier|[gen 9] ou
+|rated|
+|rule|species clause: limit one of each pokémon
+|rule|ohko clause: ohko moves are banned
+|rule|evasion items clause: evasion items are banned
+|rule|evasion moves clause: evasion moves are banned
+|rule|endless battle clause: forcing endless battles is banned
+|rule|hp percentage mod: hp is shown in percentages
+|rule|sleep moves clause: sleep-inducing moves are banned
+|clearpoke
+|poke|p1|orthworm, f|
+|poke|p1|lanturn, f|
+|poke|p1|scream tail|
+|poke|p1|maushold|
+|poke|p1|zoroark-hisui, f|
+|poke|p1|overqwil, f|
+|poke|p2|electrode-hisui|
+|poke|p2|veluza, m|
+|poke|p2|kingambit, f|
+|poke|p2|skarmory, f|
+|poke|p2|dragapult, f|
+|poke|p2|garchomp, m|
+|teampreview
+|inactive|battle timer is on: inactive players will automatically lose when time's up. (requested by jazerrr)
+|
+|t:|1725389469
+|start
+|switch|p1a: scream tail|scream tail|100/100
+|switch|p2a: electrode|electrode-hisui|100/100
+|turn|1
+|
+|t:|1725389480
+|move|p2a: electrode|leech seed|p1a: scream tail
+|-start|p1a: scream tail|move: leech seed
+|move|p1a: scream tail|fire blast|p2a: electrode
+|-supereffective|p2a: electrode
+|-damage|p2a: electrode|51/100
+|-status|p2a: electrode|brn
+|
+|-heal|p2a: electrode|57/100 brn|[from] item: leftovers
+|-damage|p1a: scream tail|88/100|[from] leech seed|[of] p2a: electrode
+|-heal|p2a: electrode|72/100 brn|[silent]
+|-damage|p2a: electrode|66/100 brn|[from] brn
+|upkeep
+|turn|2
+|
+|t:|1725389495
+|-end|p1a: scream tail|protosynthesis|[silent]
+|switch|p1a: lanturn|lanturn, f|100/100
+|move|p2a: electrode|substitute|p2a: electrode
+|-start|p2a: electrode|substitute
+|-damage|p2a: electrode|41/100 brn
+|
+|-heal|p2a: electrode|48/100 brn|[from] item: leftovers
+|-damage|p2a: electrode|41/100 brn|[from] brn
+|upkeep
+|turn|3
+|
+|t:|1725389504
+|move|p2a: electrode|leech seed|p1a: lanturn
+|-start|p1a: lanturn|move: leech seed
+|move|p1a: lanturn|ice beam|p2a: electrode
+|-supereffective|p2a: electrode
+|-end|p2a: electrode|substitute
+|
+|-heal|p2a: electrode|48/100 brn|[from] item: leftovers
+|-damage|p1a: lanturn|88/100|[from] leech seed|[of] p2a: electrode
+|-heal|p2a: electrode|62/100 brn|[silent]
+|-damage|p2a: electrode|56/100 brn|[from] brn
+|upkeep
+|turn|4
+|
+|t:|1725389515
+|move|p2a: electrode|substitute|p2a: electrode
+|-start|p2a: electrode|substitute
+|-damage|p2a: electrode|31/100 brn
+|move|p1a: lanturn|ice beam|p2a: electrode
+|-supereffective|p2a: electrode
+|-end|p2a: electrode|substitute
+|
+|-heal|p2a: electrode|38/100 brn|[from] item: leftovers
+|-heal|p1a: lanturn|94/100|[from] item: leftovers
+|-damage|p1a: lanturn|82/100|[from] leech seed|[of] p2a: electrode
+|-heal|p2a: electrode|53/100 brn|[silent]
+|-damage|p2a: electrode|46/100 brn|[from] brn
+|upkeep
+|turn|5
+|
+|t:|1725389527
+|move|p2a: electrode|substitute|p2a: electrode
+|-start|p2a: electrode|substitute
+|-damage|p2a: electrode|22/100 brn
+|move|p1a: lanturn|ice beam|p2a: electrode
+|-supereffective|p2a: electrode
+|-end|p2a: electrode|substitute
+|
+|-heal|p2a: electrode|28/100 brn|[from] item: leftovers
+|-heal|p1a: lanturn|88/100|[from] item: leftovers
+|-damage|p1a: lanturn|76/100|[from] leech seed|[of] p2a: electrode
+|-heal|p2a: electrode|43/100 brn|[silent]
+|-damage|p2a: electrode|36/100 brn|[from] brn
+|upkeep
+|turn|6
+|
+|t:|1725389540
+|move|p2a: electrode|substitute|p2a: electrode
+|-start|p2a: electrode|substitute
+|-damage|p2a: electrode|12/100 brn
+|move|p1a: lanturn|ice beam|p2a: electrode
+|-supereffective|p2a: electrode
+|-end|p2a: electrode|substitute
+|
+|-heal|p2a: electrode|18/100 brn|[from] item: leftovers
+|-heal|p1a: lanturn|82/100|[from] item: leftovers
+|-damage|p1a: lanturn|70/100|[from] leech seed|[of] p2a: electrode
+|-heal|p2a: electrode|33/100 brn|[silent]
+|-damage|p2a: electrode|27/100 brn|[from] brn
+|upkeep
+|turn|7
+|
+|t:|1725389552
+|move|p2a: electrode|substitute|p2a: electrode
+|-start|p2a: electrode|substitute
+|-damage|p2a: electrode|2/100 brn
+|move|p1a: lanturn|ice beam|p2a: electrode
+|-supereffective|p2a: electrode
+|-end|p2a: electrode|substitute
+|
+|-heal|p2a: electrode|8/100 brn|[from] item: leftovers
+|-heal|p1a: lanturn|76/100|[from] item: leftovers
+|-damage|p1a: lanturn|64/100|[from] leech seed|[of] p2a: electrode
+|-heal|p2a: electrode|23/100 brn|[silent]
+|-damage|p2a: electrode|17/100 brn|[from] brn
+|upkeep
+|turn|8
+|
+|t:|1725389567
+|move|p2a: electrode|giga drain|p1a: lanturn
+|-supereffective|p1a: lanturn
+|-damage|p1a: lanturn|29/100
+|-heal|p2a: electrode|37/100 brn|[from] drain|[of] p1a: lanturn
+|move|p1a: lanturn|ice beam|p2a: electrode
+|-supereffective|p2a: electrode
+|-damage|p2a: electrode|4/100 brn
+|
+|-heal|p2a: electrode|10/100 brn|[from] item: leftovers
+|-heal|p1a: lanturn|36/100|[from] item: leftovers
+|-damage|p1a: lanturn|23/100|[from] leech seed|[of] p2a: electrode
+|-heal|p2a: electrode|25/100 brn|[silent]
+|-damage|p2a: electrode|19/100 brn|[from] brn
+|upkeep
+|turn|9
+|
+|t:|1725389580
+|switch|p1a: orthworm|orthworm, f|100/100
+|move|p2a: electrode|giga drain|p1a: orthworm
+|-resisted|p1a: orthworm
+|-damage|p1a: orthworm|89/100
+|-heal|p2a: electrode|25/100 brn|[from] drain|[of] p1a: orthworm
+|
+|-heal|p2a: electrode|31/100 brn|[from] item: leftovers
+|-damage|p2a: electrode|25/100 brn|[from] brn
+|upkeep
+|turn|10
+|
+|t:|1725389592
+|move|p2a: electrode|leech seed|p1a: orthworm|[miss]
+|-miss|p2a: electrode|p1a: orthworm
+|move|p1a: orthworm|earthquake|p2a: electrode
+|-damage|p2a: electrode|0 fnt
+|faint|p2a: electrode
+|
+|upkeep
+|
+|t:|1725389613
+|switch|p2a: garchomp|garchomp, m|100/100
+|turn|11
+|
+|t:|1725389635
+|move|p2a: garchomp|swords dance|p2a: garchomp
+|-boost|p2a: garchomp|atk|2
+|move|p1a: orthworm|earthquake|p2a: garchomp
+|-damage|p2a: garchomp|82/100
+|
+|upkeep
+|turn|12
+|
+|t:|1725389642
+|move|p2a: garchomp|fire fang|p1a: orthworm|[miss]
+|-miss|p2a: garchomp|p1a: orthworm
+|move|p1a: orthworm|body press|p2a: garchomp
+|-damage|p2a: garchomp|55/100
+|-damage|p1a: orthworm|77/100|[from] ability: rough skin|[of] p2a: garchomp
+|
+|upkeep
+|turn|13
+|
+|t:|1725389652
+|switch|p1a: lanturn|lanturn, f|23/100
+|move|p2a: garchomp|fire fang|p1a: lanturn
+|-resisted|p1a: lanturn
+|-damage|p1a: lanturn|0 fnt
+|faint|p1a: lanturn
+|
+|upkeep
+|
+|t:|1725389656
+|switch|p1a: scream tail|scream tail|88/100
+|turn|14
+|
+|t:|1725389663
+|move|p2a: garchomp|earthquake|p1a: scream tail
+|-damage|p1a: scream tail|12/100
+|move|p1a: scream tail|ice beam|p2a: garchomp
+|-supereffective|p2a: garchomp
+|-damage|p2a: garchomp|0 fnt
+|faint|p2a: garchomp
+|
+|upkeep
+|
+|t:|1725389680
+|switch|p2a: dragapult|dragapult, f|100/100
+|turn|15
+|
+|t:|1725389685
+|move|p2a: dragapult|u-turn|p1a: scream tail
+|-damage|p1a: scream tail|0 fnt
+|faint|p1a: scream tail
+|-end|p1a: scream tail|protosynthesis|[silent]
+|
+|t:|1725389698
+|switch|p2a: veluza|veluza, m|100/100|[from] u-turn
+|
+|upkeep
+|
+|t:|1725389706
+|switch|p1a: overqwil|overqwil, f|100/100
+|-ability|p1a: overqwil|intimidate|boost
+|-unboost|p2a: veluza|atk|1
+|turn|16
+|
+|t:|1725389717
+|switch|p2a: skarmory|skarmory, f|100/100
+|move|p1a: overqwil|crunch|p2a: skarmory
+|-damage|p2a: skarmory|70/100
+|-damage|p1a: overqwil|84/100|[from] item: rocky helmet|[of] p2a: skarmory
+|
+|upkeep
+|turn|17
+|
+|t:|1725389726
+|move|p1a: overqwil|waterfall|p2a: skarmory
+|-damage|p2a: skarmory|48/100
+|-damage|p1a: overqwil|68/100|[from] item: rocky helmet|[of] p2a: skarmory
+|move|p2a: skarmory|iron defense|p2a: skarmory
+|-boost|p2a: skarmory|def|2
+|
+|upkeep
+|turn|18
+|
+|t:|1725389732
+|move|p1a: overqwil|crunch|p2a: skarmory
+|-damage|p2a: skarmory|30/100
+|-damage|p1a: overqwil|51/100|[from] item: rocky helmet|[of] p2a: skarmory
+|move|p2a: skarmory|body press|p1a: overqwil
+|-damage|p1a: overqwil|0 fnt
+|faint|p1a: overqwil
+|
+|upkeep
+|
+|t:|1725389742
+|switch|p1a: orthworm|orthworm, f|100/100
+|turn|19
+|
+|t:|1725389748
+|move|p1a: orthworm|shadow ball|p2a: skarmory
+|-damage|p2a: skarmory|0 fnt
+|faint|p2a: skarmory
+|
+|upkeep
+|
+|t:|1725389777
+|switch|p2a: veluza|veluza, m|100/100
+|turn|20
+|
+|t:|1725389783
+|-terastallize|p1a: orthworm|dark
+|move|p1a: orthworm|shadow ball|p2a: veluza
+|-supereffective|p2a: veluza
+|-damage|p2a: veluza|0 fnt
+|faint|p2a: veluza
+|
+|upkeep
+|
+|t:|1725389796
+|switch|p2a: dragapult|dragapult, f|100/100
+|turn|21
+|inactive|woodyostrich has 120 seconds left.
+|
+|t:|1725389832
+|-terastallize|p2a: dragapult|fairy
+|move|p2a: dragapult|draco meteor|p1a: orthworm
+|-damage|p1a: orthworm|34/100
+|-unboost|p2a: dragapult|spa|2
+|replace|p1a: zoroark|zoroark-hisui, f
+|-end|p1a: zoroark|illusion
+|move|p1a: zoroark|shadow ball|p2a: dragapult
+|-damage|p2a: dragapult|41/100
+|-unboost|p2a: dragapult|spd|1
+|
+|upkeep
+|turn|22
+|
+|t:|1725389848
+|move|p2a: dragapult|draco meteor|p1a: zoroark
+|-damage|p1a: zoroark|4/100
+|-unboost|p2a: dragapult|spa|2
+|move|p1a: zoroark|shadow ball|p2a: dragapult
+|-damage|p2a: dragapult|0 fnt
+|faint|p2a: dragapult
+|
+|upkeep
+|
+|t:|1725389857
+|switch|p2a: kingambit|kingambit, f|100/100
+|-activate|p2a: kingambit|ability: supreme overlord
+|-start|p2a: kingambit|fallen5|[silent]
+|turn|23
+|
+|t:|1725389862
+|switch|p1a: orthworm|orthworm, f|77/100
+|move|p2a: kingambit|swords dance|p2a: kingambit
+|-boost|p2a: kingambit|atk|2
+|
+|upkeep
+|turn|24
+|
+|t:|1725389869
+|move|p2a: kingambit|sucker punch|p1a: orthworm
+|-damage|p1a: orthworm|0 fnt
+|-damage|p2a: kingambit|84/100|[from] item: rocky helmet|[of] p1a: orthworm
+|faint|p1a: orthworm
+|
+|upkeep
+|
+|t:|1725389875
+|switch|p1a: maushold|maushold, tera:dark|4/100
+|turn|25
+|inactive|woodyostrich has 120 seconds left.
+|
+|t:|1725389885
+|move|p2a: kingambit|sucker punch|p1a: maushold
+|-resisted|p1a: maushold
+|-damage|p1a: maushold|0 fnt
+|replace|p1a: zoroark|zoroark-hisui, f
+|-end|p1a: zoroark|illusion
+|faint|p1a: zoroark
+|
+|upkeep
+|
+|t:|1725389888
+|switch|p1a: maushold|maushold|100/100
+|turn|26
+|
+|t:|1725389898
+|move|p1a: maushold|population bomb|p2a: kingambit
+|-resisted|p2a: kingambit
+|-damage|p2a: kingambit|79/100
+|-resisted|p2a: kingambit
+|-damage|p2a: kingambit|74/100
+|-resisted|p2a: kingambit
+|-damage|p2a: kingambit|69/100
+|-resisted|p2a: kingambit
+|-damage|p2a: kingambit|64/100
+|-resisted|p2a: kingambit
+|-damage|p2a: kingambit|58/100
+|-hitcount|p2a: kingambit|5
+|move|p2a: kingambit|kowtow cleave|p1a: maushold
+|-damage|p1a: maushold|0 fnt
+|faint|p1a: maushold
+|
+|win|woodyostrich
+|raw|jazerrr's rating: 1130 &rarr; <strong>1103</strong><br />(-27 for losing)
+|raw|woodyostrich's rating: 1105 &rarr; <strong>1132</strong><br />(+27 for winning)
