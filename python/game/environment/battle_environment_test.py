@@ -3,21 +3,9 @@
 import unittest
 from typing import List
 
-from absl.testing import absltest
-
 from python.game.environment.battle_environment import BattleEnvironment
-from python.game.events.battle_event import (
-    DamageEvent,
-    FaintEvent,
-    MoveEvent,
-    RequestEvent,
-    SwitchEvent,
-)
 from python.game.interface.battle_action import ActionType, BattleAction
 from python.game.schema.battle_state import BattleState
-from python.game.schema.enums import Status
-from python.game.schema.pokemon_state import PokemonState
-from python.game.schema.team_state import TeamState
 
 
 class FakeShowdownClient:
@@ -60,7 +48,7 @@ class FakeShowdownClient:
         self.sent_messages.append(message)
 
 
-class BattleEnvironmentTest(unittest.IsolatedAsyncioTestCase, absltest.TestCase):
+class BattleEnvironmentTest(unittest.IsolatedAsyncioTestCase):
     """Tests for BattleEnvironment class."""
 
     def test_initialization(self) -> None:
@@ -69,8 +57,8 @@ class BattleEnvironmentTest(unittest.IsolatedAsyncioTestCase, absltest.TestCase)
         env = BattleEnvironment(client, track_history=False)
 
         self.assertIsNotNone(env)
-        # Uninitialized state has no Pokemon, so battle is considered "over"
-        self.assertTrue(env.is_battle_over())
+        # Uninitialized state has battle_over=False by default
+        self.assertFalse(env.is_battle_over())
 
     def test_initialization_with_history_tracking(self) -> None:
         """Test environment initialization with history tracking."""
@@ -149,51 +137,33 @@ class BattleEnvironmentTest(unittest.IsolatedAsyncioTestCase, absltest.TestCase)
         # Should return same state
         self.assertEqual(state1, state2)
 
-    def test_is_battle_over_false_when_both_alive(self) -> None:
-        """Test that is_battle_over() returns False when both teams have alive Pokemon."""
+    def test_is_battle_over_false_when_not_ended(self) -> None:
+        """Test that is_battle_over() returns False when battle_over is False."""
         client = FakeShowdownClient([])
         env = BattleEnvironment(client)
 
-        # Create state with alive Pokemon on both teams
-        p1_pokemon = PokemonState(species="Pikachu", current_hp=100, max_hp=100)
-        p2_pokemon = PokemonState(species="Charizard", current_hp=100, max_hp=100)
-
-        env._state = BattleState(
-            p1_team=TeamState(pokemon=[p1_pokemon], player_id="p1"),
-            p2_team=TeamState(pokemon=[p2_pokemon], player_id="p2"),
-        )
+        # Create state with battle not over
+        env._state = BattleState(battle_over=False)
 
         self.assertFalse(env.is_battle_over())
 
-    def test_is_battle_over_true_when_p1_fainted(self) -> None:
-        """Test that is_battle_over() returns True when p1 team is fainted."""
+    def test_is_battle_over_true_when_ended(self) -> None:
+        """Test that is_battle_over() returns True when battle_over is True."""
         client = FakeShowdownClient([])
         env = BattleEnvironment(client)
 
-        # Create state with p1 fainted, p2 alive
-        p1_pokemon = PokemonState(species="Pikachu", current_hp=0, max_hp=100)
-        p2_pokemon = PokemonState(species="Charizard", current_hp=100, max_hp=100)
-
-        env._state = BattleState(
-            p1_team=TeamState(pokemon=[p1_pokemon], player_id="p1"),
-            p2_team=TeamState(pokemon=[p2_pokemon], player_id="p2"),
-        )
+        # Create state with battle over
+        env._state = BattleState(battle_over=True, winner="Player1")
 
         self.assertTrue(env.is_battle_over())
 
-    def test_is_battle_over_true_when_p2_fainted(self) -> None:
-        """Test that is_battle_over() returns True when p2 team is fainted."""
+    def test_is_battle_over_true_for_tie(self) -> None:
+        """Test that is_battle_over() returns True for a tie."""
         client = FakeShowdownClient([])
         env = BattleEnvironment(client)
 
-        # Create state with p1 alive, p2 fainted
-        p1_pokemon = PokemonState(species="Pikachu", current_hp=100, max_hp=100)
-        p2_pokemon = PokemonState(species="Charizard", current_hp=0, max_hp=100)
-
-        env._state = BattleState(
-            p1_team=TeamState(pokemon=[p1_pokemon], player_id="p1"),
-            p2_team=TeamState(pokemon=[p2_pokemon], player_id="p2"),
-        )
+        # Create state with tie (battle over, no winner)
+        env._state = BattleState(battle_over=True, winner="")
 
         self.assertTrue(env.is_battle_over())
 
@@ -235,9 +205,9 @@ class BattleEnvironmentTest(unittest.IsolatedAsyncioTestCase, absltest.TestCase)
         action = BattleAction(action_type=ActionType.MOVE, move_index=0)
         new_state = await env.step(action)
 
-        # Verify action was sent
+        # Verify action was sent (with battle room prefix)
         self.assertEqual(1, len(client.sent_messages))
-        self.assertEqual("/choose move 1", client.sent_messages[0])
+        self.assertEqual("test|/choose move 1", client.sent_messages[0])
 
         # Verify state was updated
         self.assertEqual(new_state, env.get_state())
@@ -288,10 +258,10 @@ class BattleEnvironmentTest(unittest.IsolatedAsyncioTestCase, absltest.TestCase)
 
         # Switch to second Pokemon
         action = BattleAction(action_type=ActionType.SWITCH, switch_index=1)
-        new_state = await env.step(action)
+        await env.step(action)
 
-        # Verify switch command was sent (1-indexed)
-        self.assertEqual("/choose switch 2", client.sent_messages[0])
+        # Verify switch command was sent (1-indexed, with battle room prefix)
+        self.assertEqual("test|/choose switch 2", client.sent_messages[0])
 
     async def test_step_raises_on_stream_end(self) -> None:
         """Test that step() raises error if stream ends unexpectedly."""
@@ -369,4 +339,4 @@ class BattleEnvironmentTest(unittest.IsolatedAsyncioTestCase, absltest.TestCase)
 
 
 if __name__ == "__main__":
-    absltest.main()
+    unittest.main()

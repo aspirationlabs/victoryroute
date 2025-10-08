@@ -3,8 +3,6 @@
 import unittest
 from typing import List
 
-from absl.testing import absltest
-
 from python.game.events.battle_event import (
     BattleEvent,
     DamageEvent,
@@ -47,7 +45,7 @@ class FakeShowdownClient:
         return message
 
 
-class BattleStreamTest(unittest.IsolatedAsyncioTestCase, absltest.TestCase):
+class BattleStreamTest(unittest.IsolatedAsyncioTestCase):
     """Tests for BattleStream."""
 
     async def test_live_mode_batches_until_request(self) -> None:
@@ -162,4 +160,4 @@ class BattleStreamTest(unittest.IsolatedAsyncioTestCase, absltest.TestCase):
 
 
 if __name__ == "__main__":
-    absltest.main()
+    unittest.main()

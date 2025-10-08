@@ -6,6 +6,7 @@ from absl import logging
 
 from python.game.environment.state_transition import StateTransition
 from python.game.interface.battle_action import BattleAction
+from python.game.protocol.battle_event_logger import BattleEventLogger
 from python.game.protocol.battle_stream import BattleStream
 from python.game.schema.battle_state import BattleState
 
@@ -43,17 +44,27 @@ class BattleEnvironment:
     """
 
     def __init__(
-        self, client: Any, track_history: bool = False
+        self,
+        client: Any,
+        battle_room: Optional[str] = None,
+        track_history: bool = False,
+        logger: Optional["BattleEventLogger"] = None,
     ) -> None:
         """Initialize the battle environment.
 
         Args:
             client: Connected client instance (e.g., ShowdownClient) with
                    is_connected, receive_message(), and send_message() methods
+            battle_room: Battle room ID (e.g., "battle-gen9ou-12345").
+                        Optional for testing; required for production use.
             track_history: Whether to maintain history of all states (default: False)
+            logger: Optional BattleEventLogger to log events to file
         """
         self._client = client
-        self._stream = BattleStream(client, mode="live")
+        self._battle_room = battle_room or "test"
+        self._stream = BattleStream(
+            client, mode="live", battle_id=battle_room, logger=logger
+        )
         self._state = BattleState()
         self._track_history = track_history
         self._history: List[BattleState] = []
@@ -71,7 +82,7 @@ class BattleEnvironment:
             StopAsyncIteration: If stream ends before first request
             RuntimeError: If battle initialization fails
         """
-        logging.info("Waiting for battle to start...")
+        logging.info("[%s] Waiting for battle to start...", self._battle_room)
 
         # Get first batch of events (until first RequestEvent)
         try:
@@ -79,7 +90,11 @@ class BattleEnvironment:
         except StopAsyncIteration:
             raise RuntimeError("Battle stream ended before initialization")
 
-        logging.info("Received %d initialization events", len(event_batch))
+        logging.info(
+            "[%s] Received %d initialization events",
+            self._battle_room,
+            len(event_batch),
+        )
 
         # Apply all events to build initial state
         current_state = BattleState()
@@ -92,7 +107,9 @@ class BattleEnvironment:
         if self._track_history:
             self._history = [current_state]
 
-        logging.info("Battle initialized, ready for first action")
+        logging.info(
+            "[%s] Battle initialized, ready for first action", self._battle_room
+        )
         return current_state
 
     def get_state(self) -> BattleState:
@@ -106,15 +123,12 @@ class BattleEnvironment:
     def is_battle_over(self) -> bool:
         """Check if the battle has concluded.
 
-        A battle is over when either player has all Pokemon fainted.
+        A battle is over when the server sends a |win| or |tie| message.
 
         Returns:
             True if battle is complete, False otherwise
         """
-        p1_alive = any(p.is_alive() for p in self._state.p1_team.get_pokemon_team())
-        p2_alive = any(p.is_alive() for p in self._state.p2_team.get_pokemon_team())
-
-        return not p1_alive or not p2_alive
+        return self._state.battle_over
 
     def get_history(self) -> List[BattleState]:
         """Get history of all battle states.
@@ -154,20 +168,18 @@ class BattleEnvironment:
             RuntimeError: If client disconnected or stream ended
             ValueError: If action conversion or state transition fails
         """
-        # Convert action to Showdown protocol command
         try:
             command = action.to_showdown_command()
         except Exception as e:
             raise ValueError(f"Failed to convert action to command: {e}") from e
 
-        # Send action to server
-        logging.info("Sending action: %s", command)
+        message = f"{self._battle_room}|{command}"
+        logging.info("[%s] Sending action: %s", self._battle_room, command)
         try:
-            await self._client.send_message(command)
+            await self._client.send_message(message)
         except Exception as e:
             raise RuntimeError(f"Failed to send action to server: {e}") from e
 
-        # Collect events until next RequestEvent
         try:
             event_batch = await self._stream.__anext__()
         except StopAsyncIteration:
@@ -176,21 +188,22 @@ class BattleEnvironment:
                 "Check if battle concluded or connection lost."
             )
 
-        logging.info("Received %d events from action", len(event_batch))
+        logging.info(
+            "[%s] Received %d events from action", self._battle_room, len(event_batch)
+        )
 
-        # Apply all events sequentially
         current_state = self._state
         for event in event_batch:
             try:
                 current_state = StateTransition.apply(current_state, event)
             except Exception as e:
-                logging.error("Failed to apply event %s: %s", event, e)
+                logging.error(
+                    "[%s] Failed to apply event %s: %s", self._battle_room, event, e
+                )
                 raise ValueError(f"State transition failed: {e}") from e
 
-        # Update internal state
         self._state = current_state
 
-        # Append to history if tracking
         if self._track_history:
             self._history.append(current_state)
 

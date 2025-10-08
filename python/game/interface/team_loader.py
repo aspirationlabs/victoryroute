@@ -71,25 +71,27 @@ class TeamLoader:
         item = None
         gender = None
 
+        # Extract item if present
         if " @ " in first_line:
             species_part, item = first_line.split(" @ ", 1)
             species = species_part
         else:
             species = first_line
 
+        # Check for nickname pattern: "Nickname (Species)" or species with gender "(M/F)"
+        # We need to distinguish between nickname and gender markers
         if " (" in species and ")" in species:
-            species_part, gender_part = species.rsplit(" (", 1)
-            species = species_part
-            gender = gender_part.rstrip(")")
+            before_paren, paren_content = species.rsplit(" (", 1)
+            paren_content = paren_content.rstrip(")")
 
-        if species and species[0].isupper():
-            parts = species.split(maxsplit=1)
-            if len(parts) == 1 or "-" in species:
-                nickname = None
-                species = species
+            # Check if it's a gender marker (M, F, or N)
+            if paren_content in ("M", "F", "N"):
+                gender = paren_content
+                species = before_paren
             else:
-                nickname = species
-                species = species
+                # It's a nickname pattern: "Nickname (Species)"
+                nickname = before_paren
+                species = paren_content
 
         ability = "No Ability"
         nature = "Serious"
@@ -150,11 +152,25 @@ class TeamLoader:
         for pokemon in team:
             packed = self._pack_pokemon(pokemon)
             packed_pokemon.append(packed)
-        return "]".join(packed_pokemon) + "]"
+        return "]".join(packed_pokemon)
 
     def _pack_pokemon(self, pokemon: PokemonTeamMember) -> str:
-        nickname = pokemon.nickname or ""
-        species = pokemon.species
+        # Per Showdown spec: "SPECIES is left blank if it's identical to NICKNAME"
+        # This means: if no nickname, put species in NICKNAME field and leave SPECIES blank
+        if pokemon.nickname:
+            # Has explicit nickname
+            nickname = self._normalize_name(pokemon.nickname)
+            # Species blank if same as nickname, otherwise fill it
+            if self._normalize_name(pokemon.nickname) == self._normalize_name(
+                pokemon.species
+            ):
+                species = ""
+            else:
+                species = self._normalize_name(pokemon.species)
+        else:
+            # No nickname: put species in NICKNAME field, leave SPECIES blank
+            nickname = self._normalize_name(pokemon.species)
+            species = ""
         item = self._normalize_name(pokemon.item) if pokemon.item else ""
         ability = self._normalize_name(pokemon.ability)
         moves = ",".join(self._normalize_name(m) for m in pokemon.moves)
@@ -185,11 +201,27 @@ class TeamLoader:
         shiny = "S" if pokemon.shiny else ""
         level = str(pokemon.level)
 
-        extras = []
-        if pokemon.tera_type:
-            extras.append(f"teratype={self._normalize_name(pokemon.tera_type)}")
+        # Extras field: HAPPINESS,POKEBALL,HIDDENPOWERTYPE,GIGANTAMAX,DYNAMAXLEVEL,TERATYPE
+        # All are optional, blank means default values
+        happiness = ""  # Blank = 255
+        pokeball = ""  # Blank = regular Poké Ball
+        hiddenpowertype = ""  # Blank = not hyper trained
+        gigantamax = ""  # Blank = not Gmax
+        dynamaxlevel = ""  # Blank = 10
+        teratype = self._normalize_name(pokemon.tera_type) if pokemon.tera_type else ""
 
-        extras_str = ",".join(extras) if extras else ""
+        # If all extras are blank, leave off commas entirely
+        if (
+            happiness
+            or pokeball
+            or hiddenpowertype
+            or gigantamax
+            or dynamaxlevel
+            or teratype
+        ):
+            extras_str = f"{happiness},{pokeball},{hiddenpowertype},{gigantamax},{dynamaxlevel},{teratype}"
+        else:
+            extras_str = ""
 
         parts = [
             nickname,

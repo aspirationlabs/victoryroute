@@ -43,8 +43,9 @@ class FirstAvailableAgent(Agent):
         """Choose the first available action from moves or switches.
 
         Decision logic:
-        1. If moves are available and not force_switch: return first move (index 0)
-        2. Otherwise: return first available switch
+        1. If team_preview: choose first Pokemon to lead (team 1)
+        2. If moves are available and not force_switch: return first move (index 0)
+        3. Otherwise: return first available switch
 
         Args:
             state: Current battle state with available actions
@@ -81,7 +82,9 @@ class FirstAvailableAgent(Agent):
             >>> action.switch_index
             0
         """
-        # If force_switch or no moves, pick first switch
+        if state.team_preview:
+            return BattleAction(action_type=ActionType.TEAM_ORDER, team_order="123456")
+
         if state.force_switch or not state.available_moves:
             if not state.available_switches:
                 raise ValueError("No available switches when switch is required")
@@ -91,8 +94,10 @@ class FirstAvailableAgent(Agent):
                 switch_index=state.available_switches[0],
             )
 
-        # Pick first available move
+        first_move_name = state.available_moves[0]
+        move_index = state.get_move_index(first_move_name)
+
         return BattleAction(
             action_type=ActionType.MOVE,
-            move_index=0,
+            move_index=move_index,
         )

@@ -1,12 +1,15 @@
 """Unit tests for RandomAgent."""
 
 import unittest
+from typing import List
 from unittest.mock import patch
 
 from python.agents.random_agent import RandomAgent
 from python.game.data.game_data import GameData
 from python.game.interface.battle_action import ActionType, BattleAction
 from python.game.schema.battle_state import BattleState
+from python.game.schema.pokemon_state import PokemonMove, PokemonState
+from python.game.schema.team_state import TeamState
 
 
 class RandomAgentTest(unittest.IsolatedAsyncioTestCase):
@@ -17,15 +20,52 @@ class RandomAgentTest(unittest.IsolatedAsyncioTestCase):
         self.agent = RandomAgent()
         self.game_data = GameData()
 
+    def _create_test_state(
+        self, available_moves: List[str], available_switches: List[int] = []
+    ) -> BattleState:
+        """Create a test battle state with Pokemon that have the specified moves.
+
+        Args:
+            available_moves: List of move names that should be available
+            available_switches: List of switch indices
+
+        Returns:
+            BattleState with proper Pokemon setup
+        """
+        # Create moves for the active Pokemon (all moves, not just available)
+        pokemon_moves = [
+            PokemonMove(name=move, current_pp=10, max_pp=10) for move in available_moves
+        ]
+
+        # Create active Pokemon with those moves
+        active_pokemon = PokemonState(
+            species="TestMon",
+            moves=pokemon_moves,
+            is_active=True,
+            current_hp=100,
+            max_hp=100,
+        )
+
+        # Create team with active Pokemon at index 0
+        team = TeamState(pokemon=[active_pokemon], active_pokemon_index=0)
+
+        return BattleState(
+            p1_team=team,
+            available_moves=available_moves,
+            available_switches=available_switches,
+        )
+
     async def test_random_agent_returns_move_action(self) -> None:
         """Test that agent returns move action when moves are available."""
-        state = BattleState(available_moves=["move1", "move2", "move3", "move4"])
+        state = self._create_test_state(["move1", "move2", "move3", "move4"])
 
         # Mock random to always choose move (not switch)
         with patch(
             "python.agents.random_agent.random.random", return_value=0.5
         ):  # > switch_probability
-            with patch("python.agents.random_agent.random.randint", return_value=2):
+            with patch(
+                "python.agents.random_agent.random.choice", return_value="move3"
+            ):
                 action = await self.agent.choose_action(state, self.game_data)
 
         self.assertIsInstance(action, BattleAction)
@@ -95,7 +135,7 @@ class RandomAgentTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_random_agent_produces_varied_results(self) -> None:
         """Test that agent produces different results across multiple calls."""
-        state = BattleState(
+        state = self._create_test_state(
             available_moves=["move1", "move2", "move3", "move4"],
             available_switches=[0, 1, 2, 3, 4, 5],
         )
@@ -134,16 +174,17 @@ class RandomAgentTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_random_agent_all_move_indices_can_be_selected(self) -> None:
         """Test that all move indices can potentially be selected."""
-        state = BattleState(available_moves=["move1", "move2", "move3", "move4"])
+        state = self._create_test_state(["move1", "move2", "move3", "move4"])
 
-        # Test each possible move index
-        for expected_index in range(4):
+        # Test each possible move index by mocking the move name choice
+        move_names = ["move1", "move2", "move3", "move4"]
+        for expected_index, move_name in enumerate(move_names):
             with patch(
                 "python.agents.random_agent.random.random", return_value=0.5
             ):  # choose move
                 with patch(
-                    "python.agents.random_agent.random.randint",
-                    return_value=expected_index,
+                    "python.agents.random_agent.random.choice",
+                    return_value=move_name,
                 ):
                     action = await self.agent.choose_action(state, self.game_data)
 

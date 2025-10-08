@@ -4,7 +4,15 @@ from typing import Any, AsyncIterator, List, Literal, Optional
 
 from absl import logging
 
-from python.game.events.battle_event import BattleEvent, RequestEvent, TurnEvent
+from python.game.events.battle_event import (
+    BattleEndEvent,
+    BattleEvent,
+    ErrorEvent,
+    PlayerEvent,
+    RequestEvent,
+    TurnEvent,
+)
+from python.game.protocol.battle_event_logger import BattleEventLogger
 from python.game.protocol.message_parser import MessageParser
 
 
@@ -22,6 +30,7 @@ class BattleStream:
         parser: Optional[MessageParser] = None,
         mode: Literal["live", "replay"] = "live",
         battle_id: Optional[str] = None,
+        logger: Optional["BattleEventLogger"] = None,
     ) -> None:
         """Initialize the battle stream.
 
@@ -30,11 +39,13 @@ class BattleStream:
             parser: MessageParser to parse messages (creates new one if None)
             mode: 'live' for real-time battles, 'replay' for replay analysis
             battle_id: Optional battle ID to filter messages (for multi-battle support)
+            logger: Optional BattleEventLogger to log events to file
         """
         self._client = client
         self._parser = parser or MessageParser()
         self._mode = mode
         self._battle_id = battle_id
+        self._logger = logger
         self._buffer: List[BattleEvent] = []
         self._done = False
 
@@ -79,21 +90,35 @@ class BattleStream:
             if not raw_message.strip():
                 continue
 
+            # Check if entire message belongs to our battle (first line has >ROOMID)
+            if self._battle_id and not self._matches_battle_id(raw_message):
+                continue
+
             for line in raw_message.split("\n"):
                 if not line.strip():
                     continue
 
-                if self._battle_id and not self._matches_battle_id(line):
+                if line.startswith(">"):
                     continue
 
                 event = self._parser.parse(line)
                 batch.append(event)
 
+                if isinstance(event, ErrorEvent):
+                    logging.error(
+                        "[%s] Server error: %s", self._battle_id, event.error_text
+                    )
+
+                if self._logger:
+                    self._logger.log_event(event)
+
+                    if isinstance(event, PlayerEvent) and event.player_id == "p2":
+                        self._logger.set_opponent_name(event.username)
+
                 if self._is_decision_point(event):
                     decision_event_found = True
                     break
 
-            # If we found a decision point, return the batch
             if decision_event_found:
                 return batch
 
@@ -118,7 +143,7 @@ class BattleStream:
     def _is_decision_point(self, event: BattleEvent) -> bool:
         """Check if event is a decision point.
 
-        In live mode: RequestEvent signals agent decision needed
+        In live mode: RequestEvent or BattleEndEvent signals decision point
         In replay mode: TurnEvent signals decision point
 
         Args:
@@ -127,8 +152,9 @@ class BattleStream:
         Returns:
             True if this event signals a decision point
         """
+
         if self._mode == "live":
-            return isinstance(event, RequestEvent)
+            return isinstance(event, (RequestEvent, BattleEndEvent))
         else:  # replay mode
             return isinstance(event, TurnEvent)
 

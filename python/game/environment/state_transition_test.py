@@ -6,6 +6,7 @@ from absl.testing import parameterized
 
 from python.game.environment.state_transition import StateTransition
 from python.game.events.battle_event import (
+    BattleEndEvent,
     BoostEvent,
     ClearAllBoostEvent,
     ClearBoostEvent,
@@ -17,7 +18,9 @@ from python.game.events.battle_event import (
     FaintEvent,
     FieldStartEvent,
     HealEvent,
+    PlayerEvent,
     ReplaceEvent,
+    RequestEvent,
     SetBoostEvent,
     SetHpEvent,
     StatusEvent,
@@ -728,6 +731,62 @@ class StateTransitionTest(parameterized.TestCase):
 
         state = StateTransition.apply(state, upkeep_event)
         self.assertEqual(state.field_state.weather_turns_remaining, 3)
+
+    def test_apply_player_event_p1(self) -> None:
+        """Test that PlayerEvent updates p1_username."""
+        event = PlayerEvent(
+            raw_message="|player|p1|Alice|1|1500",
+            player_id="p1",
+            username="Alice",
+            avatar="1",
+            rating=1500,
+        )
+        state = StateTransition.apply(self.initial_state, event)
+        self.assertEqual(state.p1_username, "Alice")
+        self.assertIsNone(state.p2_username)
+
+    def test_apply_player_event_p2(self) -> None:
+        """Test that PlayerEvent updates p2_username."""
+        event = PlayerEvent(
+            raw_message="|player|p2|Bob|2|1400",
+            player_id="p2",
+            username="Bob",
+            avatar="2",
+            rating=1400,
+        )
+        state = StateTransition.apply(self.initial_state, event)
+        self.assertIsNone(state.p1_username)
+        self.assertEqual(state.p2_username, "Bob")
+
+    def test_apply_battle_end_victory(self) -> None:
+        """Test that BattleEndEvent marks battle as over with winner."""
+        event = BattleEndEvent(raw_message="|win|Alice", winner="Alice")
+        state = StateTransition.apply(self.initial_state, event)
+        self.assertTrue(state.battle_over)
+        self.assertEqual(state.winner, "Alice")
+
+    def test_apply_battle_end_tie(self) -> None:
+        """Test that tie marks battle as over with no winner."""
+        event = BattleEndEvent(raw_message="|tie", winner="")
+        state = StateTransition.apply(self.initial_state, event)
+        self.assertTrue(state.battle_over)
+        self.assertEqual(state.winner, "")
+
+    def test_apply_request_with_wait(self) -> None:
+        """Test that wait requests maintain current state."""
+        initial_state = BattleState(
+            available_moves=["Move1", "Move2"],
+            available_switches=[1, 2],
+        )
+
+        event = RequestEvent(
+            raw_message='|request|{"wait":true}', request_json='{"wait":true}'
+        )
+        new_state = StateTransition.apply(initial_state, event)
+
+        self.assertEqual(new_state, initial_state)
+        self.assertEqual(["Move1", "Move2"], new_state.available_moves)
+        self.assertEqual([1, 2], new_state.available_switches)
 
 
 if __name__ == "__main__":
