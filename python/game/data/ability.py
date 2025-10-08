@@ -8,3 +8,4 @@ class Ability(GameDataObject):
     name: str
     num: int
     rating: float
+    description: str
