@@ -1,0 +1,654 @@
+|j|☆zachados
+|j|☆deportee
+|t:|1726966312
+|gametype|singles
+|player|p1|zachados|rood|1668
+|player|p2|deportee|rollerskater|1663
+|teamsize|p1|6
+|teamsize|p2|6
+|gen|9
+|tier|[gen 9] ou
+|rated|
+|rule|species clause: limit one of each pokémon
+|rule|ohko clause: ohko moves are banned
+|rule|evasion items clause: evasion items are banned
+|rule|evasion moves clause: evasion moves are banned
+|rule|endless battle clause: forcing endless battles is banned
+|rule|hp percentage mod: hp is shown in percentages
+|rule|sleep moves clause: sleep-inducing moves are banned
+|clearpoke
+|poke|p1|jirachi|
+|poke|p1|dondozo, m|
+|poke|p1|gliscor, m|
+|poke|p1|blissey, f|
+|poke|p1|talonflame, f|
+|poke|p1|toxapex, f|
+|poke|p2|glimmora, m|
+|poke|p2|ninetales-alola, f|
+|poke|p2|roaring moon|
+|poke|p2|gliscor, m|
+|poke|p2|iron moth|
+|poke|p2|kingambit, m|
+|teampreview
+|inactive|battle timer is on: inactive players will automatically lose when time's up. (requested by zachados)
+|
+|t:|1726966342
+|start
+|switch|p1a: glisca|gliscor, m|100/100
+|switch|p2a: glimmora|glimmora, m|100/100
+|turn|1
+|
+|t:|1726966351
+|move|p2a: glimmora|stealth rock|p1a: glisca
+|-sidestart|p1: zachados|move: stealth rock
+|move|p1a: glisca|knock off|p2a: glimmora
+|-damage|p2a: glimmora|73/100
+|-activate|p2a: glimmora|ability: toxic debris
+|-sidestart|p1: zachados|move: toxic spikes
+|-enditem|p2a: glimmora|focus sash|[from] move: knock off|[of] p1a: glisca
+|
+|-status|p1a: glisca|tox|[from] item: toxic orb
+|upkeep
+|turn|2
+|
+|t:|1726966355
+|move|p2a: glimmora|power gem|p1a: glisca
+|-damage|p1a: glisca|47/100 tox
+|move|p1a: glisca|spikes|p2a: glimmora
+|-sidestart|p2: deportee|spikes
+|
+|-heal|p1a: glisca|59/100 tox|[from] ability: poison heal
+|upkeep
+|turn|3
+|
+|t:|1726966358
+|move|p1a: glisca|protect|p1a: glisca
+|-singleturn|p1a: glisca|protect
+|move|p2a: glimmora|mortal spin|p1a: glisca
+|-activate|p1a: glisca|move: protect
+|
+|-heal|p1a: glisca|72/100 tox|[from] ability: poison heal
+|upkeep
+|turn|4
+|
+|t:|1726966365
+|move|p2a: glimmora|mortal spin|p1a: glisca
+|-resisted|p1a: glisca
+|-damage|p1a: glisca|70/100 tox
+|-sideend|p2: deportee|spikes|[from] move: mortal spin|[of] p2a: glimmora
+|move|p1a: glisca|knock off|p2a: glimmora
+|-damage|p2a: glimmora|55/100
+|-activate|p2a: glimmora|ability: toxic debris
+|-sidestart|p1: zachados|move: toxic spikes
+|
+|-heal|p1a: glisca|83/100 tox|[from] ability: poison heal
+|upkeep
+|turn|5
+|
+|t:|1726966368
+|move|p1a: glisca|protect|p1a: glisca
+|-singleturn|p1a: glisca|protect
+|move|p2a: glimmora|power gem|p1a: glisca
+|-activate|p1a: glisca|move: protect
+|
+|-heal|p1a: glisca|95/100 tox|[from] ability: poison heal
+|upkeep
+|turn|6
+|j| liwin
+|
+|t:|1726966382
+|move|p2a: glimmora|power gem|p1a: glisca
+|-damage|p1a: glisca|41/100 tox
+|move|p1a: glisca|knock off|p2a: glimmora
+|-damage|p2a: glimmora|38/100
+|
+|-heal|p1a: glisca|54/100 tox|[from] ability: poison heal
+|upkeep
+|turn|7
+|
+|t:|1726966393
+|move|p1a: glisca|protect|p1a: glisca
+|-singleturn|p1a: glisca|protect
+|move|p2a: glimmora|power gem|p1a: glisca
+|-activate|p1a: glisca|move: protect
+|
+|-heal|p1a: glisca|66/100 tox|[from] ability: poison heal
+|upkeep
+|turn|8
+|
+|t:|1726966399
+|switch|p1a: big stall ™️|toxapex, f|100/100
+|-sideend|p1: zachados|move: toxic spikes|[of] p1a: big stall ™️
+|move|p2a: glimmora|power gem|p1a: big stall ™️
+|-damage|p1a: big stall ™️|69/100
+|
+|upkeep
+|turn|9
+|
+|t:|1726966402
+|switch|p1a: honey im home|blissey, f|100/100
+|move|p2a: glimmora|earth power|p1a: honey im home
+|-damage|p1a: honey im home|91/100
+|
+|upkeep
+|turn|10
+|
+|t:|1726966408
+|switch|p2a: kingambit|kingambit, m|100/100
+|move|p1a: honey im home|seismic toss|p2a: kingambit
+|-damage|p2a: kingambit|75/100
+|
+|-heal|p2a: kingambit|81/100|[from] item: leftovers
+|upkeep
+|turn|11
+|
+|t:|1726966416
+|-end|p2a: kingambit|fallenundefined|[silent]
+|switch|p2a: glimmora|glimmora, m|38/100
+|switch|p1a: 040 wizard monkey|talonflame, f|100/100
+|
+|upkeep
+|turn|12
+|
+|t:|1726966421
+|switch|p1a: honey im home|blissey, f|91/100
+|switch|p2a: gliscor|gliscor, m|100/100
+|
+|-status|p2a: gliscor|tox|[from] item: toxic orb
+|upkeep
+|turn|13
+|
+|t:|1726966427
+|move|p2a: gliscor|swords dance|p2a: gliscor
+|-boost|p2a: gliscor|atk|2
+|move|p1a: honey im home|stealth rock|p2a: gliscor
+|-sidestart|p2: deportee|move: stealth rock
+|
+|upkeep
+|turn|14
+|
+|t:|1726966437
+|switch|p1a: glisca|gliscor, m|66/100 tox
+|-damage|p1a: glisca|54/100 tox|[from] stealth rock
+|-terastallize|p2a: gliscor|normal
+|move|p2a: gliscor|facade|p1a: glisca
+|-damage|p1a: glisca|0 fnt
+|faint|p1a: glisca
+|
+|upkeep
+|
+|t:|1726966449
+|switch|p1a: dozing off...|dondozo, m|100/100
+|turn|15
+|
+|t:|1726966468
+|move|p2a: gliscor|facade|p1a: dozing off...
+|-damage|p1a: dozing off...|72/100
+|move|p1a: dozing off...|curse|p1a: dozing off...
+|-unboost|p1a: dozing off...|spe|1
+|-boost|p1a: dozing off...|atk|1
+|-boost|p1a: dozing off...|def|1
+|
+|upkeep
+|turn|16
+|
+|t:|1726966471
+|switch|p2a: ninetales|ninetales-alola, f|100/100
+|-damage|p2a: ninetales|76/100|[from] stealth rock
+|-weather|snow|[from] ability: snow warning|[of] p2a: ninetales
+|move|p1a: dozing off...|waterfall|p2a: ninetales
+|-damage|p2a: ninetales|44/100
+|
+|-weather|snow|[upkeep]
+|upkeep
+|turn|17
+|
+|t:|1726966475
+|switch|p1a: elon musk|jirachi|100/100
+|move|p2a: ninetales|freeze-dry|p1a: elon musk
+|-resisted|p1a: elon musk
+|-damage|p1a: elon musk|94/100
+|
+|-weather|snow|[upkeep]
+|upkeep
+|turn|18
+|
+|t:|1726966479
+|switch|p2a: glimmora|glimmora, m|38/100
+|-damage|p2a: glimmora|26/100|[from] stealth rock
+|move|p1a: elon musk|iron head|p2a: glimmora
+|-supereffective|p2a: glimmora
+|-damage|p2a: glimmora|0 fnt
+|-activate|p2a: glimmora|ability: toxic debris
+|-sidestart|p1: zachados|move: toxic spikes
+|faint|p2a: glimmora
+|
+|-weather|snow|[upkeep]
+|upkeep
+|
+|t:|1726966481
+|switch|p2a: iron moth|iron moth|100/100
+|-damage|p2a: iron moth|76/100|[from] stealth rock
+|-enditem|p2a: iron moth|booster energy
+|-activate|p2a: iron moth|ability: quark drive|[fromitem]
+|-start|p2a: iron moth|quarkdrivespe
+|turn|19
+|
+|t:|1726966493
+|-end|p2a: iron moth|quark drive|[silent]
+|switch|p2a: roaring moon|roaring moon|100/100
+|-damage|p2a: roaring moon|88/100|[from] stealth rock
+|-enditem|p2a: roaring moon|booster energy
+|-activate|p2a: roaring moon|ability: protosynthesis|[fromitem]
+|-start|p2a: roaring moon|protosynthesisatk
+|switch|p1a: honey im home|blissey, f|91/100
+|
+|-weather|snow|[upkeep]
+|upkeep
+|turn|20
+|
+|t:|1726966507
+|switch|p1a: 040 wizard monkey|talonflame, f|100/100
+|move|p2a: roaring moon|knock off|p1a: 040 wizard monkey
+|-damage|p1a: 040 wizard monkey|37/100
+|-enditem|p1a: 040 wizard monkey|heavy-duty boots|[from] move: knock off|[of] p2a: roaring moon
+|
+|-weather|none
+|upkeep
+|turn|21
+|
+|t:|1726966513
+|move|p2a: roaring moon|acrobatics|p1a: 040 wizard monkey
+|-damage|p1a: 040 wizard monkey|0 fnt
+|faint|p1a: 040 wizard monkey
+|
+|upkeep
+|
+|t:|1726966517
+|switch|p1a: big stall ™️|toxapex, f|100/100
+|-sideend|p1: zachados|move: toxic spikes|[of] p1a: big stall ™️
+|turn|22
+|
+|t:|1726966535
+|move|p2a: roaring moon|dragon dance|p2a: roaring moon
+|-boost|p2a: roaring moon|atk|1
+|-boost|p2a: roaring moon|spe|1
+|move|p1a: big stall ™️|toxic|p2a: roaring moon
+|-status|p2a: roaring moon|tox
+|
+|-damage|p2a: roaring moon|82/100 tox|[from] psn
+|upkeep
+|turn|23
+|
+|t:|1726966538
+|move|p2a: roaring moon|knock off|p1a: big stall ™️
+|-damage|p1a: big stall ™️|28/100
+|-enditem|p1a: big stall ™️|heavy-duty boots|[from] move: knock off|[of] p2a: roaring moon
+|move|p1a: big stall ™️|haze|p1a: big stall ™️
+|-clearallboost
+|
+|-damage|p2a: roaring moon|70/100 tox|[from] psn
+|upkeep
+|turn|24
+|j| little cuack
+|
+|t:|1726966542
+|move|p2a: roaring moon|knock off|p1a: big stall ™️
+|-crit|p1a: big stall ™️
+|-damage|p1a: big stall ™️|0 fnt
+|faint|p1a: big stall ™️
+|
+|-damage|p2a: roaring moon|52/100 tox|[from] psn
+|upkeep
+|
+|t:|1726966549
+|switch|p1a: dozing off...|dondozo, m|72/100
+|turn|25
+|
+|t:|1726966560
+|move|p2a: roaring moon|knock off|p1a: dozing off...
+|-damage|p1a: dozing off...|41/100
+|-enditem|p1a: dozing off...|heavy-duty boots|[from] move: knock off|[of] p2a: roaring moon
+|move|p1a: dozing off...|waterfall|p2a: roaring moon
+|-resisted|p2a: roaring moon
+|-damage|p2a: roaring moon|33/100 tox
+|
+|-damage|p2a: roaring moon|9/100 tox|[from] psn
+|upkeep
+|turn|26
+|
+|t:|1726966563
+|move|p2a: roaring moon|acrobatics|p1a: dozing off...
+|-damage|p1a: dozing off...|18/100
+|move|p1a: dozing off...|rest|p1a: dozing off...
+|-status|p1a: dozing off...|slp|[from] move: rest
+|-heal|p1a: dozing off...|100/100 slp|[silent]
+|
+|-damage|p2a: roaring moon|0 fnt|[from] psn
+|faint|p2a: roaring moon
+|-end|p2a: roaring moon|protosynthesis|[silent]
+|upkeep
+|
+|t:|1726966566
+|switch|p2a: kingambit|kingambit, m|81/100
+|-damage|p2a: kingambit|75/100|[from] stealth rock
+|-activate|p2a: kingambit|ability: supreme overlord
+|-start|p2a: kingambit|fallen2|[silent]
+|turn|27
+|
+|t:|1726966569
+|move|p2a: kingambit|kowtow cleave|p1a: dozing off...
+|-damage|p1a: dozing off...|74/100 slp
+|cant|p1a: dozing off...|slp
+|move|p1a: dozing off...|sleep talk|p1a: dozing off...
+|move|p1a: dozing off...|curse|p1a: dozing off...|[from]move: sleep talk
+|-unboost|p1a: dozing off...|spe|1
+|-boost|p1a: dozing off...|atk|1
+|-boost|p1a: dozing off...|def|1
+|
+|-heal|p2a: kingambit|81/100|[from] item: leftovers
+|upkeep
+|turn|28
+|
+|t:|1726966572
+|-end|p2a: kingambit|fallen2|[silent]
+|switch|p2a: iron moth|iron moth|76/100
+|-damage|p2a: iron moth|51/100|[from] stealth rock
+|cant|p1a: dozing off...|slp
+|move|p1a: dozing off...|sleep talk|p1a: dozing off...
+|move|p1a: dozing off...|waterfall|p2a: iron moth|[from]move: sleep talk
+|-supereffective|p2a: iron moth
+|-damage|p2a: iron moth|0 fnt
+|faint|p2a: iron moth
+|-end|p2a: iron moth|quark drive|[silent]
+|
+|upkeep
+|
+|t:|1726966575
+|switch|p2a: ninetales|ninetales-alola, f|44/100
+|-damage|p2a: ninetales|20/100|[from] stealth rock
+|-weather|snow|[from] ability: snow warning|[of] p2a: ninetales
+|turn|29
+|
+|t:|1726966578
+|switch|p2a: kingambit|kingambit, m|81/100
+|-damage|p2a: kingambit|75/100|[from] stealth rock
+|-activate|p2a: kingambit|ability: supreme overlord
+|-start|p2a: kingambit|fallen3|[silent]
+|switch|p1a: elon musk|jirachi|94/100
+|
+|-weather|snow|[upkeep]
+|-heal|p2a: kingambit|81/100|[from] item: leftovers
+|upkeep
+|turn|30
+|
+|t:|1726966580
+|move|p1a: elon musk|fire punch|p2a: kingambit
+|-supereffective|p2a: kingambit
+|-damage|p2a: kingambit|54/100
+|move|p2a: kingambit|kowtow cleave|p1a: elon musk
+|-supereffective|p1a: elon musk
+|-damage|p1a: elon musk|0 fnt
+|faint|p1a: elon musk
+|
+|-weather|snow|[upkeep]
+|-heal|p2a: kingambit|60/100|[from] item: leftovers
+|upkeep
+|
+|t:|1726966586
+|switch|p1a: dozing off...|dondozo, m|74/100 slp
+|-damage|p1a: dozing off...|62/100 slp|[from] stealth rock
+|turn|31
+|
+|t:|1726966591
+|-end|p2a: kingambit|fallen3|[silent]
+|switch|p2a: ninetales|ninetales-alola, f|20/100
+|-damage|p2a: ninetales|0 fnt|[from] stealth rock
+|faint|p2a: ninetales
+|-curestatus|p1a: dozing off...|slp|[msg]
+|move|p1a: dozing off...|waterfall|p2: ninetales|[notarget]
+|-fail|p1a: dozing off...
+|
+|-weather|snow|[upkeep]
+|upkeep
+|
+|t:|1726966593
+|switch|p2a: kingambit|kingambit, m|60/100
+|-damage|p2a: kingambit|54/100|[from] stealth rock
+|-activate|p2a: kingambit|ability: supreme overlord
+|-start|p2a: kingambit|fallen4|[silent]
+|turn|32
+|
+|t:|1726966595
+|move|p2a: kingambit|kowtow cleave|p1a: dozing off...
+|-damage|p1a: dozing off...|29/100
+|move|p1a: dozing off...|curse|p1a: dozing off...
+|-unboost|p1a: dozing off...|spe|1
+|-boost|p1a: dozing off...|atk|1
+|-boost|p1a: dozing off...|def|1
+|
+|-weather|snow|[upkeep]
+|-heal|p2a: kingambit|60/100|[from] item: leftovers
+|upkeep
+|turn|33
+|
+|t:|1726966598
+|move|p2a: kingambit|kowtow cleave|p1a: dozing off...
+|-damage|p1a: dozing off...|9/100
+|move|p1a: dozing off...|rest|p1a: dozing off...
+|-status|p1a: dozing off...|slp|[from] move: rest
+|-heal|p1a: dozing off...|100/100 slp|[silent]
+|
+|-weather|none
+|-heal|p2a: kingambit|66/100|[from] item: leftovers
+|upkeep
+|turn|34
+|
+|t:|1726966603
+|move|p2a: kingambit|kowtow cleave|p1a: dozing off...
+|-damage|p1a: dozing off...|81/100 slp
+|cant|p1a: dozing off...|slp
+|move|p1a: dozing off...|sleep talk|p1a: dozing off...
+|move|p1a: dozing off...|curse|p1a: dozing off...|[from]move: sleep talk
+|-unboost|p1a: dozing off...|spe|1
+|-boost|p1a: dozing off...|atk|1
+|-boost|p1a: dozing off...|def|1
+|
+|-heal|p2a: kingambit|72/100|[from] item: leftovers
+|upkeep
+|turn|35
+|
+|t:|1726966606
+|move|p2a: kingambit|kowtow cleave|p1a: dozing off...
+|-damage|p1a: dozing off...|66/100 slp
+|cant|p1a: dozing off...|slp
+|move|p1a: dozing off...|sleep talk|p1a: dozing off...
+|move|p1a: dozing off...|rest||[from]move: sleep talk|[still]
+|-fail|p1a: dozing off...
+|
+|-heal|p2a: kingambit|78/100|[from] item: leftovers
+|upkeep
+|turn|36
+|
+|t:|1726966608
+|move|p2a: kingambit|kowtow cleave|p1a: dozing off...
+|-damage|p1a: dozing off...|50/100 slp
+|-curestatus|p1a: dozing off...|slp|[msg]
+|move|p1a: dozing off...|curse|p1a: dozing off...
+|-unboost|p1a: dozing off...|spe|1
+|-boost|p1a: dozing off...|atk|1
+|-boost|p1a: dozing off...|def|1
+|
+|-heal|p2a: kingambit|84/100|[from] item: leftovers
+|upkeep
+|turn|37
+|
+|t:|1726966610
+|move|p2a: kingambit|kowtow cleave|p1a: dozing off...
+|-damage|p1a: dozing off...|36/100
+|move|p1a: dozing off...|rest|p1a: dozing off...
+|-status|p1a: dozing off...|slp|[from] move: rest
+|-heal|p1a: dozing off...|100/100 slp|[silent]
+|
+|-heal|p2a: kingambit|90/100|[from] item: leftovers
+|upkeep
+|turn|38
+|
+|t:|1726966612
+|move|p2a: kingambit|kowtow cleave|p1a: dozing off...
+|-crit|p1a: dozing off...
+|-damage|p1a: dozing off...|53/100 slp
+|cant|p1a: dozing off...|slp
+|move|p1a: dozing off...|sleep talk|p1a: dozing off...
+|move|p1a: dozing off...|waterfall|p2a: kingambit|[from]move: sleep talk
+|-damage|p2a: kingambit|40/100
+|
+|-heal|p2a: kingambit|47/100|[from] item: leftovers
+|upkeep
+|turn|39
+|
+|t:|1726966614
+|move|p2a: kingambit|kowtow cleave|p1a: dozing off...
+|-damage|p1a: dozing off...|40/100 slp
+|cant|p1a: dozing off...|slp
+|move|p1a: dozing off...|sleep talk|p1a: dozing off...
+|move|p1a: dozing off...|curse|p1a: dozing off...|[from]move: sleep talk
+|-unboost|p1a: dozing off...|spe|1
+|-boost|p1a: dozing off...|atk|1
+|-boost|p1a: dozing off...|def|1
+|
+|-heal|p2a: kingambit|53/100|[from] item: leftovers
+|upkeep
+|turn|40
+|
+|t:|1726966620
+|move|p2a: kingambit|kowtow cleave|p1a: dozing off...
+|-damage|p1a: dozing off...|30/100 slp
+|-curestatus|p1a: dozing off...|slp|[msg]
+|move|p1a: dozing off...|rest|p1a: dozing off...
+|-status|p1a: dozing off...|slp|[from] move: rest
+|-heal|p1a: dozing off...|100/100 slp|[silent]
+|
+|-heal|p2a: kingambit|59/100|[from] item: leftovers
+|upkeep
+|turn|41
+|
+|t:|1726966623
+|move|p2a: kingambit|kowtow cleave|p1a: dozing off...
+|-damage|p1a: dozing off...|90/100 slp
+|cant|p1a: dozing off...|slp
+|
+|-heal|p2a: kingambit|65/100|[from] item: leftovers
+|upkeep
+|turn|42
+|
+|t:|1726966625
+|move|p2a: kingambit|kowtow cleave|p1a: dozing off...
+|-damage|p1a: dozing off...|79/100 slp
+|cant|p1a: dozing off...|slp
+|
+|-heal|p2a: kingambit|71/100|[from] item: leftovers
+|upkeep
+|turn|43
+|
+|t:|1726966627
+|move|p2a: kingambit|kowtow cleave|p1a: dozing off...
+|-damage|p1a: dozing off...|69/100 slp
+|-curestatus|p1a: dozing off...|slp|[msg]
+|move|p1a: dozing off...|curse|p1a: dozing off...
+|-unboost|p1a: dozing off...|spe|1
+|-boost|p1a: dozing off...|atk|1
+|-boost|p1a: dozing off...|def|1
+|
+|-heal|p2a: kingambit|77/100|[from] item: leftovers
+|upkeep
+|turn|44
+|
+|t:|1726966629
+|move|p2a: kingambit|kowtow cleave|p1a: dozing off...
+|-damage|p1a: dozing off...|60/100
+|move|p1a: dozing off...|curse|p1a: dozing off...
+|-unboost|p1a: dozing off...|spe|1
+|-boost|p1a: dozing off...|atk|1
+|-boost|p1a: dozing off...|def|1
+|
+|-heal|p2a: kingambit|83/100|[from] item: leftovers
+|upkeep
+|turn|45
+|
+|t:|1726966633
+|move|p2a: kingambit|kowtow cleave|p1a: dozing off...
+|-damage|p1a: dozing off...|51/100
+|move|p1a: dozing off...|waterfall|p2a: kingambit
+|-damage|p2a: kingambit|2/100
+|
+|-heal|p2a: kingambit|8/100|[from] item: leftovers
+|upkeep
+|turn|46
+|
+|t:|1726966653
+|move|p2a: kingambit|sucker punch||[still]
+|-fail|p2a: kingambit
+|move|p1a: dozing off...|rest|p1a: dozing off...
+|-status|p1a: dozing off...|slp|[from] move: rest
+|-heal|p1a: dozing off...|100/100 slp|[silent]
+|
+|-heal|p2a: kingambit|14/100|[from] item: leftovers
+|upkeep
+|turn|47
+|
+|t:|1726966656
+|move|p2a: kingambit|sucker punch||[still]
+|-fail|p2a: kingambit
+|cant|p1a: dozing off...|slp
+|move|p1a: dozing off...|sleep talk|p1a: dozing off...
+|move|p1a: dozing off...|rest||[from]move: sleep talk|[still]
+|-fail|p1a: dozing off...
+|
+|-heal|p2a: kingambit|21/100|[from] item: leftovers
+|upkeep
+|turn|48
+|
+|t:|1726966658
+|move|p2a: kingambit|sucker punch||[still]
+|-fail|p2a: kingambit
+|cant|p1a: dozing off...|slp
+|move|p1a: dozing off...|sleep talk|p1a: dozing off...
+|move|p1a: dozing off...|curse|p1a: dozing off...|[from]move: sleep talk
+|
+|-heal|p2a: kingambit|27/100|[from] item: leftovers
+|upkeep
+|turn|49
+|
+|t:|1726966661
+|move|p2a: kingambit|swords dance|p2a: kingambit
+|-boost|p2a: kingambit|atk|2
+|-curestatus|p1a: dozing off...|slp|[msg]
+|move|p1a: dozing off...|waterfall|p2a: kingambit
+|-damage|p2a: kingambit|0 fnt
+|faint|p2a: kingambit
+|-end|p2a: kingambit|fallen4|[silent]
+|
+|upkeep
+|
+|t:|1726966662
+|switch|p2a: gliscor|gliscor, m, tera:normal|100/100 tox
+|-damage|p2a: gliscor|88/100 tox|[from] stealth rock
+|turn|50
+|
+|t:|1726966667
+|move|p2a: gliscor|facade|p1a: dozing off...
+|-damage|p1a: dozing off...|93/100
+|move|p1a: dozing off...|waterfall|p2a: gliscor
+|-damage|p2a: gliscor|0 fnt
+|faint|p2a: gliscor
+|
+|win|zachados
+|raw|zachados's rating: 1668 &rarr; <strong>1687</strong><br />(+19 for winning)
+|raw|deportee's rating: 1646 &rarr; <strong>1627</strong><br />(-19 for losing)
+|l|☆deportee
+|player|p2|
+|l|☆zachados
+|player|p1|
+|l| little cuack
+|l| liwin

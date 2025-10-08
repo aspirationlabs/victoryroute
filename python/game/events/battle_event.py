@@ -1499,21 +1499,28 @@ class ReplaceEvent(BattleEvent):
             elif detail.startswith("L"):
                 level = int(detail[1:])
 
-        hp_parts = parts[4].split("/")
-        hp_status_parts = hp_parts[1].split(" ") if "/" in parts[4] else ["100", ""]
-        hp_current = (
-            int(hp_parts[0]) if hp_parts[0] != "0" and hp_parts[0] != "fnt" else 0
-        )
-        hp_max = (
-            int(hp_status_parts[0])
-            if hp_status_parts[0] and hp_status_parts[0] != "fnt"
-            else 100
-        )
-        status = (
-            hp_status_parts[1]
-            if len(hp_status_parts) > 1 and hp_status_parts[1]
-            else None
-        )
+        # HP data is optional in replace events
+        if len(parts) > 4 and parts[4]:
+            hp_parts = parts[4].split("/")
+            hp_status_parts = hp_parts[1].split(" ") if "/" in parts[4] else ["100", ""]
+            hp_current = (
+                int(hp_parts[0]) if hp_parts[0] != "0" and hp_parts[0] != "fnt" else 0
+            )
+            hp_max = (
+                int(hp_status_parts[0])
+                if hp_status_parts[0] and hp_status_parts[0] != "fnt"
+                else 100
+            )
+            status = (
+                hp_status_parts[1]
+                if len(hp_status_parts) > 1 and hp_status_parts[1]
+                else None
+            )
+        else:
+            # No HP data provided
+            hp_current = 100
+            hp_max = 100
+            status = None
 
         return cls(
             raw_message=raw_message,
@@ -1687,6 +1694,21 @@ class UnknownEvent(BattleEvent):
 
     @classmethod
     def parse_raw_message(cls, raw_message: str) -> "UnknownEvent":
+        parts = raw_message.split("|")
+        message_type = parts[1] if len(parts) > 1 else None
+        return cls(raw_message=raw_message, message_type=message_type)
+
+
+@dataclass(frozen=True)
+class IgnoredEvent(BattleEvent):
+    """Event for known message types that are metadata/UI and can be ignored."""
+
+    raw_message: str
+    message_type: Optional[str] = None
+    timestamp: Optional[datetime] = None
+
+    @classmethod
+    def parse_raw_message(cls, raw_message: str) -> "IgnoredEvent":
         parts = raw_message.split("|")
         message_type = parts[1] if len(parts) > 1 else None
         return cls(raw_message=raw_message, message_type=message_type)

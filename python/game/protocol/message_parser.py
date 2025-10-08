@@ -31,6 +31,7 @@ from python.game.events.battle_event import (
     GenEvent,
     HealEvent,
     HitCountEvent,
+    IgnoredEvent,
     ImmuneEvent,
     ItemEvent,
     MissEvent,
@@ -126,6 +127,29 @@ class MessageParser:
         "request": RequestEvent,
     }
 
+    # Known message types that are metadata/UI and can be safely ignored
+    IGNORED_MESSAGE_TYPES = {
+        "",  # Empty message type
+        "badge",  # Badge/medal display
+        "uhtml",  # HTML UI elements
+        "j",  # Player join
+        "l",  # Player leave
+        "t:",  # Timestamp
+        "rated",  # Rated battle indicator
+        "rule",  # Battle rules
+        "inactive",  # Inactivity timer
+        "c:",  # Chat message
+        "c",  # Chat message (alternate)
+        "name",  # Player name
+        "raw",  # Raw HTML
+        "html",  # HTML content
+        "init",  # Room initialization
+        "title",  # Room title
+        "users",  # User list
+        "n",  # Name change
+        "chat",  # Chat message (alternate)
+    }
+
     def parse(self, raw_message: str) -> BattleEvent:
         parts = raw_message.split("|")
         message_type = parts[1] if len(parts) > 1 else ""
@@ -133,6 +157,8 @@ class MessageParser:
         event_class = self.MESSAGE_TYPE_MAP.get(message_type)
         if event_class:
             return event_class.parse_raw_message(raw_message)
+        if message_type in self.IGNORED_MESSAGE_TYPES:
+            return IgnoredEvent(raw_message=raw_message, message_type=message_type)
 
         logging.warning("Unknown message type: %s", message_type)
         return UnknownEvent(raw_message=raw_message, message_type=message_type)

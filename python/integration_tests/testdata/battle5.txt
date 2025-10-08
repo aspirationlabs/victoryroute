@@ -1,0 +1,298 @@
+|j|☆ic1
+|j|☆armyofbrachydios
+|t:|1727370171
+|gametype|singles
+|player|p1|ic1|blackbelt-gen4dp|1064
+|player|p2|armyofbrachydios|169|1113
+|teamsize|p1|6
+|teamsize|p2|6
+|gen|9
+|tier|[gen 9] ou
+|rated|
+|rule|species clause: limit one of each pokémon
+|rule|ohko clause: ohko moves are banned
+|rule|evasion items clause: evasion items are banned
+|rule|evasion moves clause: evasion moves are banned
+|rule|endless battle clause: forcing endless battles is banned
+|rule|hp percentage mod: hp is shown in percentages
+|rule|sleep moves clause: sleep-inducing moves are banned
+|clearpoke
+|poke|p1|great tusk|
+|poke|p1|moltres|
+|poke|p1|ogerpon-wellspring, f|
+|poke|p1|dragapult, f|
+|poke|p1|slowking-galar, f|
+|poke|p1|kingambit, m|
+|poke|p2|cyclizar, f|
+|poke|p2|raikou|
+|poke|p2|grimmsnarl, m|
+|poke|p2|rillaboom, m|
+|poke|p2|skeledirge, m|
+|poke|p2|metagross|
+|teampreview
+|c|☆ic1|glhf
+|
+|t:|1727370178
+|start
+|switch|p1a: slowking|slowking-galar, f|100/100
+|switch|p2a: grimmsnarl|grimmsnarl, m|100/100
+|turn|1
+|
+|t:|1727370185
+|move|p2a: grimmsnarl|light screen|p2a: grimmsnarl
+|-sidestart|p2: armyofbrachydios|move: light screen
+|move|p1a: slowking|thunder wave|p2a: grimmsnarl
+|-status|p2a: grimmsnarl|par
+|
+|upkeep
+|turn|2
+|
+|t:|1727370197
+|move|p2a: grimmsnarl|reflect|p2a: grimmsnarl
+|-sidestart|p2: armyofbrachydios|reflect
+|move|p1a: slowking|chilly reception|p1a: slowking
+|-weather|snow
+|
+|t:|1727370206
+|switch|p1a: kingambit|kingambit, m|100/100|[from] chilly reception
+|
+|-weather|snow|[upkeep]
+|upkeep
+|turn|3
+|j| brianortegachoice
+|
+|t:|1727370219
+|switch|p2a: raikou|raikou|100/100
+|move|p1a: kingambit|swords dance|p1a: kingambit
+|-boost|p1a: kingambit|atk|2
+|
+|-weather|snow|[upkeep]
+|upkeep
+|turn|4
+|j| lug1aboi64
+|c| brianortegachoice|gg ez win
+|
+|t:|1727370227
+|move|p1a: kingambit|sucker punch|p2a: raikou
+|-damage|p2a: raikou|43/100
+|move|p2a: raikou|aura sphere|p1a: kingambit
+|-supereffective|p1a: kingambit
+|-damage|p1a: kingambit|0 fnt
+|faint|p1a: kingambit
+|-end|p1a: kingambit|fallenundefined|[silent]
+|
+|-weather|snow|[upkeep]
+|upkeep
+|l| lug1aboi64
+|j| senturies
+|
+|t:|1727370240
+|switch|p1a: great tusk|great tusk|100/100
+|turn|5
+|l| senturies
+|
+|t:|1727370246
+|switch|p2a: rillaboom|rillaboom, m|100/100
+|-fieldstart|move: grassy terrain|[from] ability: grassy surge|[of] p2a: rillaboom
+|-enditem|p2a: rillaboom|grassy seed
+|-boost|p2a: rillaboom|def|1|[from] item: grassy seed
+|move|p1a: great tusk|stealth rock|p2a: rillaboom
+|-sidestart|p2: armyofbrachydios|move: stealth rock
+|
+|-weather|snow|[upkeep]
+|upkeep
+|turn|6
+|j| saturdaynightpalsy
+|
+|t:|1727370265
+|-end|p1a: great tusk|protosynthesis|[silent]
+|switch|p1a: moltres|moltres|100/100
+|move|p2a: rillaboom|fake out|p1a: moltres
+|-damage|p1a: moltres|91/100
+|
+|-weather|none
+|upkeep
+|turn|7
+|l| saturdaynightpalsy
+|
+|t:|1727370277
+|switch|p2a: skeledirge|skeledirge, m|100/100
+|-damage|p2a: skeledirge|75/100|[from] stealth rock
+|move|p1a: moltres|flamethrower|p2a: skeledirge
+|-resisted|p2a: skeledirge
+|-damage|p2a: skeledirge|66/100
+|
+|-heal|p2a: skeledirge|72/100|[from] grassy terrain
+|-heal|p2a: skeledirge|78/100|[from] item: leftovers
+|upkeep
+|turn|8
+|j| ffkz
+|
+|t:|1727370288
+|move|p1a: moltres|u-turn|p2a: skeledirge
+|-resisted|p2a: skeledirge
+|-damage|p2a: skeledirge|77/100
+|c| brianortegachoice|don't get 6-0 in front of 3 people bro ic1
+|
+|t:|1727370309
+|switch|p1a: ogerpon|ogerpon-wellspring, f|100/100|[from] u-turn
+|move|p2a: skeledirge|torch song|p1a: ogerpon
+|-damage|p1a: ogerpon|50/100
+|-boost|p2a: skeledirge|spa|1
+|
+|-heal|p1a: ogerpon|56/100|[from] grassy terrain
+|-heal|p2a: skeledirge|83/100|[from] grassy terrain
+|-heal|p2a: skeledirge|89/100|[from] item: leftovers
+|-sideend|p2: armyofbrachydios|move: light screen
+|upkeep
+|turn|9
+|
+|t:|1727370322
+|move|p1a: ogerpon|ivy cudgel|p2a: skeledirge|[anim] ivy cudgel water
+|-supereffective|p2a: skeledirge
+|-damage|p2a: skeledirge|44/100
+|move|p2a: skeledirge|torch song|p1a: ogerpon
+|-damage|p1a: ogerpon|0 fnt
+|-boost|p2a: skeledirge|spa|1
+|faint|p1a: ogerpon
+|
+|-heal|p2a: skeledirge|50/100|[from] grassy terrain
+|-heal|p2a: skeledirge|56/100|[from] item: leftovers
+|-sideend|p2: armyofbrachydios|reflect
+|-fieldend|move: grassy terrain
+|upkeep
+|c|☆ic1|fuck
+|c| brianortegachoice|bro
+|
+|t:|1727370333
+|switch|p1a: dragapult|dragapult, f|100/100
+|turn|10
+|c| brianortegachoice|there's no way
+|
+|t:|1727370348
+|-terastallize|p2a: skeledirge|fire
+|move|p1a: dragapult|hex|p2a: skeledirge
+|-damage|p2a: skeledirge|28/100
+|move|p2a: skeledirge|slack off|p2a: skeledirge
+|-heal|p2a: skeledirge|78/100
+|
+|-heal|p2a: skeledirge|84/100|[from] item: leftovers
+|upkeep
+|turn|11
+|
+|t:|1727370358
+|move|p1a: dragapult|draco meteor|p2a: skeledirge|[miss]
+|-miss|p1a: dragapult|p2a: skeledirge
+|move|p2a: skeledirge|shadow ball|p1a: dragapult
+|-supereffective|p1a: dragapult
+|-damage|p1a: dragapult|0 fnt
+|faint|p1a: dragapult
+|
+|-heal|p2a: skeledirge|90/100|[from] item: leftovers
+|upkeep
+|c|☆ic1|rng tf
+|
+|t:|1727370363
+|switch|p1a: slowking|slowking-galar, f|100/100
+|turn|12
+|
+|t:|1727370368
+|-terastallize|p1a: slowking|water
+|move|p2a: skeledirge|shadow ball|p1a: slowking
+|-damage|p1a: slowking|49/100
+|move|p1a: slowking|thunder wave|p2a: skeledirge
+|-status|p2a: skeledirge|par
+|
+|-heal|p2a: skeledirge|96/100 par|[from] item: leftovers
+|upkeep
+|turn|13
+|c| brianortegachoice|the last nail in the coffin
+|c| brianortegachoice|ok
+|c| brianortegachoice|why didn't you do this sooner
+|
+|t:|1727370384
+|switch|p1a: moltres|moltres|91/100
+|move|p2a: skeledirge|shadow ball|p1a: moltres
+|-damage|p1a: moltres|5/100
+|-unboost|p1a: moltres|spd|1
+|
+|-heal|p2a: skeledirge|100/100 par|[from] item: leftovers
+|upkeep
+|turn|14
+|c|☆ic1|i didnt think
+|
+|t:|1727370393
+|move|p2a: skeledirge|torch song|p1a: moltres
+|-resisted|p1a: moltres
+|-damage|p1a: moltres|0 fnt
+|-boost|p2a: skeledirge|spa|1
+|faint|p1a: moltres
+|
+|upkeep
+|
+|t:|1727370396
+|switch|p1a: great tusk|great tusk|100/100
+|turn|15
+|
+|t:|1727370401
+|move|p1a: great tusk|headlong rush|p2a: skeledirge
+|-supereffective|p2a: skeledirge
+|-damage|p2a: skeledirge|20/100 par
+|-unboost|p1a: great tusk|def|1
+|-unboost|p1a: great tusk|spd|1
+|move|p2a: skeledirge|torch song|p1a: great tusk
+|-crit|p1a: great tusk
+|-damage|p1a: great tusk|0 fnt
+|-boost|p2a: skeledirge|spa|1
+|faint|p1a: great tusk
+|-end|p1a: great tusk|protosynthesis|[silent]
+|
+|-heal|p2a: skeledirge|26/100 par|[from] item: leftovers
+|upkeep
+|
+|t:|1727370417
+|switch|p1a: slowking|slowking-galar, f, tera:water|82/100
+|turn|16
+|
+|t:|1727370426
+|move|p2a: skeledirge|shadow ball|p1a: slowking
+|-damage|p1a: slowking|7/100
+|-unboost|p1a: slowking|spd|1
+|move|p1a: slowking|future sight|p2a: skeledirge
+|-start|p1a: slowking|move: future sight
+|
+|-heal|p2a: skeledirge|33/100 par|[from] item: leftovers
+|upkeep
+|turn|17
+|
+|t:|1727370436
+|cant|p2a: skeledirge|par
+|move|p1a: slowking|sludge bomb|p2a: skeledirge
+|-damage|p2a: skeledirge|0 fnt
+|faint|p2a: skeledirge
+|
+|upkeep
+|c|☆armyofbrachydios|ook good
+|c|☆ic1|not 60
+|c|☆ic1|now #
+|c|☆ic1|xd
+|c|☆armyofbrachydios|not a 6-0
+|c|☆armyofbrachydios|i didn't switch for that reason alone
+|c|☆armyofbrachydios|i felt bad after that draco missed
+|
+|t:|1727370463
+|switch|p2a: rillaboom|rillaboom, m|100/100
+|-damage|p2a: rillaboom|88/100|[from] stealth rock
+|-fieldstart|move: grassy terrain|[from] ability: grassy surge|[of] p2a: rillaboom
+|turn|18
+|c|☆ic1|respeect for that
+|c|☆ic1|init brianortegachoice?
+|
+|t:|1727370473
+|move|p2a: rillaboom|fake out|p1a: slowking
+|-damage|p1a: slowking|0 fnt
+|faint|p1a: slowking
+|
+|win|armyofbrachydios
+|raw|ic1's rating: 1064 &rarr; <strong>1047</strong><br />(-17 for losing)
+|raw|armyofbrachydios's rating: 1113 &rarr; <strong>1134</strong><br />(+21 for winning)

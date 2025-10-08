@@ -1,0 +1,414 @@
+|badge|p2|bronze|gen9ubers|100-2
+|uhtml|medal-msg|<div class="broadcast-blue">curious what those medals under the avatar are? ps now has ladder seasons! for more information, check out the <a href="https://www.smogon.com/forums/threads/3740067/">thread on smogon.</a></div>
+|j|☆qways
+|j|☆how play pkm
+|t:|1727738418
+|gametype|singles
+|player|p1|qways|169|1659
+|player|p2|how play pkm|yellow|1630
+|teamsize|p1|6
+|teamsize|p2|6
+|gen|9
+|tier|[gen 9] ou
+|rated|
+|rule|species clause: limit one of each pokémon
+|rule|ohko clause: ohko moves are banned
+|rule|evasion items clause: evasion items are banned
+|rule|evasion moves clause: evasion moves are banned
+|rule|endless battle clause: forcing endless battles is banned
+|rule|hp percentage mod: hp is shown in percentages
+|rule|sleep moves clause: sleep-inducing moves are banned
+|clearpoke
+|poke|p1|landorus-therian, m|
+|poke|p1|ogerpon-wellspring, f|
+|poke|p1|raging bolt|
+|poke|p1|zamazenta-*|
+|poke|p1|iron crown|
+|poke|p1|iron moth|
+|poke|p2|kingambit, m|
+|poke|p2|dragonite, f|
+|poke|p2|enamorus, f|
+|poke|p2|gholdengo|
+|poke|p2|rotom-wash|
+|poke|p2|kommo-o, f|
+|teampreview
+|inactive|battle timer is on: inactive players will automatically lose when time's up. (requested by how play pkm)
+|
+|t:|1727738439
+|start
+|switch|p1a: raging bolt|raging bolt|100/100
+|switch|p2a: kommo-o|kommo-o, f|100/100
+|turn|1
+|
+|t:|1727738447
+|-end|p1a: raging bolt|protosynthesis|[silent]
+|switch|p1a: iron crown|iron crown|100/100
+|move|p2a: kommo-o|stealth rock|p1a: iron crown
+|-sidestart|p1: qways|move: stealth rock
+|
+|upkeep
+|turn|2
+|
+|t:|1727738453
+|switch|p2a: gholdengo|gholdengo|100/100
+|move|p1a: iron crown|psychic noise|p2a: gholdengo
+|-resisted|p2a: gholdengo
+|-damage|p2a: gholdengo|81/100
+|-start|p2a: gholdengo|move: heal block
+|
+|upkeep
+|turn|3
+|
+|t:|1727738459
+|move|p1a: iron crown|volt switch|p2a: gholdengo
+|-damage|p2a: gholdengo|56/100
+|
+|t:|1727738462
+|-end|p1a: iron crown|quark drive|[silent]
+|switch|p1a: landorus|landorus-therian, m|100/100|[from] volt switch
+|-damage|p1a: landorus|88/100|[from] stealth rock
+|-ability|p1a: landorus|intimidate|boost
+|-unboost|p2a: gholdengo|atk|1
+|move|p2a: gholdengo|shadow ball|p1a: landorus
+|-damage|p1a: landorus|41/100
+|
+|-end|p2a: gholdengo|move: heal block
+|upkeep
+|turn|4
+|
+|t:|1727738468
+|switch|p2a: rotom|rotom-wash|100/100
+|move|p1a: landorus|stealth rock|p2a: rotom
+|-sidestart|p2: how play pkm|move: stealth rock
+|
+|upkeep
+|turn|5
+|
+|t:|1727738471
+|move|p1a: landorus|u-turn|p2a: rotom
+|-damage|p2a: rotom|78/100
+|
+|t:|1727738488
+|switch|p1a: raging bolt|raging bolt|100/100|[from] u-turn
+|move|p2a: rotom|hydro pump|p1a: raging bolt
+|-resisted|p1a: raging bolt
+|-damage|p1a: raging bolt|81/100
+|
+|-heal|p2a: rotom|84/100|[from] item: leftovers
+|upkeep
+|turn|6
+|
+|t:|1727738493
+|move|p2a: rotom|volt switch|p1a: raging bolt
+|-resisted|p1a: raging bolt
+|-damage|p1a: raging bolt|75/100
+|
+|t:|1727738496
+|switch|p2a: enamorus|enamorus, f|100/100|[from] volt switch
+|move|p1a: raging bolt|dragon pulse|p2a: enamorus
+|-immune|p2a: enamorus
+|
+|upkeep
+|turn|7
+|
+|t:|1727738505
+|move|p1a: raging bolt|thunderclap||[still]
+|-fail|p1a: raging bolt
+|move|p2a: enamorus|substitute|p2a: enamorus
+|-start|p2a: enamorus|substitute
+|-damage|p2a: enamorus|76/100
+|
+|upkeep
+|turn|8
+|
+|t:|1727738511
+|-end|p1a: raging bolt|protosynthesis|[silent]
+|switch|p1a: iron crown|iron crown|100/100
+|-damage|p1a: iron crown|94/100|[from] stealth rock
+|move|p2a: enamorus|moonblast|p1a: iron crown
+|-resisted|p1a: iron crown
+|-damage|p1a: iron crown|76/100
+|
+|upkeep
+|turn|9
+|
+|t:|1727738520
+|switch|p2a: rotom|rotom-wash|84/100
+|-damage|p2a: rotom|72/100|[from] stealth rock
+|move|p1a: iron crown|tachyon cutter|p2a: rotom
+|-resisted|p2a: rotom
+|-damage|p2a: rotom|65/100
+|-resisted|p2a: rotom
+|-damage|p2a: rotom|59/100
+|-hitcount|p2a: rotom|2
+|
+|-heal|p2a: rotom|65/100|[from] item: leftovers
+|upkeep
+|turn|10
+|
+|t:|1727738527
+|move|p1a: iron crown|future sight|p2a: rotom
+|-start|p1a: iron crown|move: future sight
+|move|p2a: rotom|volt switch|p1a: iron crown
+|-damage|p1a: iron crown|58/100
+|
+|t:|1727738533
+|switch|p2a: gholdengo|gholdengo|56/100|[from] volt switch
+|-damage|p2a: gholdengo|50/100|[from] stealth rock
+|
+|-heal|p2a: gholdengo|56/100|[from] item: leftovers
+|upkeep
+|turn|11
+|
+|t:|1727738538
+|move|p1a: iron crown|volt switch|p2a: gholdengo
+|-damage|p2a: gholdengo|35/100
+|
+|t:|1727738548
+|-end|p1a: iron crown|quark drive|[silent]
+|switch|p1a: ogerpon|ogerpon-wellspring, f|100/100|[from] volt switch
+|-damage|p1a: ogerpon|88/100|[from] stealth rock
+|move|p2a: gholdengo|shadow ball|p1a: ogerpon
+|-damage|p1a: ogerpon|47/100
+|-unboost|p1a: ogerpon|spd|1
+|
+|-heal|p2a: gholdengo|41/100|[from] item: leftovers
+|upkeep
+|turn|12
+|
+|t:|1727738559
+|switch|p2a: kommo-o|kommo-o, f|100/100
+|move|p1a: ogerpon|ivy cudgel|p2a: kommo-o|[anim] ivy cudgel water
+|-resisted|p2a: kommo-o
+|-damage|p2a: kommo-o|75/100
+|
+|-end|p2a: kommo-o|move: future sight
+|-supereffective|p2a: kommo-o
+|-damage|p2a: kommo-o|0 fnt
+|faint|p2a: kommo-o
+|upkeep
+|
+|t:|1727738567
+|switch|p2a: dragonite|dragonite, f|100/100
+|turn|13
+|
+|t:|1727738571
+|switch|p1a: landorus|landorus-therian, m|41/100
+|-damage|p1a: landorus|29/100|[from] stealth rock
+|-ability|p1a: landorus|intimidate|boost
+|-unboost|p2a: dragonite|atk|1
+|move|p2a: dragonite|dragon dance|p2a: dragonite
+|-boost|p2a: dragonite|atk|1
+|-boost|p2a: dragonite|spe|1
+|
+|upkeep
+|turn|14
+|
+|t:|1727738579
+|move|p2a: dragonite|ice spinner|p1a: landorus
+|-supereffective|p1a: landorus
+|-damage|p1a: landorus|0 fnt
+|-damage|p2a: dragonite|84/100|[from] item: rocky helmet|[of] p1a: landorus
+|faint|p1a: landorus
+|
+|upkeep
+|inactive|qways has 120 seconds left.
+|
+|t:|1727738610
+|switch|p1a: iron moth|iron moth|100/100
+|-damage|p1a: iron moth|76/100|[from] stealth rock
+|-enditem|p1a: iron moth|booster energy
+|-activate|p1a: iron moth|ability: quark drive|[fromitem]
+|-start|p1a: iron moth|quarkdrivespe
+|turn|15
+|
+|t:|1727738615
+|move|p1a: iron moth|dazzling gleam|p2a: dragonite
+|-supereffective|p2a: dragonite
+|-damage|p2a: dragonite|23/100
+|move|p2a: dragonite|dragon dance|p2a: dragonite
+|-boost|p2a: dragonite|atk|1
+|-boost|p2a: dragonite|spe|1
+|
+|upkeep
+|turn|16
+|
+|t:|1727738622
+|move|p2a: dragonite|earthquake|p1a: iron moth
+|-supereffective|p1a: iron moth
+|-damage|p1a: iron moth|0 fnt
+|faint|p1a: iron moth
+|-end|p1a: iron moth|quark drive|[silent]
+|
+|upkeep
+|
+|t:|1727738626
+|switch|p1a: zamazenta|zamazenta|100/100
+|-damage|p1a: zamazenta|94/100|[from] stealth rock
+|-ability|p1a: zamazenta|dauntless shield|boost
+|-boost|p1a: zamazenta|def|1
+|turn|17
+|
+|t:|1727738637
+|move|p2a: dragonite|earthquake|p1a: zamazenta
+|-crit|p1a: zamazenta
+|-damage|p1a: zamazenta|24/100
+|move|p1a: zamazenta|body press|p2a: dragonite
+|-resisted|p2a: dragonite
+|-damage|p2a: dragonite|0 fnt
+|faint|p2a: dragonite
+|
+|-heal|p1a: zamazenta|31/100|[from] item: leftovers
+|upkeep
+|
+|t:|1727738641
+|switch|p2a: gholdengo|gholdengo|41/100
+|-damage|p2a: gholdengo|35/100|[from] stealth rock
+|turn|18
+|
+|t:|1727738645
+|move|p1a: zamazenta|crunch|p2a: gholdengo
+|-supereffective|p2a: gholdengo
+|-damage|p2a: gholdengo|0 fnt
+|faint|p2a: gholdengo
+|
+|-heal|p1a: zamazenta|37/100|[from] item: leftovers
+|upkeep
+|
+|t:|1727738654
+|switch|p2a: rotom|rotom-wash|65/100
+|-damage|p2a: rotom|52/100|[from] stealth rock
+|turn|19
+|
+|t:|1727738682
+|switch|p1a: raging bolt|raging bolt|75/100
+|move|p2a: rotom|hydro pump|p1a: raging bolt
+|-resisted|p1a: raging bolt
+|-damage|p1a: raging bolt|56/100
+|
+|-heal|p2a: rotom|58/100|[from] item: leftovers
+|upkeep
+|turn|20
+|
+|t:|1727738691
+|move|p2a: rotom|will-o-wisp|p1a: raging bolt
+|-status|p1a: raging bolt|brn
+|move|p1a: raging bolt|volt switch|p2a: rotom
+|-damage|p2a: rotom|14/100
+|
+|t:|1727738698
+|-end|p1a: raging bolt|protosynthesis|[silent]
+|switch|p1a: zamazenta|zamazenta|37/100|[from] volt switch
+|-damage|p1a: zamazenta|31/100|[from] stealth rock
+|
+|-heal|p1a: zamazenta|37/100|[from] item: leftovers
+|-heal|p2a: rotom|20/100|[from] item: leftovers
+|upkeep
+|turn|21
+|
+|t:|1727738708
+|move|p1a: zamazenta|body press|p2a: rotom
+|-damage|p2a: rotom|0 fnt
+|faint|p2a: rotom
+|
+|-heal|p1a: zamazenta|43/100|[from] item: leftovers
+|upkeep
+|
+|t:|1727738710
+|switch|p2a: enamorus|enamorus, f|76/100
+|turn|22
+|
+|t:|1727738718
+|switch|p1a: iron crown|iron crown|58/100
+|-damage|p1a: iron crown|52/100|[from] stealth rock
+|move|p2a: enamorus|substitute|p2a: enamorus
+|-start|p2a: enamorus|substitute
+|-damage|p2a: enamorus|51/100
+|
+|upkeep
+|turn|23
+|
+|t:|1727738732
+|switch|p2a: kingambit|kingambit, m|100/100
+|-damage|p2a: kingambit|94/100|[from] stealth rock
+|-activate|p2a: kingambit|ability: supreme overlord
+|-start|p2a: kingambit|fallen4|[silent]
+|move|p1a: iron crown|volt switch|p2a: kingambit
+|-damage|p2a: kingambit|68/100
+|
+|t:|1727738741
+|-end|p1a: iron crown|quark drive|[silent]
+|switch|p1a: zamazenta|zamazenta|43/100|[from] volt switch
+|-damage|p1a: zamazenta|37/100|[from] stealth rock
+|
+|-heal|p1a: zamazenta|43/100|[from] item: leftovers
+|-heal|p2a: kingambit|74/100|[from] item: leftovers
+|upkeep
+|turn|24
+|
+|t:|1727738750
+|-terastallize|p2a: kingambit|fairy
+|move|p1a: zamazenta|iron defense|p1a: zamazenta
+|-boost|p1a: zamazenta|def|2
+|move|p2a: kingambit|tera blast|p1a: zamazenta|[anim] tera blast fairy
+|-supereffective|p1a: zamazenta
+|-damage|p1a: zamazenta|0 fnt
+|faint|p1a: zamazenta
+|
+|-heal|p2a: kingambit|80/100|[from] item: leftovers
+|upkeep
+|
+|t:|1727738758
+|switch|p1a: iron crown|iron crown|52/100
+|-damage|p1a: iron crown|46/100|[from] stealth rock
+|turn|25
+|
+|t:|1727738764
+|-terastallize|p1a: iron crown|fairy
+|move|p2a: kingambit|sucker punch|p1a: iron crown
+|-resisted|p1a: iron crown
+|-damage|p1a: iron crown|15/100
+|move|p1a: iron crown|tachyon cutter|p2a: kingambit
+|-supereffective|p2a: kingambit
+|-damage|p2a: kingambit|20/100
+|-supereffective|p2a: kingambit
+|-damage|p2a: kingambit|0 fnt
+|faint|p2a: kingambit
+|-end|p2a: kingambit|fallen4|[silent]
+|-hitcount|p2: kingambit|2
+|
+|upkeep
+|
+|t:|1727738767
+|switch|p2a: enamorus|enamorus, f|51/100
+|turn|26
+|
+|t:|1727738770
+|move|p2a: enamorus|superpower|p1a: iron crown
+|-resisted|p1a: iron crown
+|-damage|p1a: iron crown|0 fnt
+|-boost|p2a: enamorus|atk|1
+|-boost|p2a: enamorus|def|1
+|faint|p1a: iron crown
+|-end|p1a: iron crown|quark drive|[silent]
+|
+|upkeep
+|
+|t:|1727738773
+|switch|p1a: ogerpon|ogerpon-wellspring, f|47/100
+|-damage|p1a: ogerpon|35/100|[from] stealth rock
+|turn|27
+|
+|t:|1727738776
+|move|p1a: ogerpon|ivy cudgel|p2a: enamorus|[anim] ivy cudgel water
+|-damage|p2a: enamorus|0 fnt
+|faint|p2a: enamorus
+|
+|win|qways
+|raw|qways's rating: 1659 &rarr; <strong>1677</strong><br />(+18 for winning)
+|raw|how play pkm's rating: 1630 &rarr; <strong>1612</strong><br />(-18 for losing)
+|l|☆how play pkm
+|player|p2|
+|l|☆qways
+|player|p1|
+

@@ -1,0 +1,413 @@
+|j|☆traukai
+|j|☆johndm
+|t:|1725989548
+|gametype|singles
+|player|p1|traukai|brycenman|1074
+|player|p2|johndm|265|1069
+|teamsize|p1|6
+|teamsize|p2|6
+|gen|9
+|tier|[gen 9] ou
+|rated|
+|rule|species clause: limit one of each pokémon
+|rule|ohko clause: ohko moves are banned
+|rule|evasion items clause: evasion items are banned
+|rule|evasion moves clause: evasion moves are banned
+|rule|endless battle clause: forcing endless battles is banned
+|rule|hp percentage mod: hp is shown in percentages
+|rule|sleep moves clause: sleep-inducing moves are banned
+|clearpoke
+|poke|p1|forretress, m|
+|poke|p1|duosion, m|
+|poke|p1|goodra-hisui, m|
+|poke|p1|conkeldurr, m|
+|poke|p1|electrode|
+|poke|p1|slowbro, m|
+|poke|p2|dusclops, m|
+|poke|p2|toxapex, m|
+|poke|p2|umbreon, f|
+|poke|p2|skarmory, m|
+|poke|p2|clefable, f|
+|poke|p2|chansey, f|
+|teampreview
+|
+|t:|1725989557
+|start
+|switch|p1a: forretress|forretress, m, shiny|100/100
+|switch|p2a: skarmory|skarmory, m|100/100
+|turn|1
+|
+|t:|1725989564
+|move|p2a: skarmory|stealth rock|p1a: forretress
+|-sidestart|p1: traukai|move: stealth rock
+|move|p1a: forretress|stealth rock|p2a: skarmory
+|-sidestart|p2: johndm|move: stealth rock
+|
+|upkeep
+|turn|2
+|
+|t:|1725989572
+|move|p1a: forretress|iron defense|p1a: forretress
+|-boost|p1a: forretress|def|2
+|move|p2a: skarmory|roar|p1a: forretress
+|drag|p1a: duosion|duosion, m, shiny|100/100
+|
+|upkeep
+|turn|3
+|
+|t:|1725989580
+|move|p2a: skarmory|spikes|p1a: duosion
+|-sidestart|p1: traukai|spikes
+|move|p1a: duosion|trick room|p1a: duosion
+|-fieldstart|move: trick room|[of] p1a: duosion
+|
+|upkeep
+|turn|4
+|
+|t:|1725989592
+|move|p1a: duosion|psychic|p2a: skarmory
+|-resisted|p2a: skarmory
+|-damage|p2a: skarmory|77/100
+|move|p2a: skarmory|spikes|p1a: duosion
+|-sidestart|p1: traukai|spikes
+|
+|-heal|p2a: skarmory|83/100|[from] item: leftovers
+|upkeep
+|turn|5
+|
+|t:|1725989601
+|move|p1a: duosion|shadow ball|p2a: skarmory
+|-damage|p2a: skarmory|52/100
+|move|p2a: skarmory|spikes|p1a: duosion
+|-sidestart|p1: traukai|spikes
+|
+|-heal|p2a: skarmory|58/100|[from] item: leftovers
+|upkeep
+|turn|6
+|
+|t:|1725989611
+|move|p1a: duosion|shadow ball|p2a: skarmory
+|-damage|p2a: skarmory|26/100
+|move|p2a: skarmory|roar|p1a: duosion
+|drag|p1a: conkeldurr|conkeldurr, m, shiny|100/100
+|-damage|p1a: conkeldurr|94/100|[from] stealth rock
+|-damage|p1a: conkeldurr|70/100|[from] spikes
+|
+|-heal|p2a: skarmory|32/100|[from] item: leftovers
+|upkeep
+|turn|7
+|
+|t:|1725989626
+|move|p1a: conkeldurr|drain punch|p2a: skarmory
+|-damage|p2a: skarmory|0 fnt
+|-heal|p1a: conkeldurr|80/100|[from] drain|[of] p2a: skarmory
+|faint|p2a: skarmory
+|
+|-fieldend|move: trick room
+|upkeep
+|
+|t:|1725989635
+|switch|p2a: clefable|clefable, f|100/100
+|turn|8
+|
+|t:|1725989640
+|move|p2a: clefable|moonblast|p1a: conkeldurr
+|-supereffective|p1a: conkeldurr
+|-damage|p1a: conkeldurr|0 fnt
+|faint|p1a: conkeldurr
+|
+|upkeep
+|
+|t:|1725989656
+|switch|p1a: goodra|goodra-hisui, m, shiny|100/100
+|-damage|p1a: goodra|94/100|[from] stealth rock
+|-damage|p1a: goodra|69/100|[from] spikes
+|turn|9
+|
+|t:|1725989676
+|move|p2a: clefable|thunder wave|p1a: goodra
+|-status|p1a: goodra|par
+|move|p1a: goodra|sludge bomb|p2a: clefable
+|-supereffective|p2a: clefable
+|-damage|p2a: clefable|66/100
+|-status|p2a: clefable|psn
+|
+|upkeep
+|turn|10
+|
+|t:|1725989698
+|move|p2a: clefable|moonlight|p2a: clefable
+|-heal|p2a: clefable|100/100 psn
+|cant|p1a: goodra|par
+|
+|upkeep
+|turn|11
+|
+|t:|1725989709
+|switch|p2a: toxapex|toxapex, m|100/100
+|-damage|p2a: toxapex|88/100|[from] stealth rock
+|cant|p1a: goodra|par
+|
+|upkeep
+|turn|12
+|
+|t:|1725989732
+|move|p2a: toxapex|toxic spikes|p1a: goodra
+|-sidestart|p1: traukai|move: toxic spikes
+|move|p1a: goodra|sludge bomb|p2a: toxapex
+|-resisted|p2a: toxapex
+|-damage|p2a: toxapex|79/100
+|
+|upkeep
+|turn|13
+|
+|t:|1725989739
+|move|p2a: toxapex|toxic spikes|p1a: goodra
+|-sidestart|p1: traukai|move: toxic spikes
+|move|p1a: goodra|sludge bomb|p2a: toxapex
+|-resisted|p2a: toxapex
+|-damage|p2a: toxapex|69/100
+|
+|upkeep
+|turn|14
+|
+|t:|1725989748
+|switch|p1a: slowbro|slowbro, m, shiny|100/100
+|-damage|p1a: slowbro|88/100|[from] stealth rock
+|-damage|p1a: slowbro|63/100|[from] spikes
+|-status|p1a: slowbro|tox
+|move|p2a: toxapex|recover|p2a: toxapex
+|-heal|p2a: toxapex|100/100
+|
+|-damage|p1a: slowbro|57/100 tox|[from] psn
+|upkeep
+|turn|15
+|
+|t:|1725989768
+|switch|p2a: umbreon|umbreon, f|100/100
+|-damage|p2a: umbreon|88/100|[from] stealth rock
+|move|p1a: slowbro|trick room|p1a: slowbro
+|-fieldstart|move: trick room|[of] p1a: slowbro
+|
+|-heal|p2a: umbreon|94/100|[from] item: leftovers
+|-damage|p1a: slowbro|45/100 tox|[from] psn
+|upkeep
+|turn|16
+|
+|t:|1725989780
+|move|p1a: slowbro|scald|p2a: umbreon
+|-damage|p2a: umbreon|68/100
+|move|p2a: umbreon|foul play|p1a: slowbro
+|-supereffective|p1a: slowbro
+|-damage|p1a: slowbro|13/100 tox
+|-enditem|p1a: slowbro|aguav berry|[eat]
+|-heal|p1a: slowbro|46/100 tox|[from] item: aguav berry
+|
+|-heal|p2a: umbreon|74/100|[from] item: leftovers
+|-damage|p1a: slowbro|28/100 tox|[from] psn
+|upkeep
+|turn|17
+|
+|t:|1725989796
+|move|p1a: slowbro|flamethrower|p2a: umbreon
+|-damage|p2a: umbreon|53/100
+|move|p2a: umbreon|foul play|p1a: slowbro
+|-supereffective|p1a: slowbro
+|-damage|p1a: slowbro|0 fnt
+|faint|p1a: slowbro
+|
+|-heal|p2a: umbreon|59/100|[from] item: leftovers
+|upkeep
+|
+|t:|1725989812
+|switch|p1a: forretress|forretress, m, shiny|100/100
+|-damage|p1a: forretress|88/100|[from] stealth rock
+|-damage|p1a: forretress|63/100|[from] spikes
+|turn|18
+|
+|t:|1725989819
+|move|p1a: forretress|iron defense|p1a: forretress
+|-boost|p1a: forretress|def|2
+|move|p2a: umbreon|wish|p2a: umbreon
+|
+|-heal|p2a: umbreon|65/100|[from] item: leftovers
+|upkeep
+|turn|19
+|
+|t:|1725989828
+|move|p1a: forretress|iron defense|p1a: forretress
+|-boost|p1a: forretress|def|2
+|move|p2a: umbreon|foul play|p1a: forretress
+|-damage|p1a: forretress|57/100
+|
+|-heal|p2a: umbreon|100/100|[from] move: wish|[wisher] umbreon
+|-fieldend|move: trick room
+|upkeep
+|turn|20
+|
+|t:|1725989840
+|switch|p2a: chansey|chansey, f|100/100
+|-damage|p2a: chansey|88/100|[from] stealth rock
+|move|p1a: forretress|body press|p2a: chansey
+|-supereffective|p2a: chansey
+|-damage|p2a: chansey|0 fnt
+|faint|p2a: chansey
+|
+|upkeep
+|
+|t:|1725989853
+|switch|p2a: dusclops|dusclops, m|100/100
+|-damage|p2a: dusclops|88/100|[from] stealth rock
+|-ability|p2a: dusclops|pressure
+|turn|21
+|
+|t:|1725989865
+|move|p1a: forretress|body press|p2a: dusclops
+|-immune|p2a: dusclops
+|move|p2a: dusclops|curse|p1a: forretress
+|-start|p1a: forretress|curse|[of] p2a: dusclops
+|-damage|p2a: dusclops|39/100
+|
+|-damage|p1a: forretress|32/100|[from] curse
+|upkeep
+|turn|22
+|
+|t:|1725989881
+|switch|p1a: duosion|duosion, m, shiny|100/100
+|-status|p1a: duosion|tox
+|move|p2a: dusclops|pain split|p1a: duosion
+|-sethp|p1a: duosion|63/100 tox|[from] move: pain split|[silent]
+|-sethp|p2a: dusclops|95/100|[from] move: pain split
+|
+|upkeep
+|turn|23
+|
+|t:|1725989899
+|move|p2a: dusclops|shadow sneak|p1a: duosion
+|-supereffective|p1a: duosion
+|-damage|p1a: duosion|36/100 tox
+|move|p1a: duosion|shadow ball|p2a: dusclops
+|-supereffective|p2a: dusclops
+|-damage|p2a: dusclops|58/100
+|
+|upkeep
+|turn|24
+|
+|t:|1725989909
+|move|p2a: dusclops|shadow sneak|p1a: duosion
+|-supereffective|p1a: duosion
+|-damage|p1a: duosion|10/100 tox
+|move|p1a: duosion|shadow ball|p2a: dusclops
+|-supereffective|p2a: dusclops
+|-damage|p2a: dusclops|22/100
+|
+|upkeep
+|turn|25
+|
+|t:|1725989918
+|move|p2a: dusclops|shadow sneak|p1a: duosion
+|-supereffective|p1a: duosion
+|-damage|p1a: duosion|0 fnt
+|faint|p1a: duosion
+|
+|upkeep
+|
+|t:|1725989922
+|switch|p1a: goodra|goodra-hisui, m, shiny|69/100 par
+|-damage|p1a: goodra|63/100 par|[from] stealth rock
+|-damage|p1a: goodra|38/100 par|[from] spikes
+|turn|26
+|
+|t:|1725989932
+|move|p2a: dusclops|pain split|p1a: goodra
+|-sethp|p1a: goodra|26/100 par|[from] move: pain split|[silent]
+|-sethp|p2a: dusclops|42/100|[from] move: pain split
+|cant|p1a: goodra|par
+|
+|upkeep
+|turn|27
+|
+|t:|1725989944
+|move|p2a: dusclops|shadow sneak|p1a: goodra
+|-damage|p1a: goodra|16/100 par
+|-enditem|p1a: goodra|aguav berry|[eat]
+|-heal|p1a: goodra|49/100 par|[from] item: aguav berry
+|move|p1a: goodra|sludge bomb|p2a: dusclops
+|-resisted|p2a: dusclops
+|-damage|p2a: dusclops|35/100
+|-status|p2a: dusclops|psn
+|
+|-damage|p2a: dusclops|23/100 psn|[from] psn
+|upkeep
+|turn|28
+|
+|t:|1725989957
+|move|p2a: dusclops|pain split|p1a: goodra
+|-sethp|p1a: goodra|32/100 par|[from] move: pain split|[silent]
+|-sethp|p2a: dusclops|52/100 psn|[from] move: pain split
+|move|p1a: goodra|life dew|p1a: goodra
+|-heal|p1a: goodra|57/100 par
+|
+|-damage|p2a: dusclops|39/100 psn|[from] psn
+|upkeep
+|turn|29
+|
+|t:|1725989975
+|move|p2a: dusclops|pain split|p1a: goodra
+|-sethp|p1a: goodra|40/100 par|[from] move: pain split|[silent]
+|-sethp|p2a: dusclops|66/100 psn|[from] move: pain split
+|move|p1a: goodra|draco meteor|p2a: dusclops
+|-damage|p2a: dusclops|30/100 psn
+|-unboost|p1a: goodra|spa|2
+|
+|-damage|p2a: dusclops|18/100 psn|[from] psn
+|upkeep
+|turn|30
+|
+|t:|1725989992
+|move|p2a: dusclops|curse|p1a: goodra
+|-start|p1a: goodra|curse|[of] p2a: dusclops
+|-damage|p2a: dusclops|0 fnt
+|faint|p2a: dusclops
+|cant|p1a: goodra|par
+|
+|-damage|p1a: goodra|15/100 par|[from] curse
+|upkeep
+|
+|t:|1725990004
+|switch|p2a: clefable|clefable, f|100/100 psn
+|turn|31
+|
+|t:|1725990009
+|-terastallize|p2a: clefable|fire
+|move|p2a: clefable|fire blast|p1a: goodra
+|-damage|p1a: goodra|0 fnt
+|faint|p1a: goodra
+|
+|upkeep
+|
+|t:|1725990016
+|switch|p1a: electrode|electrode|100/100
+|-damage|p1a: electrode|88/100|[from] stealth rock
+|-damage|p1a: electrode|63/100|[from] spikes
+|-status|p1a: electrode|tox
+|turn|32
+|
+|t:|1725990025
+|move|p1a: electrode|explosion|p2a: clefable
+|-damage|p2a: clefable|44/100 psn
+|faint|p1a: electrode
+|move|p2a: clefable|moonblast|p1: electrode|[notarget]
+|-fail|p2a: clefable
+|
+|upkeep
+|
+|t:|1725990032
+|switch|p1a: forretress|forretress, m, shiny|32/100
+|-damage|p1a: forretress|20/100|[from] stealth rock
+|-damage|p1a: forretress|0 fnt|[from] spikes
+|faint|p1a: forretress
+|
+|win|johndm
+|raw|traukai's rating: 1074 &rarr; <strong>1053</strong><br />(-21 for losing)
+|raw|johndm's rating: 1069 &rarr; <strong>1099</strong><br />(+30 for winning)

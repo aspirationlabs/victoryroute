@@ -1,0 +1,254 @@
+|j|☆icenet
+|j|☆lce44
+|t:|1727436011
+|gametype|singles
+|player|p1|icenet|cheryl|1101
+|player|p2|lce44|n|1129
+|teamsize|p1|6
+|teamsize|p2|6
+|gen|9
+|tier|[gen 9] ou
+|rated|
+|rule|species clause: limit one of each pokémon
+|rule|ohko clause: ohko moves are banned
+|rule|evasion items clause: evasion items are banned
+|rule|evasion moves clause: evasion moves are banned
+|rule|endless battle clause: forcing endless battles is banned
+|rule|hp percentage mod: hp is shown in percentages
+|rule|sleep moves clause: sleep-inducing moves are banned
+|clearpoke
+|poke|p1|samurott-hisui, m|
+|poke|p1|ribombee, f|
+|poke|p1|tyranitar, m|
+|poke|p1|excadrill, m|
+|poke|p1|ursaluna, m|
+|poke|p1|arcanine-hisui, m|
+|poke|p2|skeledirge, f|
+|poke|p2|hydreigon, m|
+|poke|p2|donphan, f|
+|poke|p2|kilowattrel, f|
+|poke|p2|azumarill, m|
+|poke|p2|breloom, m|
+|teampreview
+|c|☆icenet|can we freind becouse we are ice
+|
+|t:|1727436044
+|start
+|switch|p1a: ribombee|ribombee, f|100/100
+|switch|p2a: breloom|breloom, m|100/100
+|turn|1
+|inactive|battle timer is on: inactive players will automatically lose when time's up. (requested by lce44)
+|
+|t:|1727436057
+|move|p1a: ribombee|sticky web|p2a: breloom
+|-sidestart|p2: lce44|move: sticky web
+|move|p2a: breloom|seed bomb|p1a: ribombee
+|-resisted|p1a: ribombee
+|-damage|p1a: ribombee|60/100
+|
+|-status|p2a: breloom|tox|[from] item: toxic orb
+|upkeep
+|turn|2
+|
+|t:|1727436065
+|move|p1a: ribombee|bug buzz|p2a: breloom
+|-damage|p2a: breloom|19/100 tox
+|move|p2a: breloom|seed bomb|p1a: ribombee
+|-resisted|p1a: ribombee
+|-damage|p1a: ribombee|21/100
+|
+|-heal|p2a: breloom|31/100 tox|[from] ability: poison heal
+|upkeep
+|turn|3
+|
+|t:|1727436076
+|move|p2a: breloom|protect|p2a: breloom
+|-singleturn|p2a: breloom|protect
+|move|p1a: ribombee|bug buzz|p2a: breloom
+|-activate|p2a: breloom|move: protect
+|
+|-heal|p2a: breloom|43/100 tox|[from] ability: poison heal
+|upkeep
+|turn|4
+|
+|t:|1727436086
+|move|p2a: breloom|mach punch|p1a: ribombee
+|-resisted|p1a: ribombee
+|-damage|p1a: ribombee|11/100
+|move|p1a: ribombee|bug buzz|p2a: breloom
+|-damage|p2a: breloom|0 fnt
+|faint|p2a: breloom
+|
+|upkeep
+|
+|t:|1727436097
+|switch|p2a: donphan|donphan, f|100/100
+|turn|5
+|
+|t:|1727436101
+|move|p1a: ribombee|light screen|p1a: ribombee
+|-sidestart|p1: icenet|move: light screen
+|move|p2a: donphan|rapid spin|p1a: ribombee
+|-damage|p1a: ribombee|0 fnt
+|-boost|p2a: donphan|spe|1
+|-sideend|p2: lce44|sticky web|[from] move: rapid spin|[of] p2a: donphan
+|faint|p1a: ribombee
+|
+|upkeep
+|
+|t:|1727436110
+|switch|p1a: tyranitar|tyranitar, m|100/100
+|-weather|sandstorm|[from] ability: sand stream|[of] p1a: tyranitar
+|turn|6
+|
+|t:|1727436120
+|move|p2a: donphan|earthquake|p1a: tyranitar
+|-supereffective|p1a: tyranitar
+|-damage|p1a: tyranitar|14/100
+|move|p1a: tyranitar|earthquake|p2a: donphan
+|-damage|p2a: donphan|71/100
+|
+|-weather|sandstorm|[upkeep]
+|upkeep
+|turn|7
+|
+|t:|1727436132
+|move|p2a: donphan|earthquake|p1a: tyranitar
+|-supereffective|p1a: tyranitar
+|-damage|p1a: tyranitar|0 fnt
+|faint|p1a: tyranitar
+|
+|-weather|sandstorm|[upkeep]
+|upkeep
+|
+|t:|1727436140
+|switch|p1a: samurott|samurott-hisui, m|100/100
+|turn|8
+|
+|t:|1727436147
+|move|p1a: samurott|aqua cutter|p2a: donphan
+|-supereffective|p2a: donphan
+|-crit|p2a: donphan
+|-damage|p2a: donphan|0 fnt
+|faint|p2a: donphan
+|
+|-weather|sandstorm|[upkeep]
+|-damage|p1a: samurott|94/100|[from] sandstorm
+|upkeep
+|
+|t:|1727436160
+|switch|p2a: kilowattrel|kilowattrel, f|100/100
+|turn|9
+|
+|t:|1727436169
+|move|p2a: kilowattrel|u-turn|p1a: samurott
+|-supereffective|p1a: samurott
+|-damage|p1a: samurott|69/100
+|
+|t:|1727436172
+|switch|p2a: azumarill|azumarill, m|100/100|[from] u-turn
+|move|p1a: samurott|night slash|p2a: azumarill
+|-resisted|p2a: azumarill
+|-damage|p2a: azumarill|77/100
+|
+|-weather|sandstorm|[upkeep]
+|-damage|p1a: samurott|62/100|[from] sandstorm
+|-damage|p2a: azumarill|71/100|[from] sandstorm
+|-sideend|p1: icenet|move: light screen
+|upkeep
+|turn|10
+|
+|t:|1727436192
+|-terastallize|p2a: azumarill|water
+|move|p2a: azumarill|aqua jet|p1a: samurott
+|-resisted|p1a: samurott
+|-damage|p1a: samurott|31/100
+|move|p1a: samurott|aqua cutter|p2a: azumarill
+|-resisted|p2a: azumarill
+|-damage|p2a: azumarill|47/100
+|
+|-weather|sandstorm|[upkeep]
+|-damage|p1a: samurott|25/100|[from] sandstorm
+|-damage|p2a: azumarill|40/100|[from] sandstorm
+|upkeep
+|turn|11
+|
+|t:|1727436206
+|move|p1a: samurott|sucker punch|p2a: azumarill
+|-damage|p2a: azumarill|6/100
+|move|p2a: azumarill|aqua jet|p1a: samurott
+|-resisted|p1a: samurott
+|-damage|p1a: samurott|0 fnt
+|faint|p1a: samurott
+|
+|-weather|sandstorm|[upkeep]
+|-damage|p2a: azumarill|0 fnt|[from] sandstorm
+|faint|p2a: azumarill
+|upkeep
+|
+|t:|1727436223
+|switch|p1a: ursaluna|ursaluna, m|100/100
+|switch|p2a: hydreigon|hydreigon, m|100/100
+|turn|12
+|
+|t:|1727436237
+|move|p2a: hydreigon|dark pulse|p1a: ursaluna
+|-damage|p1a: ursaluna|51/100
+|cant|p1a: ursaluna|flinch
+|
+|-weather|sandstorm|[upkeep]
+|-damage|p2a: hydreigon|94/100|[from] sandstorm
+|-status|p1a: ursaluna|brn|[from] item: flame orb
+|upkeep
+|turn|13
+|
+|t:|1727436248
+|move|p2a: hydreigon|dark pulse|p1a: ursaluna
+|-damage|p1a: ursaluna|0 fnt
+|faint|p1a: ursaluna
+|
+|-weather|none
+|upkeep
+|
+|t:|1727436257
+|switch|p1a: arcanine|arcanine-hisui, m|100/100
+|turn|14
+|
+|t:|1727436263
+|move|p2a: hydreigon|dark pulse|p1a: arcanine
+|-damage|p1a: arcanine|30/100
+|cant|p1a: arcanine|flinch
+|
+|upkeep
+|turn|15
+|c|☆icenet|this is hard luck bruh
+|
+|t:|1727436283
+|move|p2a: hydreigon|dark pulse|p1a: arcanine
+|-damage|p1a: arcanine|0 fnt
+|faint|p1a: arcanine
+|
+|upkeep
+|
+|t:|1727436289
+|switch|p1a: excadrill|excadrill, m|100/100
+|turn|16
+|
+|t:|1727436294
+|-terastallize|p1a: excadrill|steel
+|move|p2a: hydreigon|dark pulse|p1a: excadrill
+|-damage|p1a: excadrill|23/100
+|move|p1a: excadrill|swords dance|p1a: excadrill
+|-boost|p1a: excadrill|atk|2
+|
+|upkeep
+|turn|17
+|
+|t:|1727436303
+|move|p2a: hydreigon|dark pulse|p1a: excadrill
+|-damage|p1a: excadrill|0 fnt
+|faint|p1a: excadrill
+|
+|win|lce44
+|raw|icenet's rating: 1101 &rarr; <strong>1078</strong><br />(-23 for losing)
+|raw|lce44's rating: 1129 &rarr; <strong>1152</strong><br />(+23 for winning)

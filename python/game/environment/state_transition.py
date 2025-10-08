@@ -12,28 +12,64 @@ from typing import Tuple
 from absl import logging
 
 from python.game.events.battle_event import (
+    AbilityEvent,
+    ActivateEvent,
+    BattleEndEvent,
     BattleEvent,
+    BattleStartEvent,
     BoostEvent,
+    CantEvent,
     ClearAllBoostEvent,
     ClearBoostEvent,
     ClearNegativeBoostEvent,
+    ClearPokeEvent,
+    CritEvent,
     CureStatusEvent,
     DamageEvent,
     DetailsChangeEvent,
     DragEvent,
+    EndAbilityEvent,
+    EndItemEvent,
+    EndVolatileEvent,
+    FailEvent,
     FaintEvent,
     FieldEndEvent,
     FieldStartEvent,
+    FormeChangeEvent,
+    GameTypeEvent,
+    GenEvent,
     HealEvent,
+    HitCountEvent,
+    IgnoredEvent,
+    ImmuneEvent,
+    ItemEvent,
+    MissEvent,
+    MoveEvent,
+    PlayerEvent,
+    PokeEvent,
+    PrepareEvent,
+    PrivateMessageEvent,
     ReplaceEvent,
     RequestEvent,
+    ResistedEvent,
     SetBoostEvent,
     SetHpEvent,
     SideEndEvent,
     SideStartEvent,
+    SingleMoveEvent,
+    SingleTurnEvent,
+    StartVolatileEvent,
     StatusEvent,
+    SuperEffectiveEvent,
     SwitchEvent,
+    TeamPreviewEvent,
+    TeamSizeEvent,
+    TerastallizeEvent,
+    TierEvent,
+    TransformEvent,
+    TurnEvent,
     UnboostEvent,
+    UnknownEvent,
     UpkeepEvent,
     WeatherEvent,
 )
@@ -114,8 +150,63 @@ class StateTransition:
             return StateTransition._apply_request(state, event)
         elif isinstance(event, UpkeepEvent):
             return StateTransition._apply_upkeep(state, event)
-        else:
+        # Informational events that don't modify battle state
+        elif isinstance(
+            event,
+            (
+                # Battle flow events
+                TurnEvent,
+                BattleStartEvent,
+                BattleEndEvent,
+                # Metadata events
+                PlayerEvent,
+                TeamSizeEvent,
+                GenEvent,
+                TierEvent,
+                GameTypeEvent,
+                # Team preview events
+                PokeEvent,
+                ClearPokeEvent,
+                TeamPreviewEvent,
+                # Move/damage detail events
+                MoveEvent,
+                SuperEffectiveEvent,
+                ResistedEvent,
+                ImmuneEvent,
+                CritEvent,
+                MissEvent,
+                FailEvent,
+                HitCountEvent,
+                CantEvent,
+                PrepareEvent,
+                # Ability/Item events (informational only, actual effects handled elsewhere)
+                AbilityEvent,
+                EndAbilityEvent,
+                ItemEvent,
+                EndItemEvent,
+                ActivateEvent,
+                # Volatile condition events (not currently tracked in state)
+                StartVolatileEvent,
+                EndVolatileEvent,
+                SingleTurnEvent,
+                SingleMoveEvent,
+                # Form change events (cosmetic, not affecting battle mechanics)
+                TerastallizeEvent,
+                FormeChangeEvent,
+                TransformEvent,
+                # Ignored/metadata events
+                IgnoredEvent,
+                PrivateMessageEvent,
+            ),
+        ):
+            return state
+        # Truly unknown events
+        elif isinstance(event, UnknownEvent):
             logging.warning(f"Unknown event: {event}")
+            return state
+        else:
+            # This should never happen if all event types are handled
+            logging.error(f"Unhandled event type: {type(event).__name__}: {event}")
             return state
 
     @staticmethod
@@ -472,6 +563,13 @@ class StateTransition:
         if event.status is not None:
             status = StateTransition._parse_status(event.status)
 
+        # Preserve existing HP if event doesn't specify it (e.g., Illusion break)
+        # Check if raw message has HP data (5+ parts) or not (4 parts)
+        parts = event.raw_message.split("|")
+        has_hp_data = len(parts) > 4 and parts[4]
+        hp_current = event.hp_current if has_hp_data else pokemon.current_hp
+        hp_max = event.hp_max if has_hp_data else pokemon.max_hp
+
         # Replace event preserves all persistent attributes
         new_pokemon = replace(
             pokemon,
@@ -479,8 +577,8 @@ class StateTransition:
             level=event.level,
             gender=event.gender,
             shiny=event.shiny,
-            current_hp=event.hp_current,
-            max_hp=event.hp_max,
+            current_hp=hp_current,
+            max_hp=hp_max,
             status=status,
         )
 
@@ -964,7 +1062,12 @@ class StateTransition:
             "luckychant": SideCondition.LUCKY_CHANT,
         }
 
-        condition_str = event.condition.lower().replace(" ", "")
+        # Strip "move: " prefix if present (e.g., "move: stealth rock" -> "stealth rock")
+        condition_clean = event.condition
+        if condition_clean.lower().startswith("move:"):
+            condition_clean = condition_clean[5:].strip()
+
+        condition_str = condition_clean.lower().replace(" ", "")
         condition = condition_map.get(condition_str)
 
         if not condition:
@@ -999,7 +1102,12 @@ class StateTransition:
             "luckychant": SideCondition.LUCKY_CHANT,
         }
 
-        condition_str = event.condition.lower().replace(" ", "")
+        # Strip "move: " prefix if present (e.g., "move: stealth rock" -> "stealth rock")
+        condition_clean = event.condition
+        if condition_clean.lower().startswith("move:"):
+            condition_clean = condition_clean[5:].strip()
+
+        condition_str = condition_clean.lower().replace(" ", "")
         condition = condition_map.get(condition_str)
 
         if not condition:
