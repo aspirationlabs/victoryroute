@@ -20,9 +20,7 @@ class TeamStateTest(unittest.IsolatedAsyncioTestCase):
         )
 
         self.assertTrue(team.has_side_condition(SideCondition.STEALTH_ROCK))
-        self.assertEqual(
-            team.get_side_condition_value(SideCondition.STEALTH_ROCK), 1
-        )
+        self.assertEqual(team.get_side_condition_value(SideCondition.STEALTH_ROCK), 1)
 
     def test_side_condition_spikes_layers(self) -> None:
         """Test Spikes with multiple layers."""

@@ -28,6 +28,7 @@ STAT_STAGE_MULTIPLIERS = {
 @dataclass(frozen=True)
 class PokemonMove:
     """Represents a move with its current PP."""
+
     name: str
     current_pp: int
     max_pp: int
@@ -40,6 +41,7 @@ class PokemonState:
     This represents a complete snapshot of a Pokemon's state at a specific point
     in battle, including HP, stats, status conditions, and active effects.
     """
+
     species: str
     level: int = 100
     gender: Optional[str] = None
@@ -160,21 +162,11 @@ class PokemonState:
         """
         result: Dict[str, Any] = {
             "hp": {"current": self.current_hp, "max": self.max_hp},
-            "atk": self.get_effective_stat(
-                Stat.ATK, base_stats.get(Stat.ATK, 100)
-            ),
-            "def": self.get_effective_stat(
-                Stat.DEF, base_stats.get(Stat.DEF, 100)
-            ),
-            "spa": self.get_effective_stat(
-                Stat.SPA, base_stats.get(Stat.SPA, 100)
-            ),
-            "spd": self.get_effective_stat(
-                Stat.SPD, base_stats.get(Stat.SPD, 100)
-            ),
-            "spe": self.get_effective_stat(
-                Stat.SPE, base_stats.get(Stat.SPE, 100)
-            ),
+            "atk": self.get_effective_stat(Stat.ATK, base_stats.get(Stat.ATK, 100)),
+            "def": self.get_effective_stat(Stat.DEF, base_stats.get(Stat.DEF, 100)),
+            "spa": self.get_effective_stat(Stat.SPA, base_stats.get(Stat.SPA, 100)),
+            "spd": self.get_effective_stat(Stat.SPD, base_stats.get(Stat.SPD, 100)),
+            "spe": self.get_effective_stat(Stat.SPE, base_stats.get(Stat.SPE, 100)),
             "status": self.status.value,
             "accuracy_stage": self.get_stat_boost(Stat.ACCURACY),
             "evasion_stage": self.get_stat_boost(Stat.EVASION),
@@ -205,9 +197,15 @@ class PokemonState:
             "nickname": self.nickname,
             "hp": {"current": self.current_hp, "max": self.max_hp},
             "status": self.status.value,
-            "stat_boosts": {stat.value: boost for stat, boost in self.stat_boosts.items()},
+            "stat_boosts": {
+                stat.value: boost for stat, boost in self.stat_boosts.items()
+            },
             "moves": [
-                {"name": move.name, "current_pp": move.current_pp, "max_pp": move.max_pp}
+                {
+                    "name": move.name,
+                    "current_pp": move.current_pp,
+                    "max_pp": move.max_pp,
+                }
                 for move in self.moves
             ],
             "item": self.item,
