@@ -1,6 +1,7 @@
 """WebSocket client for connecting to Pokemon Showdown servers."""
 
 import json
+import threading
 from typing import Any, Optional
 
 import httpx
@@ -16,6 +17,7 @@ class ShowdownClient:
         self._server_url: str = ""
         self._username: str = ""
         self._authenticated: bool = False
+        self._send_lock: threading.Lock = threading.Lock()
 
     async def connect(self, server_url: str, username: str, password: str = "") -> None:
         """Connect to the Showdown server and authenticate.
@@ -92,11 +94,15 @@ class ShowdownClient:
             return response_json["assertion"]
 
     async def send_message(self, message: str) -> None:
-        """Send a message to the server."""
+        """Send a message to the server.
+
+        Thread-safe: uses lock to prevent concurrent sends.
+        """
         if self._ws is None:
             raise RuntimeError("Not connected to server")
         assert self._ws is not None
-        await self._ws.send(message)
+        with self._send_lock:
+            await self._ws.send(message)
 
     async def receive_message(self) -> str:
         """Receive a message from the server."""
