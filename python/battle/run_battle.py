@@ -11,6 +11,7 @@ from typing import List
 from absl import app, flags, logging
 
 from python.agents.agent_registry import AgentRegistry
+from python.battle.opponent_stats_tracker import OpponentStatsTracker
 from python.game.data.game_data import GameData
 from python.game.environment.battle_environment import BattleEnvironment
 from python.game.interface.challenge_handler import ChallengeHandler
@@ -106,6 +107,7 @@ async def run_battle() -> None:
     username = FLAGS.username or generate_default_username(FLAGS.agent)
     game_data = GameData()
     client = ShowdownClient()
+    stats_tracker = OpponentStatsTracker()
 
     try:
         await client.connect(FLAGS.server_url, username, FLAGS.password)
@@ -183,12 +185,35 @@ async def run_battle() -> None:
 
             logging.info(f"Battle {battle_room} ended after {turn_count} turns")
 
+            # Determine opponent username from battle state
+            opponent_username = None
+            if state.our_player_id:
+                opponent_id = "p2" if state.our_player_id == "p1" else "p1"
+                opponent_username = state.player_usernames.get(opponent_id)
+
+            # Record battle result
             if state.winner is None:
                 logging.info("Result: Tie")
+                if opponent_username:
+                    stats_tracker.record_battle(opponent_username, won=False, tied=True)
             elif state.winner == username:
                 logging.info("Result: Victory!")
+                if opponent_username:
+                    stats_tracker.record_battle(opponent_username, won=True)
             else:
                 logging.info(f"Result: Defeat - {state.winner} won")
+                if opponent_username:
+                    stats_tracker.record_battle(opponent_username, won=False)
+
+            # Log updated stats for this opponent
+            if opponent_username:
+                stats = stats_tracker.get_stats(opponent_username)
+                if stats:
+                    logging.info(f"Stats vs {opponent_username}:")
+                    logging.info(
+                        f"  Record: {stats.wins}W-{stats.losses}L-{stats.ties}T ({stats.total_battles} battles)"
+                    )
+                    logging.info(f"  Win %: {stats.win_percentage:.1f}%")
 
             if logger:
                 logger.close()
