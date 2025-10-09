@@ -376,7 +376,10 @@ class StateTransition:
         found_pokemon = False
         # Match by species and nickname to find the Pokemon to update
         for i, p in enumerate(all_pokemon):
-            if p.species == old_pokemon.species and p.nickname == old_pokemon.nickname:
+            if (
+                p.species == old_pokemon.species
+                and p.nickname == old_pokemon.nickname
+            ):
                 all_pokemon[i] = new_pokemon
                 found_pokemon = True
                 break
@@ -1465,105 +1468,109 @@ class StateTransition:
             new_team_pokemon = []
             for poke_data in request_pokemon:
                 condition = poke_data.get("condition", "100/100")
-                condition_parts = condition.split()
-                hp_parts = condition_parts[0].split("/")
-                current_hp = (
-                    int(hp_parts[0])
-                    if hp_parts[0] != "0" and hp_parts[0] != "fnt"
-                    else 0
+                    condition_parts = condition.split()
+                    hp_parts = condition_parts[0].split("/")
+                    current_hp = (
+                        int(hp_parts[0])
+                        if hp_parts[0] != "0" and hp_parts[0] != "fnt"
+                        else 0
+                    )
+                    max_hp = int(hp_parts[1]) if len(hp_parts) > 1 else 100
+
+                    # Parse status from condition (e.g., "100/100 par" -> "par")
+                    # Note: "0 fnt" format has "fnt" as second part but it's not a status
+                    status_str = None
+                    if len(condition_parts) > 1 and condition_parts[1] != "fnt":
+                        status_str = condition_parts[1]
+
+                    status = Status.NONE
+                    if status_str:
+                        try:
+                            status = Status(status_str)
+                        except ValueError:
+                            status = Status.NONE
+
+                    ident = poke_data.get("ident", "")
+                    nickname = ident.split(": ")[1] if ": " in ident else None
+
+                    details = poke_data.get("details", "")
+                    details_parts = details.split(", ")
+                    species = details_parts[0] if details_parts else "Unknown"
+                    gender = details_parts[1] if len(details_parts) > 1 else None
+
+                    pokemon_moves = []
+                    for move_name in poke_data.get("moves", []):
+                        # Calculate max PP assuming PP Ups are maxed (8/5 multiplier)
+                        max_pp = StateTransition._calculate_max_pp(move_name)
+                        pokemon_moves.append(
+                            PokemonMove(
+                                name=move_name, current_pp=max_pp, max_pp=max_pp
+                            )
+                        )
+
+                    item = poke_data.get("item", "")
+                    ability = poke_data.get("ability", "")
+                    tera_type = poke_data.get("teraType", None)
+
+                    nickname_key = nickname if nickname != species else None
+                    # Use normalized species name for lookup to match the key format
+                    normalized_species = StateTransition._normalize_species_name(
+                        species
+                    )
+                    poke_key = (normalized_species, nickname_key)
+                    existing_pokemon = existing_pokemon_map.get(poke_key)
+
+                    if existing_pokemon:
+                        pokemon = replace(
+                            existing_pokemon,
+                            current_hp=current_hp,
+                            max_hp=max_hp,
+                            status=status,
+                            moves=pokemon_moves,
+                            item=item if item else None,
+                            ability=ability,
+                            tera_type=tera_type,
+                            is_active=False,  # Will be set to True later if this is the active Pokemon
+                        )
+                    else:
+                        pokemon = PokemonState(
+                            species=species,
+                            level=100,
+                            gender=gender,
+                            current_hp=current_hp,
+                            max_hp=max_hp,
+                            status=status,
+                            nickname=nickname_key,
+                            moves=pokemon_moves,
+                            item=item if item else None,
+                            ability=ability,
+                            tera_type=tera_type,
+                        )
+                    new_team_pokemon.append(pokemon)
+
+                active_index = None
+                for i, poke_data in enumerate(request_pokemon):
+                    if poke_data.get("active", False):
+                        active_index = i
+                        break
+
+                # Mark the active Pokemon as is_active=True (only if alive)
+                if active_index is not None:
+                    active_pokemon = new_team_pokemon[active_index]
+                    # Only mark as active if Pokemon is alive
+                    if active_pokemon.current_hp > 0:
+                        new_team_pokemon[active_index] = replace(
+                            active_pokemon, is_active=True
+                        )
+
+                updated_team = replace(
+                    team, pokemon=new_team_pokemon, active_pokemon_index=active_index
                 )
-                max_hp = int(hp_parts[1]) if len(hp_parts) > 1 else 100
 
-                # Parse status from condition (e.g., "100/100 par" -> "par")
-                # Note: "0 fnt" format has "fnt" as second part but it's not a status
-                status_str = None
-                if len(condition_parts) > 1 and condition_parts[1] != "fnt":
-                    status_str = condition_parts[1]
-
-                status = Status.NONE
-                if status_str:
-                    try:
-                        status = Status(status_str)
-                    except ValueError:
-                        status = Status.NONE
-
-                ident = poke_data.get("ident", "")
-                nickname = ident.split(": ")[1] if ": " in ident else None
-
-                details = poke_data.get("details", "")
-                details_parts = details.split(", ")
-                species = details_parts[0] if details_parts else "Unknown"
-                gender = details_parts[1] if len(details_parts) > 1 else None
-
-                pokemon_moves = []
-                for move_name in poke_data.get("moves", []):
-                    # Calculate max PP assuming PP Ups are maxed (8/5 multiplier)
-                    max_pp = StateTransition._calculate_max_pp(move_name)
-                    pokemon_moves.append(
-                        PokemonMove(name=move_name, current_pp=max_pp, max_pp=max_pp)
-                    )
-
-                item = poke_data.get("item", "")
-                ability = poke_data.get("ability", "")
-                tera_type = poke_data.get("teraType", None)
-
-                nickname_key = nickname if nickname != species else None
-                # Use normalized species name for lookup to match the key format
-                normalized_species = StateTransition._normalize_species_name(species)
-                poke_key = (normalized_species, nickname_key)
-                existing_pokemon = existing_pokemon_map.get(poke_key)
-
-                if existing_pokemon:
-                    pokemon = replace(
-                        existing_pokemon,
-                        current_hp=current_hp,
-                        max_hp=max_hp,
-                        status=status,
-                        moves=pokemon_moves,
-                        item=item if item else None,
-                        ability=ability,
-                        tera_type=tera_type,
-                        is_active=False,  # Will be set to True later if this is the active Pokemon
-                    )
-                else:
-                    pokemon = PokemonState(
-                        species=species,
-                        level=100,
-                        gender=gender,
-                        current_hp=current_hp,
-                        max_hp=max_hp,
-                        status=status,
-                        nickname=nickname_key,
-                        moves=pokemon_moves,
-                        item=item if item else None,
-                        ability=ability,
-                        tera_type=tera_type,
-                    )
-                new_team_pokemon.append(pokemon)
-
-            active_index = None
-            for i, poke_data in enumerate(request_pokemon):
-                if poke_data.get("active", False):
-                    active_index = i
-                    break
-
-            # Mark the active Pokemon as is_active=True (only if alive)
-            if active_index is not None:
-                active_pokemon = new_team_pokemon[active_index]
-                # Only mark as active if Pokemon is alive
-                if active_pokemon.current_hp > 0:
-                    new_team_pokemon[active_index] = replace(
-                        active_pokemon, is_active=True
-                    )
-
-            updated_team = replace(
-                team, pokemon=new_team_pokemon, active_pokemon_index=active_index
-            )
-
-            updated_state = StateTransition._update_team_in_state(
-                state, player_id, updated_team
-            )
-            team = updated_team
+                updated_state = StateTransition._update_team_in_state(
+                    state, player_id, updated_team
+                )
+                team = updated_team
 
         if "active" in request_data and request_data["active"]:
             active_data = request_data["active"][0]

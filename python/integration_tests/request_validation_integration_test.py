@@ -342,8 +342,6 @@ class RequestValidationIntegrationTest(
                     continue
 
                 player_id = self._identify_player_id(request_data)
-                if turn_number == 50:
-                    print(f"Turn {turn_number} validating Pokemon state: {str(state)}")
 
                 # Validate Pokemon state (HP, status, item, ability)
                 self._validate_pokemon_state(
@@ -817,41 +815,46 @@ class RequestValidationIntegrationTest(
 
         # Track PP changes for each Pokemon's moves
         # Key: (pokemon_species, move_name), Value: list of PP values after each use
-        pp_history = {}
+        pp_history: Dict[Tuple[str, str], List[int]] = {}
 
         for message in raw_messages:
             event = parser.parse(message)
 
-            # Before applying the event, check if it's an opponent move event
+            # Check if this is an opponent move event
             if message.startswith(f"|move|{opponent_id}"):
                 parts = message.split("|")
                 if len(parts) >= 4:
                     ident = parts[2].split(":")[1].strip()
                     move_name = parts[3]
 
-            state = StateTransition.apply(state, event)
+                    state = StateTransition.apply(state, event)
 
-            # After applying, track PP for opponent Pokemon
-            if message.startswith(f"|move|{opponent_id}"):
-                opponent_team = state.get_team(opponent_id)
-                for pokemon in opponent_team.get_pokemon_team():
-                    # Normalize species name for matching
-                    normalized_species = (
-                        pokemon.species.lower().replace(" ", "").replace("-", "")
-                    )
-                    normalized_ident = ident.lower().replace(" ", "").replace("-", "")
+                    # Track PP for opponent Pokemon
+                    opponent_team = state.get_team(opponent_id)
+                    for pokemon in opponent_team.get_pokemon_team():
+                        # Normalize species name for matching
+                        normalized_species = (
+                            pokemon.species.lower().replace(" ", "").replace("-", "")
+                        )
+                        normalized_ident = (
+                            ident.lower().replace(" ", "").replace("-", "")
+                        )
 
-                    if (
-                        normalized_species in normalized_ident
-                        or normalized_ident in normalized_species
-                    ):
-                        # Find the move
-                        for move in pokemon.moves:
-                            if move.name == move_name:
-                                key = (pokemon.species, move.name)
-                                if key not in pp_history:
-                                    pp_history[key] = []
-                                pp_history[key].append(move.current_pp)
+                        if (
+                            normalized_species in normalized_ident
+                            or normalized_ident in normalized_species
+                        ):
+                            # Find the move
+                            for move in pokemon.moves:
+                                if move.name == move_name:
+                                    key = (pokemon.species, move.name)
+                                    if key not in pp_history:
+                                        pp_history[key] = []
+                                    pp_history[key].append(move.current_pp)
+                else:
+                    state = StateTransition.apply(state, event)
+            else:
+                state = StateTransition.apply(state, event)
 
         # Validate PP decrementing
         for (species, move_name), pp_values in pp_history.items():

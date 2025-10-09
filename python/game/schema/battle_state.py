@@ -8,6 +8,7 @@ from python.game.schema.enums import Stat
 from python.game.schema.field_state import FieldState
 from python.game.schema.pokemon_state import PokemonState
 from python.game.schema.team_state import TeamState
+from python.game.schema.utils import normalize_move_name
 
 
 @dataclass(frozen=True)
@@ -219,8 +220,6 @@ class BattleState:
             ValueError: If the move is not found in the Pokemon's moveset
             ValueError: If player is None and our_player_id is not set
         """
-        from python.game.environment.state_transition import StateTransition
-
         if player is None:
             if self.our_player_id is None:
                 raise ValueError(
@@ -233,10 +232,10 @@ class BattleState:
             raise ValueError(f"No active Pokemon for player {player}")
 
         # Normalize move name for comparison
-        normalized_search = StateTransition._normalize_move_name(move_name)
+        normalized_search = normalize_move_name(move_name)
 
         for i, move in enumerate(active_pokemon.moves):
-            normalized_move = StateTransition._normalize_move_name(move.name)
+            normalized_move = normalize_move_name(move.name)
             if normalized_move == normalized_search:
                 return i
 
@@ -309,7 +308,7 @@ class BattleState:
             >>> len(info["p1_team"])
             6
         """
-        result = {
+        result: Dict[str, Any] = {
             "turn_number": self.field_state.turn_number,
             "weather": (
                 self.field_state.weather.value if self.field_state.weather else None
