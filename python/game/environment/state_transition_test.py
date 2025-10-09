@@ -49,7 +49,7 @@ class StateTransitionTest(parameterized.TestCase):
             is_active=True,
         )
         self.p1_team = TeamState(pokemon=[self.pikachu], active_pokemon_index=0)
-        self.initial_state = BattleState(p1_team=self.p1_team, p2_team=TeamState())
+        self.initial_state = BattleState(teams={"p1": self.p1_team, "p2": TeamState()})
 
     @parameterized.parameters(
         (100, 80, 80, None, Status.NONE),
@@ -75,7 +75,7 @@ class StateTransitionTest(parameterized.TestCase):
             species="Pikachu", current_hp=initial_hp, max_hp=100, is_active=True
         )
         team = TeamState(pokemon=[pokemon], active_pokemon_index=0)
-        state = BattleState(p1_team=team, p2_team=TeamState())
+        state = BattleState(teams={"p1": team, "p2": TeamState()})
 
         event = DamageEvent(
             raw_message="|damage|p1a: Pikachu|80/100",
@@ -88,9 +88,9 @@ class StateTransitionTest(parameterized.TestCase):
         )
 
         new_state = StateTransition.apply(state, event)
-        self.assertEqual(state.p1_team.get_active_pokemon().current_hp, initial_hp)
+        self.assertEqual(state.teams["p1"].get_active_pokemon().current_hp, initial_hp)
 
-        new_pokemon = new_state.p1_team.get_active_pokemon()
+        new_pokemon = new_state.teams["p1"].get_active_pokemon()
         self.assertEqual(new_pokemon.current_hp, expected_hp)
         self.assertEqual(new_pokemon.status, expected_status)
 
@@ -104,7 +104,7 @@ class StateTransitionTest(parameterized.TestCase):
             is_active=True,
         )
         team = TeamState(pokemon=[pokemon], active_pokemon_index=0)
-        state = BattleState(p1_team=team, p2_team=TeamState())
+        state = BattleState(teams={"p1": team, "p2": TeamState()})
 
         event = DamageEvent(
             raw_message="|damage|p1a: Pikachu|50/100",
@@ -118,7 +118,7 @@ class StateTransitionTest(parameterized.TestCase):
 
         new_state = StateTransition.apply(state, event)
 
-        new_pokemon = new_state.p1_team.get_active_pokemon()
+        new_pokemon = new_state.teams["p1"].get_active_pokemon()
         self.assertEqual(new_pokemon.current_hp, 50)
         self.assertEqual(new_pokemon.status, Status.BURN)
 
@@ -149,7 +149,7 @@ class StateTransitionTest(parameterized.TestCase):
             is_active=True,
         )
         team = TeamState(pokemon=[pokemon], active_pokemon_index=0)
-        state = BattleState(p1_team=team, p2_team=TeamState())
+        state = BattleState(teams={"p1": team, "p2": TeamState()})
 
         event = HealEvent(
             raw_message="|heal|p1a: Pikachu|75/100",
@@ -163,9 +163,9 @@ class StateTransitionTest(parameterized.TestCase):
 
         new_state = StateTransition.apply(state, event)
 
-        self.assertEqual(state.p1_team.get_active_pokemon().current_hp, initial_hp)
+        self.assertEqual(state.teams["p1"].get_active_pokemon().current_hp, initial_hp)
 
-        new_pokemon = new_state.p1_team.get_active_pokemon()
+        new_pokemon = new_state.teams["p1"].get_active_pokemon()
         self.assertEqual(new_pokemon.current_hp, expected_hp)
         self.assertEqual(new_pokemon.status, expected_status)
 
@@ -191,7 +191,7 @@ class StateTransitionTest(parameterized.TestCase):
             species="Pikachu", current_hp=initial_hp, max_hp=100, is_active=True
         )
         team = TeamState(pokemon=[pokemon], active_pokemon_index=0)
-        state = BattleState(p1_team=team, p2_team=TeamState())
+        state = BattleState(teams={"p1": team, "p2": TeamState()})
 
         event = SetHpEvent(
             raw_message="|sethp|p1a: Pikachu|50/100",
@@ -204,9 +204,9 @@ class StateTransitionTest(parameterized.TestCase):
         )
 
         new_state = StateTransition.apply(state, event)
-        self.assertEqual(state.p1_team.get_active_pokemon().current_hp, initial_hp)
+        self.assertEqual(state.teams["p1"].get_active_pokemon().current_hp, initial_hp)
 
-        new_pokemon = new_state.p1_team.get_active_pokemon()
+        new_pokemon = new_state.teams["p1"].get_active_pokemon()
         self.assertEqual(new_pokemon.current_hp, expected_hp)
         self.assertEqual(new_pokemon.status, expected_status)
 
@@ -222,18 +222,18 @@ class StateTransitionTest(parameterized.TestCase):
             status=None,
         )
 
-        original_hp = self.initial_state.p1_team.get_active_pokemon().current_hp
+        original_hp = self.initial_state.teams["p1"].get_active_pokemon().current_hp
         original_id = id(self.initial_state)
 
         new_state = StateTransition.apply(self.initial_state, event)
 
         self.assertEqual(
-            self.initial_state.p1_team.get_active_pokemon().current_hp, original_hp
+            self.initial_state.teams["p1"].get_active_pokemon().current_hp, original_hp
         )
         self.assertEqual(id(self.initial_state), original_id)
 
         self.assertNotEqual(id(new_state), original_id)
-        self.assertEqual(new_state.p1_team.get_active_pokemon().current_hp, 50)
+        self.assertEqual(new_state.teams["p1"].get_active_pokemon().current_hp, 50)
 
     def test_player_id_routing(self) -> None:
         """Verify events are routed to correct player."""
@@ -242,7 +242,7 @@ class StateTransitionTest(parameterized.TestCase):
         )
         p2_team = TeamState(pokemon=[charizard], active_pokemon_index=0)
 
-        state = BattleState(p1_team=self.p1_team, p2_team=p2_team)
+        state = BattleState(teams={"p1": self.p1_team, "p2": p2_team})
 
         event = DamageEvent(
             raw_message="|damage|p2a: Charizard|60/100",
@@ -256,8 +256,8 @@ class StateTransitionTest(parameterized.TestCase):
 
         new_state = StateTransition.apply(state, event)
 
-        self.assertEqual(new_state.p1_team.get_active_pokemon().current_hp, 100)
-        self.assertEqual(new_state.p2_team.get_active_pokemon().current_hp, 60)
+        self.assertEqual(new_state.teams["p1"].get_active_pokemon().current_hp, 100)
+        self.assertEqual(new_state.teams["p2"].get_active_pokemon().current_hp, 60)
 
     @parameterized.parameters(
         # (species, level, gender, hp_current, hp_max, status, expected_volatiles_cleared)
@@ -292,7 +292,7 @@ class StateTransitionTest(parameterized.TestCase):
 
         new_state = StateTransition.apply(self.initial_state, event)
 
-        active = new_state.p1_team.get_active_pokemon()
+        active = new_state.teams["p1"].get_active_pokemon()
         self.assertEqual(active.species, species)
         self.assertEqual(active.level, level)
         self.assertEqual(active.gender, gender)
@@ -320,7 +320,7 @@ class StateTransitionTest(parameterized.TestCase):
 
         new_state = StateTransition.apply(self.initial_state, event)
 
-        active = new_state.p1_team.get_active_pokemon()
+        active = new_state.teams["p1"].get_active_pokemon()
         self.assertEqual(active.species, "Garchomp")
         self.assertEqual(active.current_hp, 90)
         self.assertEqual(active.volatile_conditions, {})
@@ -336,7 +336,7 @@ class StateTransitionTest(parameterized.TestCase):
 
         new_state = StateTransition.apply(self.initial_state, event)
 
-        active = new_state.p1_team.get_active_pokemon()
+        active = new_state.teams["p1"].get_active_pokemon()
         self.assertEqual(active.current_hp, 0)
         self.assertFalse(active.is_alive())
 
@@ -365,7 +365,7 @@ class StateTransitionTest(parameterized.TestCase):
 
         new_state = StateTransition.apply(self.initial_state, event)
 
-        active = new_state.p1_team.get_active_pokemon()
+        active = new_state.teams["p1"].get_active_pokemon()
         self.assertEqual(active.species, new_species)
         self.assertEqual(active.current_hp, new_hp)
 
@@ -379,7 +379,7 @@ class StateTransitionTest(parameterized.TestCase):
             is_active=True,
         )
         team = TeamState(pokemon=[pokemon], active_pokemon_index=0)
-        state = BattleState(p1_team=team, p2_team=TeamState())
+        state = BattleState(teams={"p1": team, "p2": TeamState()})
 
         event = ReplaceEvent(
             raw_message="|replace|p1a: Zoroark|Zoroark|80/100",
@@ -397,7 +397,7 @@ class StateTransitionTest(parameterized.TestCase):
 
         new_state = StateTransition.apply(state, event)
 
-        active = new_state.p1_team.get_active_pokemon()
+        active = new_state.teams["p1"].get_active_pokemon()
         self.assertEqual(active.species, "Zoroark")
         self.assertEqual(active.current_hp, 80)
         self.assertEqual(active.status, Status.PARALYSIS)
@@ -424,7 +424,7 @@ class StateTransitionTest(parameterized.TestCase):
 
         new_state = StateTransition.apply(self.initial_state, event)
 
-        active = new_state.p1_team.get_active_pokemon()
+        active = new_state.teams["p1"].get_active_pokemon()
         self.assertEqual(active.species, expected_species)
         self.assertEqual(active.level, expected_level)
 
@@ -438,7 +438,7 @@ class StateTransitionTest(parameterized.TestCase):
             is_active=True,
         )
         team = TeamState(pokemon=[pokemon_with_volatiles], active_pokemon_index=0)
-        state = BattleState(p1_team=team, p2_team=TeamState())
+        state = BattleState(teams={"p1": team, "p2": TeamState()})
 
         event = SwitchEvent(
             raw_message="|switch|p1a: Garchomp|Garchomp|100/100",
@@ -456,7 +456,7 @@ class StateTransitionTest(parameterized.TestCase):
 
         new_state = StateTransition.apply(state, event)
 
-        active = new_state.p1_team.get_active_pokemon()
+        active = new_state.teams["p1"].get_active_pokemon()
         self.assertEqual(active.volatile_conditions, {})
 
     @parameterized.parameters(
@@ -480,7 +480,7 @@ class StateTransitionTest(parameterized.TestCase):
         )
 
         new_state = StateTransition.apply(self.initial_state, event)
-        active = new_state.p1_team.get_active_pokemon()
+        active = new_state.teams["p1"].get_active_pokemon()
 
         stat_enum = StateTransition._parse_stat(stat_name)
         self.assertEqual(active.stat_boosts.get(stat_enum, 0), expected_stage)
@@ -504,7 +504,7 @@ class StateTransitionTest(parameterized.TestCase):
         )
 
         new_state = StateTransition.apply(self.initial_state, event)
-        active = new_state.p1_team.get_active_pokemon()
+        active = new_state.teams["p1"].get_active_pokemon()
 
         stat_enum = StateTransition._parse_stat(stat_name)
         self.assertEqual(active.stat_boosts.get(stat_enum, 0), expected_stage)
@@ -521,7 +521,7 @@ class StateTransitionTest(parameterized.TestCase):
         )
 
         new_state = StateTransition.apply(self.initial_state, event)
-        active = new_state.p1_team.get_active_pokemon()
+        active = new_state.teams["p1"].get_active_pokemon()
         self.assertEqual(active.stat_boosts.get(Stat.ATK, 0), 3)
 
     def test_apply_clearboost(self) -> None:
@@ -534,7 +534,7 @@ class StateTransitionTest(parameterized.TestCase):
             is_active=True,
         )
         team = TeamState(pokemon=[pikachu_with_boosts], active_pokemon_index=0)
-        state = BattleState(p1_team=team, p2_team=TeamState())
+        state = BattleState(teams={"p1": team, "p2": TeamState()})
 
         event = ClearBoostEvent(
             raw_message="|clearboost|p1a: Pikachu",
@@ -544,7 +544,7 @@ class StateTransitionTest(parameterized.TestCase):
         )
 
         new_state = StateTransition.apply(state, event)
-        active = new_state.p1_team.get_active_pokemon()
+        active = new_state.teams["p1"].get_active_pokemon()
         self.assertEqual(active.stat_boosts, {})
 
     def test_apply_clearallboost(self) -> None:
@@ -565,16 +565,18 @@ class StateTransitionTest(parameterized.TestCase):
         )
 
         state = BattleState(
-            p1_team=TeamState(pokemon=[p1_pikachu], active_pokemon_index=0),
-            p2_team=TeamState(pokemon=[p2_charizard], active_pokemon_index=0),
+            teams={
+                "p1": TeamState(pokemon=[p1_pikachu], active_pokemon_index=0),
+                "p2": TeamState(pokemon=[p2_charizard], active_pokemon_index=0),
+            }
         )
 
         event = ClearAllBoostEvent(raw_message="|clearallboost")
 
         new_state = StateTransition.apply(state, event)
 
-        self.assertEqual(new_state.p1_team.get_active_pokemon().stat_boosts, {})
-        self.assertEqual(new_state.p2_team.get_active_pokemon().stat_boosts, {})
+        self.assertEqual(new_state.teams["p1"].get_active_pokemon().stat_boosts, {})
+        self.assertEqual(new_state.teams["p2"].get_active_pokemon().stat_boosts, {})
 
     def test_apply_clearnegativeboost(self) -> None:
         """Test clearing only negative boosts."""
@@ -586,7 +588,7 @@ class StateTransitionTest(parameterized.TestCase):
             is_active=True,
         )
         team = TeamState(pokemon=[pikachu], active_pokemon_index=0)
-        state = BattleState(p1_team=team, p2_team=TeamState())
+        state = BattleState(teams={"p1": team, "p2": TeamState()})
 
         event = ClearNegativeBoostEvent(
             raw_message="|clearnegativeboost|p1a: Pikachu",
@@ -596,7 +598,7 @@ class StateTransitionTest(parameterized.TestCase):
         )
 
         new_state = StateTransition.apply(state, event)
-        active = new_state.p1_team.get_active_pokemon()
+        active = new_state.teams["p1"].get_active_pokemon()
 
         self.assertEqual(active.stat_boosts, {Stat.ATK: 2})
 
@@ -619,7 +621,7 @@ class StateTransitionTest(parameterized.TestCase):
         )
 
         new_state = StateTransition.apply(self.initial_state, event)
-        active = new_state.p1_team.get_active_pokemon()
+        active = new_state.teams["p1"].get_active_pokemon()
         self.assertEqual(active.status, expected_status)
 
     def test_apply_curestatus(self) -> None:
@@ -632,7 +634,7 @@ class StateTransitionTest(parameterized.TestCase):
             is_active=True,
         )
         team = TeamState(pokemon=[pikachu_burned], active_pokemon_index=0)
-        state = BattleState(p1_team=team, p2_team=TeamState())
+        state = BattleState(teams={"p1": team, "p2": TeamState()})
 
         event = CureStatusEvent(
             raw_message="|curestatus|p1a: Pikachu|brn",
@@ -643,7 +645,7 @@ class StateTransitionTest(parameterized.TestCase):
         )
 
         new_state = StateTransition.apply(state, event)
-        active = new_state.p1_team.get_active_pokemon()
+        active = new_state.teams["p1"].get_active_pokemon()
         self.assertEqual(active.status, Status.NONE)
 
     def test_apply_switch_preserves_tera_type(self) -> None:
@@ -666,7 +668,7 @@ class StateTransitionTest(parameterized.TestCase):
             is_active=False,
         )
         team = TeamState(pokemon=[pikachu_tera], active_pokemon_index=None)
-        state = BattleState(p1_team=team, p2_team=TeamState())
+        state = BattleState(teams={"p1": team, "p2": TeamState()})
 
         event = SwitchEvent(
             raw_message="|switch|p1a: Pikachu|Pikachu, L50|100/120",
@@ -683,7 +685,7 @@ class StateTransitionTest(parameterized.TestCase):
         )
 
         new_state = StateTransition.apply(state, event)
-        active = new_state.p1_team.get_active_pokemon()
+        active = new_state.teams["p1"].get_active_pokemon()
 
         self.assertEqual(active.tera_type, "Electric")
         self.assertTrue(active.has_terastallized)
@@ -742,8 +744,8 @@ class StateTransitionTest(parameterized.TestCase):
             rating=1500,
         )
         state = StateTransition.apply(self.initial_state, event)
-        self.assertEqual(state.p1_username, "Alice")
-        self.assertIsNone(state.p2_username)
+        self.assertEqual(state.player_usernames.get("p1"), "Alice")
+        self.assertIsNone(state.player_usernames.get("p2"))
 
     def test_apply_player_event_p2(self) -> None:
         """Test that PlayerEvent updates p2_username."""
@@ -755,8 +757,8 @@ class StateTransitionTest(parameterized.TestCase):
             rating=1400,
         )
         state = StateTransition.apply(self.initial_state, event)
-        self.assertIsNone(state.p1_username)
-        self.assertEqual(state.p2_username, "Bob")
+        self.assertIsNone(state.player_usernames.get("p1"))
+        self.assertEqual(state.player_usernames.get("p2"), "Bob")
 
     def test_apply_battle_end_victory(self) -> None:
         """Test that BattleEndEvent marks battle as over with winner."""
@@ -773,7 +775,7 @@ class StateTransitionTest(parameterized.TestCase):
         self.assertEqual(state.winner, "")
 
     def test_apply_request_with_wait(self) -> None:
-        """Test that wait requests maintain current state."""
+        """Test that wait requests set waiting flag to True."""
         initial_state = BattleState(
             available_moves=["Move1", "Move2"],
             available_switches=[1, 2],
@@ -784,7 +786,9 @@ class StateTransitionTest(parameterized.TestCase):
         )
         new_state = StateTransition.apply(initial_state, event)
 
-        self.assertEqual(new_state, initial_state)
+        # Wait request should set waiting flag to True
+        self.assertTrue(new_state.waiting)
+        # Other state should be preserved
         self.assertEqual(["Move1", "Move2"], new_state.available_moves)
         self.assertEqual([1, 2], new_state.available_switches)
 

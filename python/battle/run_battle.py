@@ -143,7 +143,9 @@ async def run_battle() -> None:
 
             logger = None
             if FLAGS.log_events:
-                logger = BattleEventLogger(FLAGS.agent, int(time.time()), battle_room)
+                logger = BattleEventLogger(
+                    FLAGS.username, int(time.time()), battle_room, FLAGS.opponent
+                )
                 logging.info("Event logging enabled")
 
             env = BattleEnvironment(
@@ -151,15 +153,25 @@ async def run_battle() -> None:
             )
 
             state = await env.reset()
-            logging.info("Battle started! Agent is ready to make decisions.")
+            logging.info(
+                f"Battle {battle_room} started! Agent is ready to make decisions."
+            )
 
             turn_count = 0
             while not env.is_battle_over():
+                # Skip if we're waiting for opponent to choose
+                if state.waiting:
+                    logging.debug("Waiting for opponent's choice...")
+                    state = await env.wait_for_next_state()
+                    continue
+
                 if state.team_preview:
                     logging.info("Team preview - agent choosing team order...")
                 else:
                     turn_count += 1
-                    logging.info(f"Turn {turn_count} - Agent choosing action...")
+                    logging.info(
+                        f"Battle {battle_room} - Turn {turn_count} - Agent choosing action..."
+                    )
 
                 action = await agent.choose_action(state, game_data)
                 logging.info(f"Action selected: {action}")
@@ -169,7 +181,7 @@ async def run_battle() -> None:
 
                 state = await env.step(action)
 
-            logging.info(f"Battle ended after {turn_count} turns")
+            logging.info(f"Battle {battle_room} ended after {turn_count} turns")
 
             if state.winner is None:
                 logging.info("Result: Tie")
@@ -181,7 +193,7 @@ async def run_battle() -> None:
             if logger:
                 logger.close()
 
-            logging.info(f"=== End of Battle #{battle_count} ===\n")
+            logging.info(f"=== End of Battle {battle_room} #{battle_count} ===\n")
 
     except KeyboardInterrupt:
         logging.info("Interrupted by user")

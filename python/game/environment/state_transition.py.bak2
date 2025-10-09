@@ -376,7 +376,10 @@ class StateTransition:
         found_pokemon = False
         # Match by species and nickname to find the Pokemon to update
         for i, p in enumerate(all_pokemon):
-            if p.species == old_pokemon.species and p.nickname == old_pokemon.nickname:
+            if (
+                p.species == old_pokemon.species
+                and p.nickname == old_pokemon.nickname
+            ):
                 all_pokemon[i] = new_pokemon
                 found_pokemon = True
                 break
@@ -1500,7 +1503,9 @@ class StateTransition:
                     # Calculate max PP assuming PP Ups are maxed (8/5 multiplier)
                     max_pp = StateTransition._calculate_max_pp(move_name)
                     pokemon_moves.append(
-                        PokemonMove(name=move_name, current_pp=max_pp, max_pp=max_pp)
+                        PokemonMove(
+                            name=move_name, current_pp=max_pp, max_pp=max_pp
+                        )
                     )
 
                 item = poke_data.get("item", "")
@@ -1509,7 +1514,9 @@ class StateTransition:
 
                 nickname_key = nickname if nickname != species else None
                 # Use normalized species name for lookup to match the key format
-                normalized_species = StateTransition._normalize_species_name(species)
+                normalized_species = StateTransition._normalize_species_name(
+                    species
+                )
                 poke_key = (normalized_species, nickname_key)
                 existing_pokemon = existing_pokemon_map.get(poke_key)
 
@@ -1541,29 +1548,29 @@ class StateTransition:
                     )
                 new_team_pokemon.append(pokemon)
 
-            active_index = None
-            for i, poke_data in enumerate(request_pokemon):
-                if poke_data.get("active", False):
-                    active_index = i
-                    break
+                active_index = None
+                for i, poke_data in enumerate(request_pokemon):
+                    if poke_data.get("active", False):
+                        active_index = i
+                        break
 
-            # Mark the active Pokemon as is_active=True (only if alive)
-            if active_index is not None:
-                active_pokemon = new_team_pokemon[active_index]
-                # Only mark as active if Pokemon is alive
-                if active_pokemon.current_hp > 0:
-                    new_team_pokemon[active_index] = replace(
-                        active_pokemon, is_active=True
-                    )
+                # Mark the active Pokemon as is_active=True (only if alive)
+                if active_index is not None:
+                    active_pokemon = new_team_pokemon[active_index]
+                    # Only mark as active if Pokemon is alive
+                    if active_pokemon.current_hp > 0:
+                        new_team_pokemon[active_index] = replace(
+                            active_pokemon, is_active=True
+                        )
 
-            updated_team = replace(
-                team, pokemon=new_team_pokemon, active_pokemon_index=active_index
-            )
+                updated_team = replace(
+                    team, pokemon=new_team_pokemon, active_pokemon_index=active_index
+                )
 
-            updated_state = StateTransition._update_team_in_state(
-                state, player_id, updated_team
-            )
-            team = updated_team
+                updated_state = StateTransition._update_team_in_state(
+                    state, player_id, updated_team
+                )
+                team = updated_team
 
         if "active" in request_data and request_data["active"]:
             active_data = request_data["active"][0]

@@ -174,7 +174,7 @@ class BattleEnvironment:
             raise ValueError(f"Failed to convert action to command: {e}") from e
 
         message = f"{self._battle_room}|{command}"
-        logging.info("[%s] Sending action: %s", self._battle_room, command)
+        logging.debug("[%s] Sending action: %s", self._battle_room, command)
         try:
             await self._client.send_message(message)
         except Exception as e:
@@ -188,8 +188,52 @@ class BattleEnvironment:
                 "Check if battle concluded or connection lost."
             )
 
-        logging.info(
+        logging.debug(
             "[%s] Received %d events from action", self._battle_room, len(event_batch)
+        )
+
+        current_state = self._state
+        for event in event_batch:
+            try:
+                current_state = StateTransition.apply(current_state, event)
+            except Exception as e:
+                logging.error(
+                    "[%s] Failed to apply event %s: %s", self._battle_room, event, e
+                )
+                raise ValueError(f"State transition failed: {e}") from e
+
+        self._state = current_state
+
+        if self._track_history:
+            self._history.append(current_state)
+
+        return current_state
+
+    async def wait_for_next_state(self) -> BattleState:
+        """Wait for the next state update without sending an action.
+
+        Used when we receive a "wait" request and need to wait for opponent's action.
+
+        Returns:
+            New BattleState after opponent's action completes
+
+        Raises:
+            RuntimeError: If stream ends unexpectedly
+        """
+        logging.debug("[%s] Waiting for opponent's action...", self._battle_room)
+
+        try:
+            event_batch = await self._stream.__anext__()
+        except StopAsyncIteration:
+            raise RuntimeError(
+                "Battle stream ended while waiting for opponent. "
+                "Check if battle concluded or connection lost."
+            )
+
+        logging.info(
+            "[%s] Received %d events from opponent's action",
+            self._battle_room,
+            len(event_batch),
         )
 
         current_state = self._state

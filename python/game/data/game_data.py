@@ -1,26 +1,61 @@
 import json
+import threading
 from pathlib import Path
-from typing import Dict, Type, TypeVar
+from typing import Dict, Optional, Type, TypeVar
 
 from python.game.data.ability import Ability
+from python.game.data.base import GameDataObject
 from python.game.data.item import Item
 from python.game.data.move import Move
 from python.game.data.nature import Nature
 from python.game.data.pokemon import Pokemon
 from python.game.data.type_chart import TypeChart
 
-T = TypeVar("T")
+T = TypeVar("T", bound=GameDataObject)
 
 
 class GameData:
-    def __init__(self, data_dir: str = "data/game"):
-        self.data_dir = Path(data_dir)
-        self._pokemon_lookup = self._load_lookup_data("pokemon.json", Pokemon)
-        self._moves_lookup = self._load_lookup_data("moves.json", Move)
-        self._abilities_lookup = self._load_lookup_data("abilities.json", Ability)
-        self._items_lookup = self._load_lookup_data("items.json", Item)
-        self._natures_lookup = self._load_lookup_data("natures.json", Nature)
-        self._type_chart = self._load_type_chart()
+    """Singleton class for accessing static game data.
+
+    This class loads Pokemon, moves, abilities, items, natures, and type chart data
+    once and provides read-only access throughout the application.
+
+    Thread-safe singleton implementation using double-checked locking pattern.
+    """
+
+    _instance: Optional["GameData"] = None
+    _instance_lock: threading.Lock = threading.Lock()
+    _init_lock: threading.Lock = threading.Lock()
+
+    def __new__(cls, data_dir: str = "data/game") -> "GameData":
+        """Create or return the singleton instance (thread-safe)."""
+        if cls._instance is None:
+            with cls._instance_lock:
+                # Double-check after acquiring lock
+                if cls._instance is None:
+                    cls._instance = super().__new__(cls)
+                    cls._instance._initialized = False
+        return cls._instance
+
+    def __init__(self, data_dir: str = "data/game") -> None:
+        """Initialize the game data (only runs once for the singleton, thread-safe)."""
+        # Double-checked locking for initialization
+        if self._initialized:  # type: ignore
+            return
+
+        with self._init_lock:
+            # Double-check after acquiring lock
+            if self._initialized:  # type: ignore
+                return
+
+            self.data_dir = Path(data_dir)
+            self._pokemon_lookup = self._load_lookup_data("pokemon.json", Pokemon)
+            self._moves_lookup = self._load_lookup_data("moves.json", Move)
+            self._abilities_lookup = self._load_lookup_data("abilities.json", Ability)
+            self._items_lookup = self._load_lookup_data("items.json", Item)
+            self._natures_lookup = self._load_lookup_data("natures.json", Nature)
+            self._type_chart = self._load_type_chart()
+            self._initialized = True  # type: ignore
 
     def _normalize_key(self, name: str) -> str:
         return name.lower().replace(" ", "").replace("-", "").replace("'", "")
