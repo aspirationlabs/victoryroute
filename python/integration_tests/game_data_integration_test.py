@@ -2,7 +2,7 @@
 
 import os
 import unittest
-from typing import List, Set
+from typing import List
 
 from absl.testing import absltest, parameterized
 
@@ -97,41 +97,28 @@ class GameDataIntegrationTest(unittest.IsolatedAsyncioTestCase, parameterized.Te
         self.assertIsNotNone(item, f"Item data is null for {item_name}")
         self.assertTrue(item.name, f"Item name is empty for {item_name}")
 
-    def _collect_all_game_data_references(
-        self, state: BattleState
-    ) -> tuple[Set[str], Set[str], Set[str], Set[str]]:
-        """Collect all references to game data from the current battle state.
+    def _validate_all_team_game_data(self, state: BattleState) -> None:
+        """Validate all game data for both teams in current state.
 
         Args:
             state: Current battle state
-
-        Returns:
-            Tuple of (pokemon_names, move_names, ability_names, item_names)
         """
-        pokemon_names: Set[str] = set()
-        move_names: Set[str] = set()
-        ability_names: Set[str] = set()
-        item_names: Set[str] = set()
-
-        # Extract Pokemon data from both teams
         for player_id in ["p1", "p2"]:
             team = state.get_team(player_id)
 
             for pokemon in team.get_pokemon_team():
                 if pokemon.species:
-                    pokemon_names.add(pokemon.species)
+                    self._validate_pokemon_data(pokemon.species)
 
                 if pokemon.ability:
-                    ability_names.add(pokemon.ability)
+                    self._validate_ability_data(pokemon.ability)
 
                 if pokemon.item:
-                    item_names.add(pokemon.item)
+                    self._validate_item_data(pokemon.item)
 
                 for move in pokemon.moves:
                     if move.name:
-                        move_names.add(move.name)
-
-        return pokemon_names, move_names, ability_names, item_names
+                        self._validate_move_data(move.name)
 
     @parameterized.named_parameters(
         ("battle_1", "live_battle_1.txt"),
@@ -141,7 +128,7 @@ class GameDataIntegrationTest(unittest.IsolatedAsyncioTestCase, parameterized.Te
     def test_all_game_data_retrievable(self, battle_file: str) -> None:
         """Test that all game data referenced in battle can be retrieved.
 
-        This test validates that:
+        This test validates that after each event:
         1. All Pokemon species have valid game data with non-empty fields
         2. All moves have valid game data with non-empty fields
         3. All abilities have valid game data with non-empty fields
@@ -155,38 +142,12 @@ class GameDataIntegrationTest(unittest.IsolatedAsyncioTestCase, parameterized.Te
         state = BattleState()
         parser = MessageParser()
 
-        # Collect all unique game data references throughout the battle
-        all_pokemon: Set[str] = set()
-        all_moves: Set[str] = set()
-        all_abilities: Set[str] = set()
-        all_items: Set[str] = set()
-
         for message in raw_messages:
             event = parser.parse(message)
             state = StateTransition.apply(state, event)
 
-            # After each event, collect game data references
-            pokemon, moves, abilities, items = self._collect_all_game_data_references(
-                state
-            )
-            all_pokemon.update(pokemon)
-            all_moves.update(moves)
-            all_abilities.update(abilities)
-            all_items.update(items)
-
-        # Now validate all collected game data
-        for pokemon_name in all_pokemon:
-            self._validate_pokemon_data(pokemon_name)
-
-        for move_name in all_moves:
-            self._validate_move_data(move_name)
-
-        for ability_name in all_abilities:
-            self._validate_ability_data(ability_name)
-
-        for item_name in all_items:
-            if item_name:
-                self._validate_item_data(item_name)
+            # After each event, validate all game data in current state
+            self._validate_all_team_game_data(state)
 
     @parameterized.named_parameters(
         ("battle_1", "live_battle_1.txt"),
@@ -196,7 +157,7 @@ class GameDataIntegrationTest(unittest.IsolatedAsyncioTestCase, parameterized.Te
     def test_pokemon_team_data(self, battle_file: str) -> None:
         """Test that all Pokemon team data is valid and non-empty.
 
-        This validates:
+        This validates after each event:
         - Pokemon species data
         - Abilities
         - Moves
@@ -214,26 +175,8 @@ class GameDataIntegrationTest(unittest.IsolatedAsyncioTestCase, parameterized.Te
             event = parser.parse(message)
             state = StateTransition.apply(state, event)
 
-            # Validate all Pokemon data for both teams
-            for player_id in ["p1", "p2"]:
-                team = state.get_team(player_id)
-                for pokemon in team.get_pokemon_team():
-                    # Validate Pokemon species
-                    if pokemon.species:
-                        self._validate_pokemon_data(pokemon.species)
-
-                    # Validate ability
-                    if pokemon.ability:
-                        self._validate_ability_data(pokemon.ability)
-
-                    # Validate item
-                    if pokemon.item:
-                        self._validate_item_data(pokemon.item)
-
-                    # Validate moves
-                    for move in pokemon.moves:
-                        if move.name:
-                            self._validate_move_data(move.name)
+            # After each event, validate all team game data
+            self._validate_all_team_game_data(state)
 
 
 if __name__ == "__main__":
