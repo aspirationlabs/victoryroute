@@ -107,6 +107,13 @@ async def run_battle() -> None:
     game_data = GameData()
     client = ShowdownClient()
 
+    # Track win/loss statistics per opponent
+    from collections import defaultdict
+
+    opponent_stats: defaultdict[str, dict[str, int]] = defaultdict(
+        lambda: {"wins": 0, "losses": 0, "ties": 0}
+    )
+
     try:
         await client.connect(FLAGS.server_url, username, FLAGS.password)
         logging.info(f"Connected successfully as {username} to {FLAGS.server_url}")
@@ -183,12 +190,38 @@ async def run_battle() -> None:
 
             logging.info(f"Battle {battle_room} ended after {turn_count} turns")
 
+            # Determine opponent from state
+            opponent_name = state.winner if state.winner != username else "Unknown"
+            if state.winner == username and hasattr(state, "p2"):
+                # Try to get opponent name from state
+                opponent_name = getattr(
+                    state.p2, "username", FLAGS.opponent or "Unknown"
+                )
+            elif state.winner and state.winner != username:
+                opponent_name = state.winner
+            elif FLAGS.opponent:
+                opponent_name = FLAGS.opponent
+
+            # Update statistics (defaultdict auto-initializes)
             if state.winner is None:
+                opponent_stats[opponent_name]["ties"] += 1
                 logging.info("Result: Tie")
             elif state.winner == username:
+                opponent_stats[opponent_name]["wins"] += 1
                 logging.info("Result: Victory!")
             else:
+                opponent_stats[opponent_name]["losses"] += 1
                 logging.info(f"Result: Defeat - {state.winner} won")
+
+            # Calculate and log statistics
+            stats = opponent_stats[opponent_name]
+            total = stats["wins"] + stats["losses"] + stats["ties"]
+            win_rate = (stats["wins"] / total * 100) if total > 0 else 0.0
+
+            logging.info(
+                f"Stats vs {opponent_name}: {stats['wins']}W-{stats['losses']}L-{stats['ties']}T "
+                f"({total} battles, {win_rate:.1f}% win rate)"
+            )
 
             if logger:
                 logger.close()
