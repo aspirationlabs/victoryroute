@@ -11,6 +11,7 @@ from typing import Tuple
 
 from absl import logging
 
+from python.game.data.game_data import GameData
 from python.game.events.battle_event import (
     AbilityEvent,
     ActivateEvent,
@@ -31,6 +32,7 @@ from python.game.events.battle_event import (
     EndAbilityEvent,
     EndItemEvent,
     EndVolatileEvent,
+    ErrorEvent,
     FailEvent,
     FaintEvent,
     FieldEndEvent,
@@ -93,6 +95,29 @@ class StateTransition:
     state, and never mutate the inputs.
     """
 
+    # Shared game data instance for looking up move PP
+    # Initialize eagerly to catch any initialization errors early
+    _game_data: GameData = GameData()
+
+    @staticmethod
+    def _calculate_max_pp(move_name: str) -> int:
+        """Calculate max PP for a move, assuming PP Ups are maxed.
+
+        Args:
+            move_name: Name of the move
+
+        Returns:
+            Max PP (base PP * 8/5), or 1 if move not found
+        """
+        try:
+            move = StateTransition._game_data.get_move(move_name)
+            # PP Ups multiply base PP by 8/5
+            return int(move.pp * 8 / 5)
+        except (ValueError, AttributeError) as e:
+            # Move not found or invalid, return placeholder
+            logging.error(f"Move not found in game data: {move_name} - Error: {e}")
+            return 1
+
     @staticmethod
     def apply(state: BattleState, event: BattleEvent) -> BattleState:
         """Apply an event to a battle state, returning a new state.
@@ -114,6 +139,8 @@ class StateTransition:
             return StateTransition._apply_switch(state, event)
         elif isinstance(event, DragEvent):
             return StateTransition._apply_drag(state, event)
+        elif isinstance(event, PokeEvent):
+            return StateTransition._apply_poke(state, event)
         elif isinstance(event, FaintEvent):
             return StateTransition._apply_faint(state, event)
         elif isinstance(event, ReplaceEvent):
@@ -154,6 +181,10 @@ class StateTransition:
             return StateTransition._apply_player(state, event)
         elif isinstance(event, BattleEndEvent):
             return StateTransition._apply_battle_end(state, event)
+        elif isinstance(event, MoveEvent):
+            return StateTransition._apply_move(state, event)
+        elif isinstance(event, AbilityEvent):
+            return StateTransition._apply_ability(state, event)
         # Informational events that don't modify battle state
         elif isinstance(
             event,
@@ -167,11 +198,9 @@ class StateTransition:
                 TierEvent,
                 GameTypeEvent,
                 # Team preview events
-                PokeEvent,
                 ClearPokeEvent,
                 TeamPreviewEvent,
                 # Move/damage detail events
-                MoveEvent,
                 SuperEffectiveEvent,
                 ResistedEvent,
                 ImmuneEvent,
@@ -181,8 +210,7 @@ class StateTransition:
                 HitCountEvent,
                 CantEvent,
                 PrepareEvent,
-                # Ability/Item events (informational only, actual effects handled elsewhere)
-                AbilityEvent,
+                # Item events (informational only, actual effects handled elsewhere)
                 EndAbilityEvent,
                 ItemEvent,
                 EndItemEvent,
@@ -199,6 +227,7 @@ class StateTransition:
                 # Ignored/metadata events
                 IgnoredEvent,
                 PrivateMessageEvent,
+                ErrorEvent,
             ),
         ):
             return state
@@ -210,6 +239,43 @@ class StateTransition:
             # This should never happen if all event types are handled
             logging.error(f"Unhandled event type: {type(event).__name__}: {event}")
             return state
+
+    @staticmethod
+    def _normalize_species_name(species: str) -> str:
+        """Normalize a Pokemon species name for matching.
+
+        Handles various edge cases in species name formatting:
+        - Removes asterisk suffix from team preview (e.g., "Zamazenta-*" → "Zamazenta")
+        - Converts to lowercase and removes spaces and hyphens
+          (e.g., "Walking Wake" → "walkingwake", "Ting-Lu" → "tinglu")
+
+        Args:
+            species: Species name to normalize
+
+        Returns:
+            Normalized species name for matching
+        """
+        # Remove team preview asterisk suffix
+        if species.endswith("-*"):
+            species = species[:-2]
+        # Lowercase and remove spaces and hyphens
+        return species.lower().replace(" ", "").replace("-", "")
+
+    @staticmethod
+    def _normalize_move_name(move_name: str) -> str:
+        """Normalize a move name for matching.
+
+        Converts move names to lowercase and removes spaces and hyphens
+        to handle different formatting from events vs requests.
+        (e.g., "Swords Dance" → "swordsdance", "Will-O-Wisp" → "willowisp")
+
+        Args:
+            move_name: Move name to normalize
+
+        Returns:
+            Normalized move name for matching
+        """
+        return move_name.lower().replace(" ", "").replace("-", "")
 
     @staticmethod
     def _parse_stat(stat_str: str) -> Stat:
@@ -315,10 +381,22 @@ class StateTransition:
         all_pokemon = list(team.get_pokemon_team())
         found_pokemon = False
         for i, p in enumerate(all_pokemon):
-            if p.species == old_pokemon.species and p.nickname == old_pokemon.nickname:
+            # Match by object identity first (for frozen dataclasses, this checks if it's the exact same object)
+            # This ensures we update the correct Pokemon even if multiple have same species/nickname
+            if p is old_pokemon:
                 all_pokemon[i] = new_pokemon
                 found_pokemon = True
                 break
+        if not found_pokemon:
+            # Fallback to property matching for backwards compatibility
+            for i, p in enumerate(all_pokemon):
+                if (
+                    p.species == old_pokemon.species
+                    and p.nickname == old_pokemon.nickname
+                ):
+                    all_pokemon[i] = new_pokemon
+                    found_pokemon = True
+                    break
         if not found_pokemon:
             raise ValueError(
                 f"Pokemon {old_pokemon.species} {old_pokemon.nickname} not found in team"
@@ -340,11 +418,9 @@ class StateTransition:
         Returns:
             New battle state with team updated
         """
-        return (
-            replace(state, p1_team=new_team)
-            if player_id == "p1"
-            else replace(state, p2_team=new_team)
-        )
+        new_teams = dict(state.teams)
+        new_teams[player_id] = new_team
+        return replace(state, teams=new_teams)
 
     @staticmethod
     def _apply_damage(state: BattleState, event: DamageEvent) -> BattleState:
@@ -435,6 +511,58 @@ class StateTransition:
         return StateTransition._update_team_in_state(state, player_id, new_team)
 
     @staticmethod
+    def _apply_poke(state: BattleState, event: PokeEvent) -> BattleState:
+        """Apply a poke event (team preview).
+
+        Creates a placeholder Pokemon with species and basic info.
+        HP, stats, moves, and other details will be filled in when Pokemon switches in.
+
+        Args:
+            state: Current battle state
+            event: Poke event containing species and basic info
+
+        Returns:
+            New battle state with Pokemon added to team
+        """
+        team = state.get_team(event.player_id)
+        all_pokemon = list(team.get_pokemon_team())
+
+        # Normalize species name (removes "-*" suffix and normalizes case/spaces)
+        # Store the original species name (with asterisk removed) in the Pokemon
+        species = event.species
+        if species.endswith("-*"):
+            species = species[:-2]
+
+        # Check if Pokemon already exists (avoid duplicates)
+        normalized_species = StateTransition._normalize_species_name(species)
+        for p in all_pokemon:
+            if StateTransition._normalize_species_name(p.species) == normalized_species:
+                # Already exists, don't add duplicate
+                return state
+
+        # Create placeholder Pokemon
+        new_pokemon = PokemonState(
+            species=species,
+            gender=event.gender,
+            shiny=event.shiny,
+            item=event.item,
+            level=100,  # Default level
+            current_hp=100,  # Placeholder HP
+            max_hp=100,  # Placeholder HP
+            status=Status.NONE,
+            is_active=False,
+        )
+
+        all_pokemon.append(new_pokemon)
+
+        new_team = replace(
+            team,
+            pokemon=all_pokemon,
+        )
+
+        return StateTransition._update_team_in_state(state, event.player_id, new_team)
+
+    @staticmethod
     def _apply_switch(state: BattleState, event: SwitchEvent) -> BattleState:
         """Apply a switch event.
 
@@ -445,47 +573,99 @@ class StateTransition:
         Returns:
             New battle state with pokemon switched in
         """
-        pokemon, team, player_id = StateTransition._get_pokemon_and_team(
-            state, event.player_id, event.position
+        team = state.get_team(event.player_id)
+        all_pokemon = list(team.get_pokemon_team())
+
+        # Mark all Pokemon as inactive first
+        for i, p in enumerate(all_pokemon):
+            if p.is_active:
+                all_pokemon[i] = replace(
+                    p, is_active=False, stat_boosts={}, volatile_conditions={}
+                )
+
+        # Normalize species and pokemon_name for matching
+        normalized_event_species = StateTransition._normalize_species_name(
+            event.species
+        )
+        normalized_pokemon_name = (
+            StateTransition._normalize_species_name(event.pokemon_name)
+            if event.pokemon_name
+            else None
         )
 
-        status = pokemon.status
+        # Find the Pokemon that's switching in to preserve its learned moves/ability
+        existing_pokemon = None
+        pokemon_index = None
+        for i, p in enumerate(all_pokemon):
+            normalized_p_species = StateTransition._normalize_species_name(p.species)
+            normalized_p_nickname = (
+                StateTransition._normalize_species_name(p.nickname)
+                if p.nickname
+                else None
+            )
+
+            # Match if species matches AND (no nickname or nickname matches or species matches pokemon_name)
+            # Also handle case where pokemon_name is a shortened form of species (e.g., "landorus" vs "landorus-therian")
+            species_matches = normalized_p_species == normalized_event_species
+            nickname_matches = (
+                not normalized_pokemon_name
+                or normalized_p_nickname == normalized_pokemon_name
+                or (
+                    not normalized_p_nickname
+                    and normalized_p_species == normalized_pokemon_name
+                )
+                or (
+                    not normalized_p_nickname
+                    and normalized_pokemon_name in normalized_p_species
+                )
+            )
+
+            if species_matches and nickname_matches:
+                existing_pokemon = p
+                pokemon_index = i
+                break
+
+        # Parse status from event
+        status = existing_pokemon.status if existing_pokemon else Status.NONE
         if event.status is not None:
             status = StateTransition._parse_status(event.status)
 
-        # Preserve persistent attributes (moves, item, ability, tera type)
-        # Reset volatile state (stat_boosts, volatile_conditions)
-        new_pokemon = replace(
-            pokemon,
-            species=event.species,
-            level=event.level,
-            gender=event.gender,
-            shiny=event.shiny,
-            nickname=event.pokemon_name
-            if event.pokemon_name != event.species
-            else None,
-            current_hp=event.hp_current,
-            max_hp=event.hp_max,
-            status=status,
-            stat_boosts={},
-            volatile_conditions={},
-            is_active=True,
-        )
-
-        all_pokemon = list(team.get_pokemon_team())
-        pokemon_found = False
-
-        for i, p in enumerate(all_pokemon):
-            if p.species == event.species and (
-                not event.pokemon_name
-                or p.nickname == event.pokemon_name
-                or (not p.nickname and p.species == event.pokemon_name)
-            ):
-                all_pokemon[i] = new_pokemon
-                pokemon_found = True
-                break
-
-        if not pokemon_found:
+        # Create new Pokemon state, preserving learned moves/ability from existing Pokemon
+        if existing_pokemon and pokemon_index is not None:
+            # Preserve persistent attributes (moves, item, ability, tera type)
+            # Reset volatile state (stat_boosts, volatile_conditions)
+            new_pokemon = replace(
+                existing_pokemon,
+                species=event.species,
+                level=event.level,
+                gender=event.gender,
+                shiny=event.shiny,
+                nickname=event.pokemon_name
+                if event.pokemon_name != event.species
+                else None,
+                current_hp=event.hp_current,
+                max_hp=event.hp_max,
+                status=status,
+                stat_boosts={},
+                volatile_conditions={},
+                is_active=True,
+            )
+            all_pokemon[pokemon_index] = new_pokemon
+        else:
+            # Pokemon not in team yet, create new
+            new_pokemon = PokemonState(
+                species=event.species,
+                level=event.level,
+                gender=event.gender,
+                shiny=event.shiny,
+                nickname=event.pokemon_name
+                if event.pokemon_name != event.species
+                else None,
+                current_hp=event.hp_current,
+                max_hp=event.hp_max,
+                status=status,
+                is_active=True,
+            )
             all_pokemon.append(new_pokemon)
 
         new_active_index = all_pokemon.index(new_pokemon)
@@ -541,9 +721,17 @@ class StateTransition:
             state, event.player_id, event.position
         )
 
-        new_pokemon = replace(pokemon, current_hp=0)
+        new_pokemon = replace(
+            pokemon,
+            current_hp=0,
+            is_active=False,
+            stat_boosts={},
+            volatile_conditions={},
+        )
 
         new_team = StateTransition._update_pokemon_in_team(team, pokemon, new_pokemon)
+        # Keep active_pokemon_index pointing to the fainted Pokemon
+        # It will be cleared when a new Pokemon switches in
         return StateTransition._update_team_in_state(state, player_id, new_team)
 
     @staticmethod
@@ -585,6 +773,33 @@ class StateTransition:
         )
 
         new_team = StateTransition._update_pokemon_in_team(team, pokemon, new_pokemon)
+
+        # If this is an Illusion break (e.g., "scream tail" → "zoroark-hisui"),
+        # we may have a placeholder Pokemon from PokeEvent that should be removed
+        # to avoid duplicates
+        if pokemon.species != event.species:
+            all_pokemon = list(new_team.get_pokemon_team())
+            normalized_new_species = StateTransition._normalize_species_name(
+                event.species
+            )
+
+            # Remove any non-active Pokemon with the same species as the revealed Pokemon
+            # This handles cases where PokeEvent created a placeholder that we no longer need
+            filtered_pokemon = []
+            for p in all_pokemon:
+                normalized_p_species = StateTransition._normalize_species_name(
+                    p.species
+                )
+                # Keep if it's the active Pokemon (the one we just revealed)
+                if p.is_active:
+                    filtered_pokemon.append(p)
+                # Keep if it's a different species
+                elif normalized_p_species != normalized_new_species:
+                    filtered_pokemon.append(p)
+                # Skip non-active Pokemon with same species (placeholders or old copies)
+
+            new_team = replace(new_team, pokemon=filtered_pokemon)
+
         return StateTransition._update_team_in_state(state, player_id, new_team)
 
     @staticmethod
@@ -778,68 +993,41 @@ class StateTransition:
         state: BattleState, event: ClearAllBoostEvent
     ) -> BattleState:
         """Clear all stat boosts for all pokemon (Haze)."""
-        p1_pokemon = []
-        for p in state.p1_team.get_pokemon_team():
-            p1_pokemon.append(
-                PokemonState(
-                    species=p.species,
-                    level=p.level,
-                    gender=p.gender,
-                    shiny=p.shiny,
-                    nickname=p.nickname,
-                    current_hp=p.current_hp,
-                    max_hp=p.max_hp,
-                    status=p.status,
-                    stat_boosts={},
-                    moves=p.moves,
-                    item=p.item,
-                    ability=p.ability,
-                    tera_type=p.tera_type,
-                    has_terastallized=p.has_terastallized,
-                    volatile_conditions=p.volatile_conditions,
-                    is_active=p.is_active,
-                    active_effects=p.active_effects,
+        new_teams = {}
+
+        for player_id, team in state.teams.items():
+            cleared_pokemon = []
+            for p in team.get_pokemon_team():
+                cleared_pokemon.append(
+                    PokemonState(
+                        species=p.species,
+                        level=p.level,
+                        gender=p.gender,
+                        shiny=p.shiny,
+                        nickname=p.nickname,
+                        current_hp=p.current_hp,
+                        max_hp=p.max_hp,
+                        status=p.status,
+                        stat_boosts={},
+                        moves=p.moves,
+                        item=p.item,
+                        ability=p.ability,
+                        tera_type=p.tera_type,
+                        has_terastallized=p.has_terastallized,
+                        volatile_conditions=p.volatile_conditions,
+                        is_active=p.is_active,
+                        active_effects=p.active_effects,
+                    )
                 )
+
+            new_teams[player_id] = TeamState(
+                pokemon=cleared_pokemon,
+                active_pokemon_index=team.active_pokemon_index,
+                side_conditions=team.side_conditions,
+                player_id=team.player_id,
             )
 
-        p2_pokemon = []
-        for p in state.p2_team.get_pokemon_team():
-            p2_pokemon.append(
-                PokemonState(
-                    species=p.species,
-                    level=p.level,
-                    gender=p.gender,
-                    shiny=p.shiny,
-                    nickname=p.nickname,
-                    current_hp=p.current_hp,
-                    max_hp=p.max_hp,
-                    status=p.status,
-                    stat_boosts={},
-                    moves=p.moves,
-                    item=p.item,
-                    ability=p.ability,
-                    tera_type=p.tera_type,
-                    has_terastallized=p.has_terastallized,
-                    volatile_conditions=p.volatile_conditions,
-                    is_active=p.is_active,
-                    active_effects=p.active_effects,
-                )
-            )
-
-        new_p1_team = TeamState(
-            pokemon=p1_pokemon,
-            active_pokemon_index=state.p1_team.active_pokemon_index,
-            side_conditions=state.p1_team.side_conditions,
-            player_id=state.p1_team.player_id,
-        )
-        new_p2_team = TeamState(
-            pokemon=p2_pokemon,
-            active_pokemon_index=state.p2_team.active_pokemon_index,
-            side_conditions=state.p2_team.side_conditions,
-            player_id=state.p2_team.player_id,
-        )
-
-        return replace(state, p1_team=new_p1_team, p2_team=new_p2_team)
+        return replace(state, teams=new_teams)
 
     @staticmethod
     def _apply_clearnegativeboost(
@@ -1125,6 +1313,76 @@ class StateTransition:
         return StateTransition._update_team_in_state(state, event.player_id, new_team)
 
     @staticmethod
+    def _apply_move(state: BattleState, event: MoveEvent) -> BattleState:
+        """Track opponent moves and decrement PP when used.
+
+        When we observe an opponent using a move:
+        1. If the move is not in their moveset yet, add it with calculated PP
+        2. Decrement the move's current PP by 1
+        This allows us to build up knowledge of opponent Pokemon moves and track PP usage.
+        """
+        pokemon, team, player_id = StateTransition._get_pokemon_and_team(
+            state, event.player_id, event.position
+        )
+
+        # Find if this move is already in the Pokemon's moveset
+        existing_move_index = None
+        for i, move in enumerate(pokemon.moves):
+            if move.name == event.move_name:
+                existing_move_index = i
+                break
+
+        new_moves = list(pokemon.moves)
+
+        if existing_move_index is not None:
+            # Move already known, decrement PP
+            existing_move = new_moves[existing_move_index]
+            new_moves[existing_move_index] = PokemonMove(
+                name=existing_move.name,
+                current_pp=max(0, existing_move.current_pp - 1),
+                max_pp=existing_move.max_pp,
+            )
+        else:
+            # Add the newly discovered move with calculated PP, then decrement by 1
+            max_pp = StateTransition._calculate_max_pp(event.move_name)
+            new_moves.append(
+                PokemonMove(
+                    name=event.move_name,
+                    current_pp=max(
+                        0, max_pp - 1
+                    ),  # Start with max_pp - 1 since we just used it
+                    max_pp=max_pp,
+                )
+            )
+
+        new_pokemon = replace(pokemon, moves=new_moves)
+
+        new_team = StateTransition._update_pokemon_in_team(team, pokemon, new_pokemon)
+        return StateTransition._update_team_in_state(state, player_id, new_team)
+
+    @staticmethod
+    def _apply_ability(state: BattleState, event: AbilityEvent) -> BattleState:
+        """Track opponent abilities by setting them when revealed.
+
+        When we observe an opponent's ability being activated, we set it on their
+        Pokemon if it's not already known. This allows us to learn opponent abilities
+        during battle.
+        """
+        pokemon, team, player_id = StateTransition._get_pokemon_and_team(
+            state, event.player_id, event.position
+        )
+
+        # Only update if ability is currently unknown (empty string)
+        if pokemon.ability:
+            # Ability already known, no update needed
+            return state
+
+        new_pokemon = replace(pokemon, ability=event.ability)
+
+        new_team = StateTransition._update_pokemon_in_team(team, pokemon, new_pokemon)
+        return StateTransition._update_team_in_state(state, player_id, new_team)
+
+    @staticmethod
     def _apply_request(state: BattleState, event: RequestEvent) -> BattleState:
         """Parse request event to extract available actions.
 
@@ -1133,13 +1391,19 @@ class StateTransition:
         request_data = json.loads(event.request_json)
 
         if request_data.get("wait", False):
-            logging.debug("Received wait request - maintaining current state")
-            return state
+            logging.debug("Received wait request - opponent is choosing")
+            return replace(state, waiting=True)
 
         team_preview = request_data.get("teamPreview", False)
 
-        # Infer values from state for validation (assume p1)
         player_id = "p1"
+        if "side" in request_data and "id" in request_data["side"]:
+            player_id = request_data["side"]["id"]
+
+        # Learn our player ID from the first request we receive
+        if state.our_player_id is None:
+            state = replace(state, our_player_id=player_id)
+
         inferred_moves = state._infer_available_moves(player_id)
         inferred_switches = state._infer_available_switches(player_id)
 
@@ -1178,7 +1442,15 @@ class StateTransition:
                 else False
             )
 
-        if set(inferred_moves) != set(available_moves):
+        # Normalize for comparison to avoid false positives from capitalization
+        normalized_inferred_moves = [
+            StateTransition._normalize_move_name(m) for m in inferred_moves
+        ]
+        normalized_available_moves = [
+            StateTransition._normalize_move_name(m) for m in available_moves
+        ]
+
+        if set(normalized_inferred_moves) != set(normalized_available_moves):
             logging.info(
                 f"Move inference diff for {player_id} - "
                 f"Inferred: {inferred_moves}, Actual: {available_moves}"
@@ -1190,61 +1462,209 @@ class StateTransition:
                 f"Inferred: {inferred_switches}, Actual: {available_switches}"
             )
 
-        # Update active Pokemon's moves from request data (for p1 only)
-        # This ensures agents can map move names to indices
+        # Populate/update team from request data (for both teams)
         updated_state = state
+        team = state.get_team(player_id)
+
+        if "side" in request_data and "pokemon" in request_data["side"]:
+            request_pokemon = request_data["side"]["pokemon"]
+
+            existing_pokemon_map = {}
+            for poke in team.pokemon:
+                # Use normalized species name for matching to handle case differences
+                normalized_species = StateTransition._normalize_species_name(
+                    poke.species
+                )
+                key = (normalized_species, poke.nickname)
+                existing_pokemon_map[key] = poke
+
+            if True:  # len(team.pokemon) != len(request_pokemon):
+                new_team_pokemon = []
+                for poke_data in request_pokemon:
+                    condition = poke_data.get("condition", "100/100")
+                    condition_parts = condition.split()
+                    hp_parts = condition_parts[0].split("/")
+                    current_hp = (
+                        int(hp_parts[0])
+                        if hp_parts[0] != "0" and hp_parts[0] != "fnt"
+                        else 0
+                    )
+                    max_hp = int(hp_parts[1]) if len(hp_parts) > 1 else 100
+
+                    # Parse status from condition (e.g., "100/100 par" -> "par")
+                    # Note: "0 fnt" format has "fnt" as second part but it's not a status
+                    status_str = None
+                    if len(condition_parts) > 1 and condition_parts[1] != "fnt":
+                        status_str = condition_parts[1]
+
+                    status = Status.NONE
+                    if status_str:
+                        try:
+                            status = Status(status_str)
+                        except ValueError:
+                            status = Status.NONE
+
+                    ident = poke_data.get("ident", "")
+                    nickname = ident.split(": ")[1] if ": " in ident else None
+
+                    details = poke_data.get("details", "")
+                    details_parts = details.split(", ")
+                    species = details_parts[0] if details_parts else "Unknown"
+                    gender = details_parts[1] if len(details_parts) > 1 else None
+
+                    pokemon_moves = []
+                    for move_name in poke_data.get("moves", []):
+                        # Calculate max PP assuming PP Ups are maxed (8/5 multiplier)
+                        max_pp = StateTransition._calculate_max_pp(move_name)
+                        pokemon_moves.append(
+                            PokemonMove(
+                                name=move_name, current_pp=max_pp, max_pp=max_pp
+                            )
+                        )
+
+                    item = poke_data.get("item", "")
+                    ability = poke_data.get("ability", "")
+                    tera_type = poke_data.get("teraType", None)
+
+                    nickname_key = nickname if nickname != species else None
+                    # Use normalized species name for lookup to match the key format
+                    normalized_species = StateTransition._normalize_species_name(
+                        species
+                    )
+                    poke_key = (normalized_species, nickname_key)
+                    existing_pokemon = existing_pokemon_map.get(poke_key)
+
+                    if existing_pokemon:
+                        pokemon = replace(
+                            existing_pokemon,
+                            current_hp=current_hp,
+                            max_hp=max_hp,
+                            status=status,
+                            moves=pokemon_moves,
+                            item=item if item else None,
+                            ability=ability,
+                            tera_type=tera_type,
+                            is_active=False,  # Will be set to True later if this is the active Pokemon
+                        )
+                    else:
+                        pokemon = PokemonState(
+                            species=species,
+                            level=100,
+                            gender=gender,
+                            current_hp=current_hp,
+                            max_hp=max_hp,
+                            status=status,
+                            nickname=nickname_key,
+                            moves=pokemon_moves,
+                            item=item if item else None,
+                            ability=ability,
+                            tera_type=tera_type,
+                        )
+                    new_team_pokemon.append(pokemon)
+
+                active_index = None
+                for i, poke_data in enumerate(request_pokemon):
+                    if poke_data.get("active", False):
+                        active_index = i
+                        break
+
+                # Mark the active Pokemon as is_active=True (only if alive)
+                if active_index is not None:
+                    active_pokemon = new_team_pokemon[active_index]
+                    # Only mark as active if Pokemon is alive
+                    if active_pokemon.current_hp > 0:
+                        new_team_pokemon[active_index] = replace(
+                            active_pokemon, is_active=True
+                        )
+
+                updated_team = replace(
+                    team, pokemon=new_team_pokemon, active_pokemon_index=active_index
+                )
+
+                updated_state = StateTransition._update_team_in_state(
+                    state, player_id, updated_team
+                )
+                team = updated_team
+
         if "active" in request_data and request_data["active"]:
             active_data = request_data["active"][0]
             if "moves" in active_data:
-                try:
-                    # Get active Pokemon
-                    active_pokemon = state.get_active_pokemon(player_id)
-                    if active_pokemon:
-                        # Create PokemonMove objects from request data
-                        pokemon_moves = []
-                        for move_data in active_data["moves"]:
-                            move_name = move_data.get("move", "")
-                            if move_name:
-                                pokemon_moves.append(
-                                    PokemonMove(
-                                        name=move_name,
-                                        current_pp=move_data.get("pp", 0),
-                                        max_pp=move_data.get("maxpp", 0),
-                                    )
+                # Get the team that was just updated above (which has correct active_index)
+                team = updated_state.get_team(player_id)
+
+                # Use the active_pokemon_index from the team to get the correct active Pokemon
+                # IMPORTANT: Don't use get_active_pokemon() because it might use a stale index
+                if (
+                    team.active_pokemon_index is not None
+                    and team.active_pokemon_index < len(team.pokemon)
+                ):
+                    active_pokemon = team.pokemon[team.active_pokemon_index]
+
+                    pokemon_moves = []
+                    for move_data in active_data["moves"]:
+                        move_name = move_data.get("move", "")
+                        if move_name:
+                            pokemon_moves.append(
+                                PokemonMove(
+                                    name=move_name,
+                                    current_pp=move_data.get("pp", 0),
+                                    max_pp=move_data.get("maxpp", 0),
                                 )
+                            )
 
-                        # Update the Pokemon with moves
-                        updated_pokemon = replace(active_pokemon, moves=pokemon_moves)
+                    choice_items = ["choicescarf", "choicespecs", "choiceband"]
+                    pokemon_item = (
+                        active_pokemon.item.lower() if active_pokemon.item else ""
+                    )
+                    has_choice_item = pokemon_item in choice_items
+                    choice_locked_move = None
+                    if has_choice_item:
+                        enabled_moves = []
+                        for move_data in active_data["moves"]:
+                            if not move_data.get("disabled", False):
+                                enabled_moves.append(move_data.get("move", ""))
+                        if len(enabled_moves) == 1:
+                            choice_locked_move = enabled_moves[0]
 
-                        # Update the team
-                        team = state.get_team(player_id)
-                        team_pokemon = list(team.pokemon)
-                        if team.active_pokemon_index is not None:
-                            team_pokemon[team.active_pokemon_index] = updated_pokemon
-                            updated_team = replace(team, pokemon=team_pokemon)
+                    new_volatile_conditions = dict(active_pokemon.volatile_conditions)
+                    if choice_locked_move:
+                        new_volatile_conditions["choice_locked_move"] = (
+                            choice_locked_move
+                        )
+                    elif "choice_locked_move" in new_volatile_conditions:
+                        del new_volatile_conditions["choice_locked_move"]
 
-                            # Update the state
-                            if player_id == "p1":
-                                updated_state = replace(state, p1_team=updated_team)
-                            else:
-                                updated_state = replace(state, p2_team=updated_team)
-                except Exception as e:
-                    logging.error(
-                        "Error updating Pokemon moves from request: %s",
-                        e,
-                        exc_info=True,
+                    updated_pokemon = replace(
+                        active_pokemon,
+                        moves=pokemon_moves,
+                        volatile_conditions=new_volatile_conditions,
                     )
 
-        return replace(
-            updated_state,
-            available_moves=available_moves,
-            available_switches=available_switches,
-            can_mega=can_mega,
-            can_tera=can_tera,
-            can_dynamax=can_dynamax,
-            force_switch=force_switch,
-            team_preview=team_preview,
-        )
+                    team_pokemon = list(team.pokemon)
+                    team_pokemon[team.active_pokemon_index] = updated_pokemon
+                    updated_team = replace(team, pokemon=team_pokemon)
+
+                    updated_state = StateTransition._update_team_in_state(
+                        updated_state, player_id, updated_team
+                    )
+
+        # Only update available actions if this is our request
+        # (we could be p1 or p2, determined from first request)
+        if player_id == updated_state.our_player_id:
+            return replace(
+                updated_state,
+                available_moves=available_moves,
+                available_switches=available_switches,
+                can_mega=can_mega,
+                can_tera=can_tera,
+                can_dynamax=can_dynamax,
+                force_switch=force_switch,
+                team_preview=team_preview,
+                waiting=False,  # Clear waiting flag when we receive a real request
+            )
+        else:
+            # Not our request, just return updated team data
+            return updated_state
 
     @staticmethod
     def _apply_upkeep(state: BattleState, event: UpkeepEvent) -> BattleState:
@@ -1291,12 +1711,9 @@ class StateTransition:
         Returns:
             New battle state with player username recorded
         """
-        if event.player_id == "p1":
-            return replace(state, p1_username=event.username)
-        elif event.player_id == "p2":
-            return replace(state, p2_username=event.username)
-        else:
-            return state
+        new_usernames = dict(state.player_usernames)
+        new_usernames[event.player_id] = event.username
+        return replace(state, player_usernames=new_usernames)
 
     @staticmethod
     def _apply_battle_end(state: BattleState, event: "BattleEndEvent") -> BattleState:

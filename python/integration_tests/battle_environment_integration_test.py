@@ -151,8 +151,8 @@ class BattleEnvironmentIntegrationTest(
             expected_winner: Expected winner player ID (p1 or p2)
         """
         # Check that at least one team has all pokemon fainted
-        p1_team = final_state.p1_team
-        p2_team = final_state.p2_team
+        p1_team = final_state.get_team("p1")
+        p2_team = final_state.get_team("p2")
 
         p1_alive = any(p.is_alive() for p in p1_team.get_pokemon_team())
         p2_alive = any(p.is_alive() for p in p2_team.get_pokemon_team())
@@ -219,10 +219,10 @@ class BattleEnvironmentIntegrationTest(
         winner_player_id = player_map.get(winner, winner)
         self._verify_battle_ended(final_state, winner_player_id)
         p1_all_fainted = all(
-            not p.is_alive() for p in final_state.p1_team.get_pokemon_team()
+            not p.is_alive() for p in final_state.get_team("p1").get_pokemon_team()
         )
         p2_all_fainted = all(
-            not p.is_alive() for p in final_state.p2_team.get_pokemon_team()
+            not p.is_alive() for p in final_state.get_team("p2").get_pokemon_team()
         )
 
         self.assertTrue(

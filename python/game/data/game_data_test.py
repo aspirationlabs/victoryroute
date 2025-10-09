@@ -199,6 +199,54 @@ class GameDataTest(parameterized.TestCase):
         self.assertEqual(type_chart.get_effectiveness("fire", "grass"), 2.0)
         self.assertEqual(type_chart.get_effectiveness("water", "fire"), 2.0)
 
+    def test_get_item_normalized_formats(self) -> None:
+        """Test that items can be retrieved with or without spaces/hyphens."""
+        # Heavy-Duty Boots
+        item_spaced = self.game_data.get_item("Heavy-Duty Boots")
+        item_no_space = self.game_data.get_item("heavydutyboots")
+        item_mixed = self.game_data.get_item("HeavyDutyBoots")
+        self.assertEqual(item_spaced.name, "Heavy-Duty Boots")
+        self.assertEqual(item_no_space.name, "Heavy-Duty Boots")
+        self.assertEqual(item_mixed.name, "Heavy-Duty Boots")
+
+        # Choice Scarf
+        item_spaced2 = self.game_data.get_item("Choice Scarf")
+        item_no_space2 = self.game_data.get_item("choicescarf")
+        self.assertEqual(item_spaced2.name, "Choice Scarf")
+        self.assertEqual(item_no_space2.name, "Choice Scarf")
+
+    def test_get_move_normalized_formats(self) -> None:
+        """Test that moves can be retrieved with or without spaces/hyphens."""
+        # Will-O-Wisp
+        move_spaced = self.game_data.get_move("Will-O-Wisp")
+        move_no_space = self.game_data.get_move("willowisp")
+        move_mixed = self.game_data.get_move("WillOWisp")
+        self.assertEqual(move_spaced.name, "Will-O-Wisp")
+        self.assertEqual(move_no_space.name, "Will-O-Wisp")
+        self.assertEqual(move_mixed.name, "Will-O-Wisp")
+
+        # Ice Spinner
+        move_spaced2 = self.game_data.get_move("Ice Spinner")
+        move_no_space2 = self.game_data.get_move("icespinner")
+        self.assertEqual(move_spaced2.name, "Ice Spinner")
+        self.assertEqual(move_no_space2.name, "Ice Spinner")
+
+    def test_get_ability_normalized_formats(self) -> None:
+        """Test that abilities can be retrieved with or without spaces."""
+        # Poison Heal
+        ability_spaced = self.game_data.get_ability("Poison Heal")
+        ability_no_space = self.game_data.get_ability("poisonheal")
+        ability_mixed = self.game_data.get_ability("PoisonHeal")
+        self.assertEqual(ability_spaced.name, "Poison Heal")
+        self.assertEqual(ability_no_space.name, "Poison Heal")
+        self.assertEqual(ability_mixed.name, "Poison Heal")
+
+        # Supreme Overlord
+        ability_spaced2 = self.game_data.get_ability("Supreme Overlord")
+        ability_no_space2 = self.game_data.get_ability("supremeoverlord")
+        self.assertEqual(ability_spaced2.name, "Supreme Overlord")
+        self.assertEqual(ability_no_space2.name, "Supreme Overlord")
+
 
 if __name__ == "__main__":
     unittest.main()

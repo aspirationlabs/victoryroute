@@ -51,8 +51,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
         field = FieldState(turn_number=3)
 
         battle = BattleState(
-            p1_team=p1_team,
-            p2_team=p2_team,
+            teams={"p1": p1_team, "p2": p2_team},
             field_state=field,
         )
 
@@ -93,8 +92,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
         field = FieldState(turn_number=10)
 
         battle = BattleState(
-            p1_team=p1_team,
-            p2_team=p2_team,
+            teams={"p1": p1_team, "p2": p2_team},
             field_state=field,
         )
 
@@ -137,8 +135,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
         field = FieldState(turn_number=20)
 
         battle = BattleState(
-            p1_team=p1_team,
-            p2_team=p2_team,
+            teams={"p1": p1_team, "p2": p2_team},
             field_state=field,
         )
 
@@ -181,8 +178,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
         field = FieldState(turn_number=24)
 
         battle = BattleState(
-            p1_team=p1_team,
-            p2_team=p2_team,
+            teams={"p1": p1_team, "p2": p2_team},
             field_state=field,
         )
 
@@ -227,8 +223,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
         field = FieldState(turn_number=3)
 
         battle = BattleState(
-            p1_team=p1_team,
-            p2_team=p2_team,
+            teams={"p1": p1_team, "p2": p2_team},
             field_state=field,
         )
 
@@ -265,8 +260,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
         field = FieldState(turn_number=4)
 
         battle = BattleState(
-            p1_team=p1_team,
-            p2_team=p2_team,
+            teams={"p1": p1_team, "p2": p2_team},
             field_state=field,
         )
 
@@ -307,8 +301,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
         field = FieldState(turn_number=37)
 
         battle = BattleState(
-            p1_team=p1_team,
-            p2_team=p2_team,
+            teams={"p1": p1_team, "p2": p2_team},
             field_state=field,
         )
 
@@ -356,8 +349,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
         )
 
         battle = BattleState(
-            p1_team=p1_team,
-            p2_team=p2_team,
+            teams={"p1": p1_team, "p2": p2_team},
             field_state=field,
         )
 
@@ -395,8 +387,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
         field = FieldState(turn_number=22)
 
         battle = BattleState(
-            p1_team=p1_team,
-            p2_team=p2_team,
+            teams={"p1": p1_team, "p2": p2_team},
             field_state=field,
         )
 
@@ -431,8 +422,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
         field = FieldState(turn_number=10)
 
         battle = BattleState(
-            p1_team=p1_team,
-            p2_team=p2_team,
+            teams={"p1": p1_team, "p2": p2_team},
             field_state=field,
         )
 
@@ -462,8 +452,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
         )
 
         battle = BattleState(
-            p1_team=p1_team,
-            p2_team=p2_team,
+            teams={"p1": p1_team, "p2": p2_team},
             field_state=field,
         )
 
@@ -503,8 +492,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
         field = FieldState(turn_number=27)
 
         battle = BattleState(
-            p1_team=p1_team,
-            p2_team=p2_team,
+            teams={"p1": p1_team, "p2": p2_team},
             field_state=field,
         )
 
@@ -537,7 +525,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
             is_active=True,
         )
         team = TeamState(pokemon=[pikachu], active_pokemon_index=0)
-        state = BattleState(p1_team=team, p2_team=TeamState())
+        state = BattleState(teams={"p1": team, "p2": TeamState()})
 
         # Get available moves - should exclude Thunder Wave (no PP)
         moves = state.get_available_moves("p1")
@@ -552,7 +540,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
         fainted = PokemonState(species="Blastoise", current_hp=0, max_hp=100)
 
         team = TeamState(pokemon=[pikachu, charizard, fainted], active_pokemon_index=0)
-        state = BattleState(p1_team=team, p2_team=TeamState())
+        state = BattleState(teams={"p1": team, "p2": TeamState()})
 
         switches = state.get_available_switches("p1")
         self.assertEqual(switches, [1])
@@ -574,7 +562,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
             is_active=True,
         )
         team = TeamState(pokemon=[pikachu], active_pokemon_index=0)
-        state = BattleState(p1_team=team, p2_team=TeamState())
+        state = BattleState(teams={"p1": team, "p2": TeamState()})
 
         # Only Thunderbolt should be available due to Encore
         moves = state.get_available_moves("p1")
@@ -594,7 +582,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
             is_active=True,
         )
         team = TeamState(pokemon=[pikachu], active_pokemon_index=0)
-        state = BattleState(p1_team=team, p2_team=TeamState())
+        state = BattleState(teams={"p1": team, "p2": TeamState()})
 
         moves = state.get_available_moves("p1")
         self.assertEqual(moves, ["Thunderbolt"])
@@ -613,7 +601,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
             is_active=True,
         )
         team = TeamState(pokemon=[pikachu], active_pokemon_index=0)
-        state = BattleState(p1_team=team, p2_team=TeamState())
+        state = BattleState(teams={"p1": team, "p2": TeamState()})
 
         # Should return empty since encored move has no PP
         moves = state.get_available_moves("p1")
@@ -635,7 +623,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
             is_active=True,
         )
         team = TeamState(pokemon=[pikachu], active_pokemon_index=0)
-        state = BattleState(p1_team=team, p2_team=TeamState())
+        state = BattleState(teams={"p1": team, "p2": TeamState()})
 
         # All moves except Thunderbolt should be available
         moves = state.get_available_moves("p1")
@@ -655,7 +643,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
             is_active=True,
         )
         team = TeamState(pokemon=[pikachu], active_pokemon_index=0)
-        state = BattleState(p1_team=team, p2_team=TeamState())
+        state = BattleState(teams={"p1": team, "p2": TeamState()})
 
         moves = state.get_available_moves("p1")
         self.assertEqual(moves, ["Volt Switch"])
@@ -675,7 +663,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
             is_active=True,
         )
         team = TeamState(pokemon=[pikachu], active_pokemon_index=0)
-        state = BattleState(p1_team=team, p2_team=TeamState())
+        state = BattleState(teams={"p1": team, "p2": TeamState()})
 
         # Thunderbolt already has no PP, so same result as without Disable
         moves = state.get_available_moves("p1")
@@ -703,8 +691,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
         field = FieldState(turn_number=1)
 
         battle = BattleState(
-            p1_team=p1_team,
-            p2_team=p2_team,
+            teams={"p1": p1_team, "p2": p2_team},
             field_state=field,
             battle_format="singles",
         )

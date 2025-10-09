@@ -8,7 +8,6 @@ from python.game.events.battle_event import (
     BattleEndEvent,
     BattleEvent,
     ErrorEvent,
-    PlayerEvent,
     RequestEvent,
     TurnEvent,
 )
@@ -111,9 +110,6 @@ class BattleStream:
 
                 if self._logger:
                     self._logger.log_event(event)
-
-                    if isinstance(event, PlayerEvent) and event.player_id == "p2":
-                        self._logger.set_opponent_name(event.username)
 
                 if self._is_decision_point(event):
                     decision_event_found = True

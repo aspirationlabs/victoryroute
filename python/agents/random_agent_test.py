@@ -50,9 +50,10 @@ class RandomAgentTest(unittest.IsolatedAsyncioTestCase):
         team = TeamState(pokemon=[active_pokemon], active_pokemon_index=0)
 
         return BattleState(
-            p1_team=team,
+            teams={"p1": team, "p2": TeamState()},
             available_moves=available_moves,
             available_switches=available_switches,
+            our_player_id="p1",
         )
 
     async def test_random_agent_returns_move_action(self) -> None:

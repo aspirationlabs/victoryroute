@@ -17,18 +17,15 @@ class BattleState:
     This is the complete snapshot of a battle, including both teams and field state.
     """
 
-    # Teams
-    p1_team: TeamState = field(default_factory=TeamState)
-    p2_team: TeamState = field(default_factory=TeamState)
+    teams: Dict[str, TeamState] = field(
+        default_factory=lambda: {"p1": TeamState(), "p2": TeamState()}
+    )
 
-    # Field
     field_state: FieldState = field(default_factory=FieldState)
 
-    # Battle format/rules
     battle_format: str = "singles"
     ruleset: Optional[str] = None
 
-    # Available actions (set by request events)
     available_moves: List[str] = field(default_factory=list)
     available_switches: List[int] = field(default_factory=list)
     can_mega: bool = False
@@ -36,12 +33,16 @@ class BattleState:
     can_dynamax: bool = False
     force_switch: bool = False
     team_preview: bool = False
+    waiting: bool = (
+        False  # True when we received a "wait" request (opponent is choosing)
+    )
 
-    # Battle outcome
     battle_over: bool = False
-    winner: Optional[str] = None  # Username of winner, or None for tie
-    p1_username: Optional[str] = None
-    p2_username: Optional[str] = None
+    winner: Optional[str] = None
+    player_usernames: Dict[str, str] = field(default_factory=dict)
+    our_player_id: Optional[str] = (
+        None  # "p1" or "p2" - learned from first RequestEvent
+    )
 
     def get_team(self, player: str) -> TeamState:
         """Get team state for a player.
@@ -52,12 +53,9 @@ class BattleState:
         Returns:
             TeamState for the specified player
         """
-        if player == "p1":
-            return self.p1_team
-        elif player == "p2":
-            return self.p2_team
-        else:
+        if player not in self.teams:
             raise ValueError(f"Invalid player ID: {player}")
+        return self.teams[player]
 
     def get_active_pokemon(self, player: str) -> Optional[PokemonState]:
         """Get active Pokemon for a player.
@@ -98,6 +96,19 @@ class BattleState:
                     return [move.name]
             return []
 
+        # Check for Choice item locking - if Pokemon has Choice item and used a move,
+        # only that move is available (others will have 0 PP or be tracked as locked)
+        choice_items = ["choicescarf", "choicespecs", "choiceband"]
+        pokemon_item = active.item.lower() if active.item else ""
+        has_choice_item = pokemon_item in choice_items
+
+        if has_choice_item and "choice_locked_move" in active.volatile_conditions:
+            locked_move = active.volatile_conditions["choice_locked_move"]
+            for move in active.moves:
+                if move.name == locked_move and move.current_pp > 0:
+                    return [move.name]
+            return []
+
         # Check for Disable - exclude the disabled move
         disabled_move = None
         if "disable" in active.volatile_conditions:
@@ -125,82 +136,108 @@ class BattleState:
             List of indices of Pokemon that can be switched in
         """
         team = self.get_team(player)
-        active = team.get_active_pokemon()
+        active_index = team.active_pokemon_index
 
         available = []
         for i, pokemon in enumerate(team.get_pokemon_team()):
             # Can switch if: alive, not active, not trapped
-            if pokemon.is_alive():
-                # Check if this is the active Pokemon
-                if (
-                    active
-                    and pokemon.species == active.species
-                    and pokemon.nickname == active.nickname
-                ):
-                    continue
-                # Check if can switch (not trapped)
-                if pokemon.can_switch():
-                    available.append(i)
+            # Skip the active Pokemon (use index instead of species/nickname matching)
+            if i == active_index:
+                continue
+
+            # Must be alive and not trapped
+            if pokemon.is_alive() and pokemon.can_switch():
+                available.append(i)
 
         return available
 
-    def get_available_moves(self, player: str = "p1") -> List[str]:
+    def get_available_moves(self, player: Optional[str] = None) -> List[str]:
         """Get available moves for a player.
 
         If request data is available (from RequestEvent), returns that.
         Otherwise, infers from battle state (replay mode).
 
         Args:
-            player: Player ID (p1 or p2)
+            player: Player ID (p1 or p2). If None, uses our_player_id.
 
         Returns:
             List of available move names
+
+        Raises:
+            ValueError: If player is None and our_player_id is not set
         """
-        # If we have request data, use it
-        if player == "p1" and self.available_moves:
+        if player is None:
+            if self.our_player_id is None:
+                raise ValueError(
+                    "player parameter is required when our_player_id is not set"
+                )
+            player = self.our_player_id
+
+        if player == self.our_player_id and self.available_moves:
             return self.available_moves
 
-        # Otherwise, infer from state
         return self._infer_available_moves(player)
 
-    def get_available_switches(self, player: str = "p1") -> List[int]:
+    def get_available_switches(self, player: Optional[str] = None) -> List[int]:
         """Get available switches for a player.
 
         If request data is available (from RequestEvent), returns that.
         Otherwise, infers from battle state (replay mode).
 
         Args:
-            player: Player ID (p1 or p2)
+            player: Player ID (p1 or p2). If None, uses our_player_id.
 
         Returns:
             List of indices of Pokemon that can be switched in
+
+        Raises:
+            ValueError: If player is None and our_player_id is not set
         """
-        # If we have request data, use it
-        if player == "p1" and self.available_switches:
+        if player is None:
+            if self.our_player_id is None:
+                raise ValueError(
+                    "player parameter is required when our_player_id is not set"
+                )
+            player = self.our_player_id
+
+        if player == self.our_player_id and self.available_switches:
             return self.available_switches
 
-        # Otherwise, infer from state
         return self._infer_available_switches(player)
 
-    def get_move_index(self, move_name: str, player: str = "p1") -> int:
+    def get_move_index(self, move_name: str, player: Optional[str] = None) -> int:
         """Get the index of a move in the active Pokemon's moveset.
 
         Args:
             move_name: Name of the move to find
-            player: Player ID ("p1" or "p2")
+            player: Player ID ("p1" or "p2"). If None, uses our_player_id.
 
         Returns:
             Index of the move (0-3)
 
         Raises:
             ValueError: If the move is not found in the Pokemon's moveset
+            ValueError: If player is None and our_player_id is not set
         """
+        from python.game.environment.state_transition import StateTransition
+
+        if player is None:
+            if self.our_player_id is None:
+                raise ValueError(
+                    "player parameter is required when our_player_id is not set"
+                )
+            player = self.our_player_id
+
         active_pokemon = self.get_active_pokemon(player)
         if not active_pokemon:
             raise ValueError(f"No active Pokemon for player {player}")
 
+        # Normalize move name for comparison
+        normalized_search = StateTransition._normalize_move_name(move_name)
+
         for i, move in enumerate(active_pokemon.moves):
-            if move.name == move_name:
+            normalized_move = StateTransition._normalize_move_name(move.name)
+            if normalized_move == normalized_search:
                 return i
 
         raise ValueError(
@@ -272,7 +309,7 @@ class BattleState:
             >>> len(info["p1_team"])
             6
         """
-        return {
+        result = {
             "turn_number": self.field_state.turn_number,
             "weather": (
                 self.field_state.weather.value if self.field_state.weather else None
@@ -285,17 +322,16 @@ class BattleState:
             "field_effects": [
                 effect.value for effect in self.field_state.field_effects
             ],
-            "p1_side_conditions": {
-                cond.value: value
-                for cond, value in self.p1_team.side_conditions.items()
-            },
-            "p2_side_conditions": {
-                cond.value: value
-                for cond, value in self.p2_team.side_conditions.items()
-            },
-            "p1_team": [p.to_dict() for p in self.p1_team.get_pokemon_team()],
-            "p2_team": [p.to_dict() for p in self.p2_team.get_pokemon_team()],
         }
+
+        # Add side conditions and teams for each player
+        for player_id, team in self.teams.items():
+            result[f"{player_id}_side_conditions"] = {
+                cond.value: value for cond, value in team.side_conditions.items()
+            }
+            result[f"{player_id}_team"] = [p.to_dict() for p in team.get_pokemon_team()]
+
+        return result
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert Battle state to dictionary for JSON serialization.
@@ -303,11 +339,9 @@ class BattleState:
         Returns:
             Dictionary representation of the entire battle state
         """
-        return {
+        result = {
             "battle_format": self.battle_format,
             "ruleset": self.ruleset,
-            "p1_team": self.p1_team.to_dict(),
-            "p2_team": self.p2_team.to_dict(),
             "field_state": self.field_state.to_dict(),
             "available_actions": {
                 "moves": self.available_moves,
@@ -318,6 +352,12 @@ class BattleState:
                 "force_switch": self.force_switch,
             },
         }
+
+        # Add teams dynamically
+        for player_id, team in self.teams.items():
+            result[f"{player_id}_team"] = team.to_dict()
+
+        return result
 
     def __str__(self) -> str:
         """Return JSON representation of Battle state.
