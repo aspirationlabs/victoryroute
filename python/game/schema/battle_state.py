@@ -352,16 +352,10 @@ class BattleState:
             },
         }
 
-        # Add teams dynamically
         for player_id, team in self.teams.items():
             result[f"{player_id}_team"] = team.to_dict()
 
         return result
 
     def __str__(self) -> str:
-        """Return JSON representation of Battle state.
-
-        Returns:
-            JSON string of battle state, useful for testing and LLM integration
-        """
-        return json.dumps(self.to_dict(), indent=2, sort_keys=True)
+        return json.dumps(self.to_dict(), sort_keys=True)

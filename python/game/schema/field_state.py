@@ -104,4 +104,4 @@ class FieldState:
         Returns:
             JSON string of field state, useful for testing and LLM integration
         """
-        return json.dumps(self.to_dict(), indent=2, sort_keys=True)
+        return json.dumps(self.to_dict(), sort_keys=True)

@@ -179,12 +179,13 @@ class StateTransition:
             return StateTransition._apply_move(state, event)
         elif isinstance(event, AbilityEvent):
             return StateTransition._apply_ability(state, event)
+        elif isinstance(event, TurnEvent):
+            return StateTransition._apply_turn(state, event)
         # Informational events that don't modify battle state
         elif isinstance(
             event,
             (
                 # Battle flow events
-                TurnEvent,
                 BattleStartEvent,
                 # Metadata events
                 TeamSizeEvent,
@@ -1364,6 +1365,20 @@ class StateTransition:
 
         new_team = StateTransition._update_pokemon_in_team(team, pokemon, new_pokemon)
         return StateTransition._update_team_in_state(state, player_id, new_team)
+
+    @staticmethod
+    def _apply_turn(state: BattleState, event: TurnEvent) -> BattleState:
+        """Apply turn event - update turn number.
+
+        Args:
+            state: Current battle state
+            event: Turn event
+
+        Returns:
+            New battle state with turn number updated
+        """
+        new_field = replace(state.field_state, turn_number=event.turn_number)
+        return replace(state, field_state=new_field)
 
     @staticmethod
     def _apply_request(state: BattleState, event: RequestEvent) -> BattleState:

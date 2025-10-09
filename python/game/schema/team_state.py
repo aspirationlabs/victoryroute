@@ -109,9 +109,4 @@ class TeamState:
         }
 
     def __str__(self) -> str:
-        """Return JSON representation of Team state.
-
-        Returns:
-            JSON string of team state, useful for testing and LLM integration
-        """
-        return json.dumps(self.to_dict(), indent=2, sort_keys=True)
+        return json.dumps(self.to_dict(), sort_keys=True)

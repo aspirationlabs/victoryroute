@@ -29,6 +29,9 @@ const { AbilitiesText } = require(
 const { ItemsText } = require(
   path.join(SHOWDOWN_PATH, "data", "text", "items.ts"),
 );
+const { MovesText } = require(
+  path.join(SHOWDOWN_PATH, "data", "text", "moves.ts"),
+);
 
 const DAMAGE_MULTIPLIERS: Record<number, number> = {
   0: 1.0,
@@ -78,7 +81,7 @@ function transformTypeChart(raw: any): any[] {
   return [{ effectiveness: typeEffectiveness }];
 }
 
-function transformMoves(raw: any): any[] {
+function transformMoves(raw: any, textData: any): any[] {
   const moves: any[] = [];
   for (const [moveId, moveData] of Object.entries<any>(raw)) {
     let accuracy = moveData.accuracy;
@@ -87,6 +90,9 @@ function transformMoves(raw: any): any[] {
     }
 
     const basePower = moveData.basePower ?? 0;
+
+    const textEntry = textData[moveId];
+    const description = textEntry?.desc || textEntry?.shortDesc || "";
 
     moves.push({
       name: moveData.name,
@@ -97,6 +103,7 @@ function transformMoves(raw: any): any[] {
       pp: moveData.pp,
       priority: moveData.priority,
       category: moveData.category,
+      description: description,
     });
   }
   return moves;
@@ -171,7 +178,7 @@ fs.writeFileSync(
 console.log("Transforming and writing moves...");
 fs.writeFileSync(
   path.join(OUTPUT_DIR, "moves.json"),
-  JSON.stringify(transformMoves(Moves), null, 2),
+  JSON.stringify(transformMoves(Moves, MovesText), null, 2),
 );
 
 console.log("Transforming and writing abilities...");

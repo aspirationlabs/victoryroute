@@ -202,12 +202,12 @@ class BattleEnvironmentTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(["Thunder Shock"], initial_state.available_moves)
 
         # Execute action
-        action = BattleAction(action_type=ActionType.MOVE, move_index=0)
+        action = BattleAction(action_type=ActionType.MOVE, move_name="Thunder Shock")
         new_state = await env.step(action)
 
         # Verify action was sent (with battle room prefix)
         self.assertEqual(1, len(client.sent_messages))
-        self.assertEqual("test|/choose move 1", client.sent_messages[0])
+        self.assertEqual("test|/choose move thundershock", client.sent_messages[0])
 
         # Verify state was updated
         self.assertEqual(new_state, env.get_state())
@@ -231,7 +231,7 @@ class BattleEnvironmentTest(unittest.IsolatedAsyncioTestCase):
 
         # Initialize and take action
         await env.reset()
-        action = BattleAction(action_type=ActionType.MOVE, move_index=0)
+        action = BattleAction(action_type=ActionType.MOVE, move_name="Thunder Shock")
         await env.step(action)
 
         # Verify history contains both states
@@ -257,11 +257,13 @@ class BattleEnvironmentTest(unittest.IsolatedAsyncioTestCase):
         await env.reset()
 
         # Switch to second Pokemon
-        action = BattleAction(action_type=ActionType.SWITCH, switch_index=1)
+        action = BattleAction(
+            action_type=ActionType.SWITCH, switch_pokemon_name="Raichu"
+        )
         await env.step(action)
 
-        # Verify switch command was sent (1-indexed, with battle room prefix)
-        self.assertEqual("test|/choose switch 2", client.sent_messages[0])
+        # Verify switch command was sent (normalized name, with battle room prefix)
+        self.assertEqual("test|/choose switch raichu", client.sent_messages[0])
 
     async def test_step_raises_on_stream_end(self) -> None:
         """Test that step() raises error if stream ends unexpectedly."""
@@ -276,7 +278,7 @@ class BattleEnvironmentTest(unittest.IsolatedAsyncioTestCase):
 
         await env.reset()
 
-        action = BattleAction(action_type=ActionType.MOVE, move_index=0)
+        action = BattleAction(action_type=ActionType.MOVE, move_name="Thunder Shock")
 
         with self.assertRaises(RuntimeError):
             await env.step(action)
@@ -298,7 +300,7 @@ class BattleEnvironmentTest(unittest.IsolatedAsyncioTestCase):
 
         await env.reset()
 
-        action = BattleAction(action_type=ActionType.MOVE, move_index=0)
+        action = BattleAction(action_type=ActionType.MOVE, move_name="Thunder Shock")
 
         with self.assertRaises(RuntimeError):
             await env.step(action)
@@ -326,7 +328,7 @@ class BattleEnvironmentTest(unittest.IsolatedAsyncioTestCase):
 
         # Initialize and take two actions
         await env.reset()
-        action = BattleAction(action_type=ActionType.MOVE, move_index=0)
+        action = BattleAction(action_type=ActionType.MOVE, move_name="Thunder Shock")
         await env.step(action)
         await env.step(action)
 

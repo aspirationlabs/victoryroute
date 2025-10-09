@@ -80,7 +80,7 @@ class Agent(ABC):
 
     @abstractmethod
     async def choose_action(
-        self, state: BattleState, game_data: GameData
+        self, state: BattleState, game_data: GameData, battle_room: str
     ) -> BattleAction:
         """Choose a battle action based on the current state.
 
@@ -104,6 +104,7 @@ class Agent(ABC):
                 - Available actions (moves, switches, mega/tera flags)
             game_data: Access to game database for querying Pokemon, moves,
                       abilities, items, natures, and type chart
+            battle_room: The battle room identifier (e.g., "battle-gen9ou-12345")
 
         Returns:
             A BattleAction representing the agent's chosen action. This will be
