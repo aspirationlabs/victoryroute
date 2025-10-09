@@ -17,7 +17,6 @@ from google.adk.sessions import InMemorySessionService
 from google.genai import types
 
 from python.agents.agent_interface import Agent
-from python.agents.tools.get_available_moves import get_available_moves
 from python.agents.tools.get_object_game_data import get_object_game_data
 from python.agents.tools.llm_event_logger import LlmEventLogger
 from python.game.data.game_data import GameData
@@ -26,7 +25,7 @@ from python.game.schema.battle_state import BattleState
 
 # Configure LiteLLM global retry settings for rate limit handling
 # LiteLLM automatically uses exponential backoff for rate limits
-litellm.num_retries = 10
+litellm.num_retries = 5
 
 
 def _extract_json_from_response(response: str) -> str:
@@ -197,7 +196,16 @@ class ZeroShotNoHistoryAgent(Agent):
         Returns:
             Formatted user message with all turn-specific context
         """
-        available_moves_data = get_available_moves(state)
+        available_actions: Dict[str, Any] = {
+            "moves": state.available_moves,
+            "switches": state.available_switches,
+            "can_mega": state.can_mega,
+            "can_tera": state.can_tera,
+            "can_dynamax": state.can_dynamax,
+            "force_switch": state.force_switch,
+            "team_preview": state.team_preview,
+        }
+        available_moves_data = json.dumps(available_actions, indent=2)
 
         parts = [
             f"=== Turn {turn_number} - Choose Your Action ===",
@@ -425,7 +433,16 @@ class ZeroShotNoHistoryAgent(Agent):
                 )
             else:
                 # On retry, only send error + available actions (not full state)
-                available_moves_data = get_available_moves(state)
+                available_actions: Dict[str, Any] = {
+                    "moves": state.available_moves,
+                    "switches": state.available_switches,
+                    "can_mega": state.can_mega,
+                    "can_tera": state.can_tera,
+                    "can_dynamax": state.can_dynamax,
+                    "force_switch": state.force_switch,
+                    "team_preview": state.team_preview,
+                }
+                available_moves_data = json.dumps(available_actions, indent=2)
                 turn_context = (
                     f"=== RETRY {retry_attempt}/{self._max_retries} ===\n\n"
                     f"Previous action INVALID:\n{last_error}\n\n"

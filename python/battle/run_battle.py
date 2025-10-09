@@ -100,8 +100,10 @@ def generate_default_username(agent_name: str) -> str:
 
 async def run_battle() -> None:
     """Main function to continuously run battles with the specified agent."""
+    logging.info("Creating agent: %s", FLAGS.agent)
     try:
         agent = AgentRegistry.create_agent(FLAGS.agent)
+        logging.info("Agent created successfully: %s", type(agent).__name__)
     except ValueError as e:
         logging.error("%s", e)
         return

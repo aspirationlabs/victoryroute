@@ -22,9 +22,19 @@ class ShowdownClient:
 
         Args:
             server_url: WebSocket URL (e.g., ws://localhost:8000/showdown/websocket)
-            username: Username to log in with
+            username: Username to log in with (max 18 characters)
             password: Password for the account (empty string for guests)
+
+        Raises:
+            ValueError: If username is too long (>18 chars) or contains invalid characters
         """
+        # Validate username length (Showdown limit is 18 characters)
+        if len(username) > 18:
+            raise ValueError(
+                f"Username '{username}' is too long ({len(username)} chars). "
+                f"Pokemon Showdown usernames must be 18 characters or less."
+            )
+
         self._server_url = server_url
         self._username = username
 
@@ -49,12 +59,34 @@ class ShowdownClient:
 
         logging.info("Sent authentication command")
 
-        while True:
+        max_attempts = 10
+        attempts = 0
+        while attempts < max_attempts:
+            attempts += 1
             login_response = await self.receive_message()
+            logging.debug(
+                "Authentication response %d: %s", attempts, login_response[:200]
+            )
+
             if "|updateuser|" in login_response:
                 self._authenticated = True
                 logging.info("Successfully authenticated as %s", username)
                 break
+
+            # Check for error messages
+            if "|popup|" in login_response or "|nametaken|" in login_response:
+                # Extract error message
+                if "|popup|" in login_response:
+                    error_msg = login_response.split("|popup|")[1].strip()
+                else:
+                    error_msg = "Username is taken or invalid"
+                raise RuntimeError(f"Authentication failed: {error_msg}")
+
+        if not self._authenticated:
+            raise RuntimeError(
+                f"Authentication timeout after {max_attempts} attempts. "
+                "Server did not send updateuser confirmation."
+            )
 
         await self.send_message("|/join lobby")
         logging.info("Joined lobby")
