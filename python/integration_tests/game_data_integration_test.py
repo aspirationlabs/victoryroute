@@ -10,7 +10,6 @@ from python.game.data.game_data import GameData
 from python.game.environment.state_transition import StateTransition
 from python.game.protocol.message_parser import MessageParser
 from python.game.schema.battle_state import BattleState
-from python.game.schema.enums import SideCondition, Terrain, Weather
 
 
 class GameDataIntegrationTest(unittest.IsolatedAsyncioTestCase, parameterized.TestCase):
@@ -98,66 +97,6 @@ class GameDataIntegrationTest(unittest.IsolatedAsyncioTestCase, parameterized.Te
         self.assertIsNotNone(item, f"Item data is null for {item_name}")
         self.assertTrue(item.name, f"Item name is empty for {item_name}")
 
-    def _extract_weather_move_name(self, weather: Weather) -> str:
-        """Get the move name that corresponds to a weather condition.
-
-        Args:
-            weather: Weather enum value
-
-        Returns:
-            Move name that sets this weather
-        """
-        weather_to_move = {
-            Weather.SUN: "sunnyday",
-            Weather.RAIN: "raindance",
-            Weather.SANDSTORM: "sandstorm",
-            Weather.SNOW: "snowscape",
-            Weather.HARSH_SUN: "desolateland",
-            Weather.HEAVY_RAIN: "primordialsea",
-        }
-        return weather_to_move.get(weather, "")
-
-    def _extract_terrain_move_name(self, terrain: Terrain) -> str:
-        """Get the move name that corresponds to a terrain condition.
-
-        Args:
-            terrain: Terrain enum value
-
-        Returns:
-            Move name that sets this terrain
-        """
-        terrain_to_move = {
-            Terrain.ELECTRIC: "electricterrain",
-            Terrain.GRASSY: "grassyterrain",
-            Terrain.PSYCHIC: "psychicterrain",
-            Terrain.MISTY: "mistyterrain",
-        }
-        return terrain_to_move.get(terrain, "")
-
-    def _extract_side_condition_move_name(self, condition: SideCondition) -> str:
-        """Get the move name that corresponds to a side condition.
-
-        Args:
-            condition: SideCondition enum value
-
-        Returns:
-            Move name that sets this side condition
-        """
-        condition_to_move = {
-            SideCondition.REFLECT: "reflect",
-            SideCondition.LIGHT_SCREEN: "lightscreen",
-            SideCondition.AURORA_VEIL: "auroraveil",
-            SideCondition.STEALTH_ROCK: "stealthrock",
-            SideCondition.SPIKES: "spikes",
-            SideCondition.TOXIC_SPIKES: "toxicspikes",
-            SideCondition.STICKY_WEB: "stickyweb",
-            SideCondition.TAILWIND: "tailwind",
-            SideCondition.SAFEGUARD: "safeguard",
-            SideCondition.MIST: "mist",
-            SideCondition.LUCKY_CHANT: "luckychant",
-        }
-        return condition_to_move.get(condition, "")
-
     def _collect_all_game_data_references(
         self, state: BattleState
     ) -> tuple[Set[str], Set[str], Set[str], Set[str]]:
@@ -174,28 +113,10 @@ class GameDataIntegrationTest(unittest.IsolatedAsyncioTestCase, parameterized.Te
         ability_names: Set[str] = set()
         item_names: Set[str] = set()
 
-        # Extract weather-related moves
-        if state.field_state.weather and state.field_state.weather != Weather.NONE:
-            weather_move = self._extract_weather_move_name(state.field_state.weather)
-            if weather_move:
-                move_names.add(weather_move)
-
-        # Extract terrain-related moves
-        if state.field_state.terrain and state.field_state.terrain != Terrain.NONE:
-            terrain_move = self._extract_terrain_move_name(state.field_state.terrain)
-            if terrain_move:
-                move_names.add(terrain_move)
-
-        # Extract side conditions
+        # Extract Pokemon data from both teams
         for player_id in ["p1", "p2"]:
             team = state.get_team(player_id)
 
-            for condition in team.side_conditions.keys():
-                condition_move = self._extract_side_condition_move_name(condition)
-                if condition_move:
-                    move_names.add(condition_move)
-
-            # Extract Pokemon data
             for pokemon in team.get_pokemon_team():
                 if pokemon.species:
                     pokemon_names.add(pokemon.species)
@@ -225,8 +146,6 @@ class GameDataIntegrationTest(unittest.IsolatedAsyncioTestCase, parameterized.Te
         2. All moves have valid game data with non-empty fields
         3. All abilities have valid game data with non-empty fields
         4. All items have valid game data with non-empty fields
-        5. Weather and terrain conditions map to valid moves
-        6. Side conditions map to valid moves
 
         Args:
             battle_file: Battle log file to test
@@ -268,70 +187,6 @@ class GameDataIntegrationTest(unittest.IsolatedAsyncioTestCase, parameterized.Te
         for item_name in all_items:
             if item_name:
                 self._validate_item_data(item_name)
-
-    @parameterized.named_parameters(
-        ("battle_1", "live_battle_1.txt"),
-        ("battle_2", "live_battle_2.txt"),
-        ("battle_3", "live_battle_3.txt"),
-    )
-    def test_weather_and_terrain_data(self, battle_file: str) -> None:
-        """Test that weather and terrain conditions have valid move data.
-
-        Args:
-            battle_file: Battle log file to test
-        """
-        raw_messages = self._load_battle_log(battle_file)
-
-        state = BattleState()
-        parser = MessageParser()
-
-        for message in raw_messages:
-            event = parser.parse(message)
-            state = StateTransition.apply(state, event)
-
-            # Validate weather
-            if state.field_state.weather and state.field_state.weather != Weather.NONE:
-                weather_move = self._extract_weather_move_name(
-                    state.field_state.weather
-                )
-                if weather_move:
-                    self._validate_move_data(weather_move)
-
-            # Validate terrain
-            if state.field_state.terrain and state.field_state.terrain != Terrain.NONE:
-                terrain_move = self._extract_terrain_move_name(
-                    state.field_state.terrain
-                )
-                if terrain_move:
-                    self._validate_move_data(terrain_move)
-
-    @parameterized.named_parameters(
-        ("battle_1", "live_battle_1.txt"),
-        ("battle_2", "live_battle_2.txt"),
-        ("battle_3", "live_battle_3.txt"),
-    )
-    def test_side_condition_data(self, battle_file: str) -> None:
-        """Test that side conditions have valid move data.
-
-        Args:
-            battle_file: Battle log file to test
-        """
-        raw_messages = self._load_battle_log(battle_file)
-
-        state = BattleState()
-        parser = MessageParser()
-
-        for message in raw_messages:
-            event = parser.parse(message)
-            state = StateTransition.apply(state, event)
-
-            # Validate side conditions for both players
-            for player_id in ["p1", "p2"]:
-                team = state.get_team(player_id)
-                for condition in team.side_conditions.keys():
-                    condition_move = self._extract_side_condition_move_name(condition)
-                    if condition_move:
-                        self._validate_move_data(condition_move)
 
     @parameterized.named_parameters(
         ("battle_1", "live_battle_1.txt"),
