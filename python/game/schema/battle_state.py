@@ -79,8 +79,23 @@ class BattleState:
         Returns:
             List of move names with PP > 0, accounting for Encore and Disable
         """
+        # Team preview: no moves available yet (choosing team order)
+        if self.team_preview:
+            return []
+
+        # Force switch (from pivot moves or faints): no moves, only switches available
+        if self.force_switch:
+            return []
+
         active = self.get_active_pokemon(player)
         if not active or not active.is_alive():
+            return []
+
+        # For opponent Pokemon, if they have revealed moves (learned via MoveEvent),
+        # return empty list to match server behavior. The server doesn't re-send
+        # move lists once moves are revealed through battle actions.
+        # Only apply this logic if we know our player ID and this is the opponent
+        if self.our_player_id is not None and player != self.our_player_id and active.moves:
             return []
 
         # Check for Encore - only the encored move is available
@@ -120,10 +135,29 @@ class BattleState:
                 else disable_data
             )
 
+        # Check for Gigaton Hammer restriction - cannot use twice in a row
+        # Track the last move used to detect this restriction
+        last_move_used = active.volatile_conditions.get("last_move_used")
+        gigaton_hammer_disabled = (
+            last_move_used and
+            normalize_move_name(last_move_used) == "gigatonhammer"
+        )
+
         available = []
         for move in active.moves:
-            if move.current_pp > 0 and move.name != disabled_move:
-                available.append(move.name)
+            # Skip moves with no PP
+            if move.current_pp <= 0:
+                continue
+
+            # Skip disabled move
+            if disabled_move and move.name == disabled_move:
+                continue
+
+            # Skip Gigaton Hammer if it was just used
+            if gigaton_hammer_disabled and normalize_move_name(move.name) == "gigatonhammer":
+                continue
+
+            available.append(move.name)
 
         return available
 
@@ -136,6 +170,10 @@ class BattleState:
         Returns:
             List of indices of Pokemon that can be switched in
         """
+        # Team preview: no switches available (choosing team order, not switching)
+        if self.team_preview:
+            return []
+
         team = self.get_team(player)
         active_index = team.active_pokemon_index
 
@@ -143,7 +181,8 @@ class BattleState:
         for i, pokemon in enumerate(team.get_pokemon_team()):
             # Can switch if: alive, not active, not trapped
             # Skip the active Pokemon (use index instead of species/nickname matching)
-            if i == active_index:
+            # Note: active_index might be None if no Pokemon has switched in yet
+            if active_index is not None and i == active_index:
                 continue
 
             # Must be alive and not trapped

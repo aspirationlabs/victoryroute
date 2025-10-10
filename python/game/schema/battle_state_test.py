@@ -531,6 +531,49 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
         moves = state.get_available_moves("p1")
         self.assertEqual(set(moves), {"Thunderbolt", "Volt Switch"})
 
+    def test_infer_opponent_moves_returns_empty(self) -> None:
+        """Test that opponent moves return empty list once revealed.
+
+        When the opponent uses moves (learned via MoveEvent), the server doesn't
+        re-send the move list in subsequent requests. The inference should return
+        an empty list to match this behavior.
+        """
+        # Set up our player as p1
+        our_pikachu = PokemonState(
+            species="Pikachu",
+            current_hp=100,
+            max_hp=100,
+            is_active=True,
+        )
+        our_team = TeamState(pokemon=[our_pikachu], active_pokemon_index=0)
+
+        # Opponent (p2) has revealed moves from battle
+        opponent_charizard = PokemonState(
+            species="Charizard",
+            current_hp=80,
+            max_hp=100,
+            moves=[
+                PokemonMove(name="Flamethrower", current_pp=15, max_pp=15),
+                PokemonMove(name="Air Slash", current_pp=20, max_pp=20),
+            ],
+            is_active=True,
+        )
+        opponent_team = TeamState(pokemon=[opponent_charizard], active_pokemon_index=0)
+
+        # Create state with our_player_id set to p1
+        state = BattleState(
+            teams={"p1": our_team, "p2": opponent_team},
+            our_player_id="p1"
+        )
+
+        # Opponent moves should return empty (already revealed via MoveEvent)
+        opponent_moves = state._infer_available_moves("p2")
+        self.assertEqual(opponent_moves, [])
+
+        # Our moves should still work normally
+        our_moves = state._infer_available_moves("p1")
+        self.assertEqual(our_moves, [])
+
     def test_infer_available_switches(self) -> None:
         """Test switch inference from battle state."""
         pikachu = PokemonState(
@@ -544,6 +587,24 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
 
         switches = state.get_available_switches("p1")
         self.assertEqual(switches, [1])
+
+    def test_infer_available_switches_with_none_active_index(self) -> None:
+        """Test switch inference when active_pokemon_index is None (team preview).
+
+        This case occurs during team preview before any Pokemon has switched in.
+        The inference should still work and not incorrectly include index 0.
+        """
+        pikachu = PokemonState(species="Pikachu", current_hp=100, max_hp=100)
+        charizard = PokemonState(species="Charizard", current_hp=80, max_hp=100)
+        blastoise = PokemonState(species="Blastoise", current_hp=100, max_hp=100)
+
+        # active_pokemon_index is None (no Pokemon has switched in yet)
+        team = TeamState(pokemon=[pikachu, charizard, blastoise], active_pokemon_index=None)
+        state = BattleState(teams={"p1": team, "p2": TeamState()})
+
+        switches = state.get_available_switches("p1")
+        # All alive Pokemon should be available since none is active yet
+        self.assertEqual(set(switches), {0, 1, 2})
 
     def test_infer_available_moves_with_encore(self) -> None:
         """Test that Encore forces only the encored move to be available."""
