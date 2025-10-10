@@ -163,7 +163,7 @@ class RandomAgentTest(unittest.IsolatedAsyncioTestCase):
         )
 
         with self.assertRaises(ValueError) as context:
-            await self.agent.choose_action(state, self.game_data, "test-battle")
+            await self.agent.choose_action(state, "test-battle")
 
         self.assertIn("switch", str(context.exception).lower())
 
@@ -179,7 +179,7 @@ class RandomAgentTest(unittest.IsolatedAsyncioTestCase):
         )
 
         with self.assertRaises(ValueError):
-            await self.agent.choose_action(state, self.game_data, "test-battle")
+            await self.agent.choose_action(state, "test-battle")
 
     async def test_random_agent_produces_varied_results(self) -> None:
         """Test that agent produces different results across multiple calls."""

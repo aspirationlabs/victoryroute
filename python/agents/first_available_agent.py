@@ -1,7 +1,9 @@
 """First available move agent that always picks the first valid action."""
 
+from typing import Optional
+
 from python.agents.agent_interface import Agent
-from python.game.data.game_data import GameData
+from python.game.environment.battle_stream_store import BattleStreamStore
 from python.game.interface.battle_action import ActionType, BattleAction
 from python.game.schema.battle_state import BattleState
 
@@ -38,7 +40,10 @@ class FirstAvailableAgent(Agent):
     """
 
     async def choose_action(
-        self, state: BattleState, game_data: GameData, battle_room: str
+        self,
+        state: BattleState,
+        battle_room: str,
+        battle_stream_store: Optional[BattleStreamStore] = None,
     ) -> BattleAction:
         """Choose the first available action from moves or switches.
 
@@ -49,8 +54,8 @@ class FirstAvailableAgent(Agent):
 
         Args:
             state: Current battle state with available actions
-            game_data: Game data (unused by this agent)
             battle_room: Battle room identifier (unused by this agent)
+            battle_stream_store: Battle stream store (unused by this agent)
 
         Returns:
             BattleAction with first available move or switch

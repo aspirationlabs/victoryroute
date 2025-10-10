@@ -58,7 +58,7 @@ class FirstAvailableAgentTest(unittest.IsolatedAsyncioTestCase):
         """Test that agent returns first move when moves are available."""
         state = self._create_test_state(["move1", "move2", "move3", "move4"])
 
-        action = await self.agent.choose_action(state, self.game_data, "test-battle")
+        action = await self.agent.choose_action(state, "test-battle")
 
         self.assertIsInstance(action, BattleAction)
         self.assertEqual(action.action_type, ActionType.MOVE)
@@ -79,7 +79,7 @@ class FirstAvailableAgentTest(unittest.IsolatedAsyncioTestCase):
             our_player_id="p1",
         )
 
-        action = await self.agent.choose_action(state, self.game_data, "test-battle")
+        action = await self.agent.choose_action(state, "test-battle")
 
         self.assertIsInstance(action, BattleAction)
         self.assertEqual(action.action_type, ActionType.SWITCH)
@@ -92,9 +92,9 @@ class FirstAvailableAgentTest(unittest.IsolatedAsyncioTestCase):
         )
 
         # Call multiple times and verify consistency
-        action1 = await self.agent.choose_action(state, self.game_data, "test-battle")
-        action2 = await self.agent.choose_action(state, self.game_data, "test-battle")
-        action3 = await self.agent.choose_action(state, self.game_data, "test-battle")
+        action1 = await self.agent.choose_action(state, "test-battle")
+        action2 = await self.agent.choose_action(state, "test-battle")
+        action3 = await self.agent.choose_action(state, "test-battle")
 
         self.assertEqual(action1.move_name, "thunderbolt")
         self.assertEqual(action2.move_name, "thunderbolt")
@@ -116,7 +116,7 @@ class FirstAvailableAgentTest(unittest.IsolatedAsyncioTestCase):
             our_player_id="p1",
         )
 
-        action = await self.agent.choose_action(state, self.game_data, "test-battle")
+        action = await self.agent.choose_action(state, "test-battle")
 
         self.assertEqual(action.action_type, ActionType.SWITCH)
         self.assertEqual(action.switch_pokemon_name, "Pokemon0")
@@ -128,7 +128,7 @@ class FirstAvailableAgentTest(unittest.IsolatedAsyncioTestCase):
         )
 
         with self.assertRaises(ValueError) as context:
-            await self.agent.choose_action(state, self.game_data, "test-battle")
+            await self.agent.choose_action(state, "test-battle")
 
         self.assertIn("switch", str(context.exception).lower())
 
@@ -142,14 +142,14 @@ class FirstAvailableAgentTest(unittest.IsolatedAsyncioTestCase):
         )
 
         with self.assertRaises(ValueError):
-            await self.agent.choose_action(state, self.game_data, "test-battle")
+            await self.agent.choose_action(state, "test-battle")
 
     async def test_agent_never_mega_evolves(self) -> None:
         """Test that agent never chooses to mega evolve."""
         state = self._create_test_state(["move1", "move2"])
         state = replace(state, can_mega=True)
 
-        action = await self.agent.choose_action(state, self.game_data, "test-battle")
+        action = await self.agent.choose_action(state, "test-battle")
 
         self.assertEqual(action.action_type, ActionType.MOVE)
         self.assertEqual(action.move_name, "move1")
@@ -160,7 +160,7 @@ class FirstAvailableAgentTest(unittest.IsolatedAsyncioTestCase):
         state = self._create_test_state(["move1", "move2"])
         state = replace(state, can_tera=True)
 
-        action = await self.agent.choose_action(state, self.game_data, "test-battle")
+        action = await self.agent.choose_action(state, "test-battle")
 
         self.assertEqual(action.action_type, ActionType.MOVE)
         self.assertEqual(action.move_name, "move1")
@@ -171,7 +171,7 @@ class FirstAvailableAgentTest(unittest.IsolatedAsyncioTestCase):
         state = self._create_test_state(["move1", "move2"])
         state = replace(state, can_mega=True, can_tera=True)
 
-        action = await self.agent.choose_action(state, self.game_data, "test-battle")
+        action = await self.agent.choose_action(state, "test-battle")
 
         self.assertEqual(action.action_type, ActionType.MOVE)
         self.assertEqual(action.move_name, "move1")
@@ -182,7 +182,7 @@ class FirstAvailableAgentTest(unittest.IsolatedAsyncioTestCase):
         """Test agent with only one available move."""
         state = self._create_test_state(["tackle"])
 
-        action = await self.agent.choose_action(state, self.game_data, "test-battle")
+        action = await self.agent.choose_action(state, "test-battle")
 
         self.assertEqual(action.action_type, ActionType.MOVE)
         self.assertEqual(action.move_name, "tackle")
@@ -201,7 +201,7 @@ class FirstAvailableAgentTest(unittest.IsolatedAsyncioTestCase):
             our_player_id="p1",
         )
 
-        action = await self.agent.choose_action(state, self.game_data, "test-battle")
+        action = await self.agent.choose_action(state, "test-battle")
 
         self.assertEqual(action.action_type, ActionType.SWITCH)
         self.assertEqual(action.switch_pokemon_name, "Pokemon3")
@@ -212,7 +212,7 @@ class FirstAvailableAgentTest(unittest.IsolatedAsyncioTestCase):
             available_moves=["move1", "move2"], available_switches=[1, 2, 3]
         )
 
-        action = await self.agent.choose_action(state, self.game_data, "test-battle")
+        action = await self.agent.choose_action(state, "test-battle")
 
         # Should always pick move when available and not forced to switch
         self.assertEqual(action.action_type, ActionType.MOVE)
@@ -262,7 +262,7 @@ class FirstAvailableAgentTest(unittest.IsolatedAsyncioTestCase):
 
         # Same state should always produce same result
         actions = [
-            await self.agent.choose_action(state, self.game_data, "test-battle")
+            await self.agent.choose_action(state, "test-battle")
             for _ in range(10)
         ]
 

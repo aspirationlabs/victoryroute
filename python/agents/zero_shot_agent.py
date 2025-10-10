@@ -1,12 +1,14 @@
 """
 A zero-shot agent that uses a foundation model to make decisions.
-The prompt includes no examples of past battles, team/move priors, common combinations, etc.
+The prompt includes no examples of past battles, team/move priors, or common combinations,
+but does include historical actions from the current battle.
 """
 
 import json
 import os
-from collections import defaultdict
-from typing import Any, Dict, List
+from dataclasses import asdict
+from enum import Enum
+from typing import Any, Dict, Optional
 
 import litellm
 from google.adk.agents import LlmAgent
@@ -23,6 +25,7 @@ from python.agents.battle_action_generator import (
 from python.agents.tools.get_object_game_data import get_object_game_data
 from python.agents.tools.llm_event_logger import LlmEventLogger
 from python.game.data.game_data import GameData
+from python.game.environment.battle_stream_store import BattleStreamStore
 from python.game.interface.battle_action import BattleAction
 from python.game.schema.battle_state import BattleState
 
@@ -50,7 +53,7 @@ def _load_static_system_instruction(mode: str = "gen9ou") -> str:
     current_dir = os.path.dirname(os.path.abspath(__file__))
     prompts_dir = os.path.join(current_dir, "prompts")
 
-    base_prompt_path = os.path.join(prompts_dir, "zero_shot_no_history_agent.md")
+    base_prompt_path = os.path.join(prompts_dir, "zero_shot_agent.md")
     with open(base_prompt_path, "r", encoding="utf-8") as f:
         base_prompt = f.read()
 
@@ -70,14 +73,15 @@ def _load_static_system_instruction(mode: str = "gen9ou") -> str:
     return system_instruction
 
 
-class ZeroShotNoHistoryAgent(Agent):
-    """Zero-shot LLM agent with no historical battle data."""
+class ZeroShotAgent(Agent):
+    """Zero-shot LLM agent that uses current battle history but no prior battle data."""
 
     def __init__(
         self,
         session_service: BaseSessionService = InMemorySessionService(),
         model_name: str = "openrouter/google/gemini-2.5-flash-lite-preview-09-2025",
         mode: str = "gen9ou",
+        past_actions_count: int = 5,
         max_retries: int = 3,
         reuse_sessions: bool = False,
     ):
@@ -88,53 +92,72 @@ class ZeroShotNoHistoryAgent(Agent):
             mode: Battle mode for loading mode-specific rules (default: "gen9ou")
             max_retries: Maximum number of retries for invalid actions (default: 2)
         """
-        self._app_name: str = "zero_shot_no_history_agent"
+        self._app_name: str = "zero_shot_agent"
         self._model_name: str = model_name
         self._mode: str = mode
         self._game_data: GameData = GameData()
         self._max_retries: int = max_retries
         self._battle_room_to_logger: Dict[str, LlmEventLogger] = {}
         self._battle_room_to_session: Dict[str, Session] = {}
-        self._battle_room_to_actions: Dict[str, List[BattleAction]] = defaultdict(list)
         self._system_instruction: str = _load_static_system_instruction(mode=mode)
         self._session_service: BaseSessionService = session_service
         self._reuse_sessions: bool = reuse_sessions
+        self._past_actions_count: int = past_actions_count
 
-    def _format_past_actions(
+    def _format_past_actions_from_store(
         self,
-        actions: List[BattleAction],
+        store: BattleStreamStore,
         our_player_id: str,
+        opponent_player_id: str,
+        past_turns: int = 5,
     ) -> str:
-        """Format past actions as XML for inclusion in prompt.
+        """Format past actions from BattleStreamStore as XML for inclusion in prompt.
 
         Args:
-            actions: List of BattleAction objects for this battle
+            store: BattleStreamStore containing battle events
             our_player_id: Our player ID (p1 or p2)
+            opponent_player_id: Opponent player ID (p1 or p2)
+            past_turns: Number of past turns to include (default: 5)
 
         Returns:
-            XML-formatted string of past actions
+            XML-formatted string of past actions for both players
         """
-        if not actions:
+        our_actions = store.get_past_battle_actions(our_player_id, past_turns=0)
+        opponent_actions = store.get_past_battle_actions(
+            opponent_player_id, past_turns=0
+        )
+
+        if not our_actions and not opponent_actions:
             return "No actions have been taken yet in this battle."
 
-        lines = ["<past_actions>"]
-        lines.append(f"<{our_player_id}>")
+        all_turn_ids = sorted(set(our_actions.keys()) | set(opponent_actions.keys()))
+        recent_turn_ids = (
+            all_turn_ids[-past_turns:] if len(all_turn_ids) > past_turns else all_turn_ids
+        )
 
-        for turn_idx, action in enumerate(actions, start=1):
-            action_json = json.dumps(
-                {
-                    "action_type": action.action_type.value,
-                    "move_name": action.move_name,
-                    "switch_pokemon_name": action.switch_pokemon_name,
-                    "mega": action.mega,
-                    "tera": action.tera,
-                    "team_order": action.team_order,
-                }
-            )
-            lines.append(f"<turn_{turn_idx}>{action_json}</turn_{turn_idx}>")
+        if not recent_turn_ids:
+            return "No actions have been taken yet in this battle."
 
-        lines.append(f"</{our_player_id}>")
-        lines.append("</past_actions>")
+        def format_player_actions(player_id: str, actions: Dict[int, list]) -> list:
+            """Format actions for a single player."""
+            lines = [f"<{player_id}>"]
+            for turn_id in recent_turn_ids:
+                if turn_id in actions:
+                    for action in actions[turn_id]:
+                        action_json = json.dumps(
+                            asdict(action),
+                            default=lambda obj: obj.value if isinstance(obj, Enum) else obj
+                        )
+                        lines.append(f"<turn_{turn_id}>{action_json}</turn_{turn_id}>")
+            lines.append(f"</{player_id}>")
+            return lines
+
+        lines = [
+            "<past_actions>",
+            *format_player_actions(our_player_id, our_actions),
+            *format_player_actions(opponent_player_id, opponent_actions),
+            "</past_actions>",
+        ]
 
         return "\n".join(lines)
 
@@ -161,49 +184,48 @@ class ZeroShotNoHistoryAgent(Agent):
     def _format_turn_context(
         self,
         state: BattleState,
-        turn_number: int,
         past_actions_xml: str,
     ) -> str:
-        """Format turn-specific context for the user message.
+        """Format turn-specific context for the user message using template.
 
         Args:
             state: Current battle state
-            turn_number: Current turn number
             past_actions_xml: Formatted past actions
 
         Returns:
             Formatted user message with all turn-specific context
         """
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        template_path = os.path.join(
+            current_dir, "prompts", "zero_shot_agent_turn_prompt.md"
+        )
+
+        with open(template_path, "r", encoding="utf-8") as f:
+            template = f.read()
+
         available_moves_data = self._format_available_actions(state)
 
-        parts = [
-            f"=== Turn {turn_number} - Choose Your Action ===",
-            "",
-            f"Your Player ID: {state.our_player_id}",
-            "",
-            "Available Actions This Turn:",
-            available_moves_data,
-            "",
-            "Current Battle State:",
-            str(state),
-            "",
-            "Past Actions This Battle:",
-            past_actions_xml,
-            "",
-            "Based on the available actions above, choose your optimal battle action and return it as JSON.",
-        ]
-
-        return "\n".join(parts)
+        return (
+            template.replace("{{TURN_NUMBER}}", str(state.field_state.turn_number))
+            .replace("{{OUR_PLAYER_ID}}", str(state.our_player_id))
+            .replace("{{AVAILABLE_ACTIONS}}", available_moves_data)
+            .replace("{{BATTLE_STATE}}", str(state))
+            .replace("{{PAST_ACTIONS}}", past_actions_xml)
+            .replace("{{PAST_ACTIONS_COUNT}}", str(self._past_actions_count))
+        )
 
     async def choose_action(
-        self, state: BattleState, game_data: GameData, battle_room: str
+        self,
+        state: BattleState,
+        battle_room: str,
+        battle_stream_store: Optional[BattleStreamStore] = None,
     ) -> BattleAction:
         """Choose a battle action using LLM reasoning with retry logic.
 
         Args:
             state: Current battle state
-            game_data: Game data for lookups
             battle_room: Battle room identifier
+            battle_stream_store: Optional store with all battle events
 
         Returns:
             BattleAction chosen by the LLM
@@ -221,7 +243,7 @@ class ZeroShotNoHistoryAgent(Agent):
             Args:
                 name: Object name (e.g., "Landorus", "Earthquake", "Intimidate", "Choice Scarf")
             """
-            return get_object_game_data(name, game_data)
+            return get_object_game_data(name, self._game_data)
 
         if state.our_player_id is None:
             raise ValueError("our_player_id must be set in the battle state")
@@ -233,7 +255,6 @@ class ZeroShotNoHistoryAgent(Agent):
                 battle_room=battle_room,
             )
             self._battle_room_to_logger[battle_room] = logger
-            # Log system instruction once at battle start
             logger.log_system_instruction(
                 turn_number=0, instruction=self._system_instruction
             )
@@ -248,10 +269,14 @@ class ZeroShotNoHistoryAgent(Agent):
             if self._reuse_sessions:
                 self._battle_room_to_session[battle_room] = session
 
-        # TODO: Add past actions from the opponent too.
-        past_actions = self._battle_room_to_actions[battle_room]
-        past_actions_xml = self._format_past_actions(past_actions, state.our_player_id)
-        turn_number = state.field_state.turn_number if state.field_state else 0
+        opponent_player_id = "p2" if state.our_player_id == "p1" else "p1"
+
+        past_actions_xml = ""
+        if battle_stream_store:
+            past_actions_xml = self._format_past_actions_from_store(
+                battle_stream_store, state.our_player_id, opponent_player_id, past_turns=5
+            )
+
         llm_agent = LlmAgent(
             model=LiteLlm(model=self._model_name),
             name=self._app_name,
@@ -266,7 +291,7 @@ class ZeroShotNoHistoryAgent(Agent):
             app_name=self._app_name,
             session_service=self._session_service,
         )
-        turn_context = self._format_turn_context(state, turn_number, past_actions_xml)
+        turn_context = self._format_turn_context(state, past_actions_xml)
         content = types.Content(
             parts=[types.Part(text=turn_context)],
             role="user",
@@ -279,7 +304,6 @@ class ZeroShotNoHistoryAgent(Agent):
             session_id=session.id,
             max_retries=self._max_retries,
         )
-        self._battle_room_to_actions[battle_room].append(action)
 
         return action
 
@@ -294,9 +318,6 @@ class ZeroShotNoHistoryAgent(Agent):
         if battle_room in self._battle_room_to_logger:
             self._battle_room_to_logger[battle_room].close()
             del self._battle_room_to_logger[battle_room]
-
-        if battle_room in self._battle_room_to_actions:
-            del self._battle_room_to_actions[battle_room]
 
         if battle_room in self._battle_room_to_session:
             await self._session_service.delete_session(
