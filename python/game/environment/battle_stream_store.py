@@ -70,6 +70,33 @@ class BattleStreamStore:
         """
         return self._events_by_turn.copy()
 
+    def get_past_raw_events(self, past_turns: int = 0) -> Dict[int, List[str]]:
+        """Get past raw event strings grouped by turn.
+
+        Args:
+            past_turns: Number of past turns to retrieve (0 = all turns)
+
+        Returns:
+            Dictionary mapping turn_id to list of raw event strings for that turn
+        """
+        raw_events_by_turn: Dict[int, List[str]] = {}
+
+        if past_turns == 0:
+            turn_ids = self._events_by_turn.keys()
+        else:
+            all_turn_ids = sorted(self._events_by_turn.keys())
+            turn_ids = all_turn_ids[-past_turns:] if len(all_turn_ids) > past_turns else all_turn_ids
+
+        for turn_id in turn_ids:
+            if turn_id not in self._events_by_turn:
+                continue
+
+            raw_events_by_turn[turn_id] = [
+                event.raw_message for event in self._events_by_turn[turn_id]  # type: ignore[attr-defined]
+            ]
+
+        return raw_events_by_turn
+
     def get_past_battle_actions(
         self, player_id: str, past_turns: int = 0
     ) -> Dict[int, List[BattleAction]]:
