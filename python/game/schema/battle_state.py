@@ -4,6 +4,7 @@ import json
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
+from python.game.interface.battle_action import ActionType, BattleAction
 from python.game.schema.enums import Stat
 from python.game.schema.field_state import FieldState
 from python.game.schema.pokemon_state import PokemonState
@@ -244,6 +245,109 @@ class BattleState:
             return self.available_switches
 
         return self._infer_available_switches(player)
+
+    def get_opponent_potential_actions(
+        self, player: Optional[str] = None
+    ) -> List[BattleAction]:
+        """Get potential actions for the opponent, including unknown placeholders.
+
+        This method infers what the opponent could do on their turn, returning:
+        - Known moves as MOVE actions
+        - Unknown move slots as UNKNOWN_MOVE placeholders
+        - Known switches as SWITCH actions
+        - Unknown team members as UNKNOWN_SWITCH placeholders
+
+        Args:
+            player: Opponent player ID (p1 or p2). If None, infers from our_player_id.
+
+        Returns:
+            List of BattleAction objects representing opponent's potential actions
+
+        Raises:
+            ValueError: If player is None and our_player_id is not set, or if
+                       the specified player is actually our player
+        """
+        if player is None:
+            if self.our_player_id is None:
+                raise ValueError(
+                    "player parameter is required when our_player_id is not set"
+                )
+            opponent_id = "p2" if self.our_player_id == "p1" else "p1"
+        else:
+            opponent_id = player
+
+        if self.our_player_id and opponent_id == self.our_player_id:
+            raise ValueError(
+                f"Cannot get opponent actions for our own player {opponent_id}"
+            )
+
+        actions: List[BattleAction] = []
+
+        if self.team_preview:
+            return actions
+
+        opponent_team = self.get_team(opponent_id)
+        active = opponent_team.get_active_pokemon()
+        if active and active.is_alive():
+            actions.extend(self._infer_opponent_move_actions(active))
+        actions.extend(self._infer_opponent_switch_actions(opponent_id))
+        return actions
+
+    def _infer_opponent_move_actions(
+        self, active: PokemonState
+    ) -> List[BattleAction]:
+        """Infer opponent's potential move actions from revealed moves.
+
+        Args:
+            active: Opponent's active Pokemon
+
+        Returns:
+            List of MOVE actions for known moves, UNKNOWN_MOVE for unrevealed slots
+        """
+        actions: List[BattleAction] = []
+
+        known_moves = [m for m in active.moves if m.current_pp > 0]
+        for move in known_moves:
+            actions.append(
+                BattleAction(
+                    action_type=ActionType.MOVE,
+                    move_name=move.name,
+                )
+            )
+
+        unknown_move_count = max(0, 4 - len(active.moves))
+        for _ in range(unknown_move_count):
+            actions.append(BattleAction(action_type=ActionType.UNKNOWN_MOVE))
+
+        return actions
+
+    def _infer_opponent_switch_actions(self, opponent_id: str) -> List[BattleAction]:
+        """Infer opponent's potential switch actions.
+
+        Args:
+            opponent_id: Opponent player ID
+
+        Returns:
+            List of SWITCH actions for known Pokemon, UNKNOWN_SWITCH for unrevealed team members
+        """
+        actions: List[BattleAction] = []
+
+        opponent_team = self.get_team(opponent_id)
+        active_index = opponent_team.active_pokemon_index
+
+        for i, pokemon in enumerate(opponent_team.pokemon):
+            if active_index is not None and i == active_index:
+                continue
+
+            if pokemon.is_alive() and pokemon.can_switch():
+                actions.append(
+                    BattleAction(
+                        action_type=ActionType.SWITCH,
+                        switch_pokemon_name=pokemon.species,
+                    )
+                )
+
+        return actions
 
     def get_move_index(self, move_name: str, player: Optional[str] = None) -> int:
         """Get the index of a move in the active Pokemon's moveset.

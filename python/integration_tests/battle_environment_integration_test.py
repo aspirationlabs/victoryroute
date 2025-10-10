@@ -2,7 +2,7 @@
 
 import os
 import unittest
-from typing import List, Tuple
+from typing import Any, Dict, List, Set, Tuple
 
 from absl.testing import absltest, parameterized
 
@@ -12,7 +12,9 @@ from python.game.events.battle_event import (
     FaintEvent,
     BattleEndEvent,
     PlayerEvent,
+    MoveEvent,
 )
+from python.game.interface.battle_action import ActionType
 from python.game.protocol.message_parser import MessageParser
 from python.game.schema.battle_state import BattleState
 
@@ -229,6 +231,242 @@ class BattleEnvironmentIntegrationTest(
             p1_all_fainted or p2_all_fainted,
             "Battle ended but no team has all fainted pokemon",
         )
+
+    @parameterized.named_parameters(
+        (
+            "battle1",
+            "battle1.txt",
+            {
+                1: {
+                    "moves": set(),
+                    "switches": {
+                        "Kingambit",
+                        "Dragonite",
+                        "Enamorus",
+                        "Gholdengo",
+                        "Rotom-Wash",
+                    },
+                },
+                2: {
+                    "moves": {"Stealth Rock"},
+                    "switches": {
+                        "Kingambit",
+                        "Dragonite",
+                        "Enamorus",
+                        "Gholdengo",
+                        "Rotom-Wash",
+                    },
+                },
+                4: {
+                    "moves": {"Shadow Ball"},
+                    "switches": {
+                        "Kingambit",
+                        "Dragonite",
+                        "Enamorus",
+                        "Kommo-o",
+                        "Rotom-Wash",
+                    },
+                },
+                6: {
+                    "moves": {"Hydro Pump", "Volt Switch"},
+                    "switches": {
+                        "Kingambit",
+                        "Dragonite",
+                        "Enamorus",
+                        "Kommo-o",
+                        "Gholdengo",
+                    },
+                },
+                8: {
+                    "moves": {"Substitute", "Moonblast"},
+                    "switches": {
+                        "Kingambit",
+                        "Dragonite",
+                        "Kommo-o",
+                        "Gholdengo",
+                        "Rotom-Wash",
+                    },
+                },
+                10: {
+                    "moves": {"Volt Switch", "Hydro Pump"},
+                    "switches": {
+                        "Kingambit",
+                        "Dragonite",
+                        "Enamorus",
+                        "Kommo-o",
+                        "Gholdengo",
+                    },
+                },
+                13: {
+                    "moves": {"Dragon Dance"},
+                    "switches": {"Kingambit", "Enamorus", "Gholdengo", "Rotom-Wash"},
+                },
+                14: {
+                    "moves": {"Dragon Dance", "Ice Spinner"},
+                    "switches": {"Kingambit", "Enamorus", "Gholdengo", "Rotom-Wash"},
+                },
+                17: {
+                    "moves": {"Dragon Dance", "Ice Spinner", "Earthquake"},
+                    "switches": {"Kingambit", "Enamorus", "Gholdengo", "Rotom-Wash"},
+                },
+                20: {
+                    "moves": {"Hydro Pump", "Volt Switch", "Will-O-Wisp"},
+                    "switches": {"Kingambit", "Enamorus", "Gholdengo"},
+                },
+                24: {
+                    "moves": {"Tera Blast", "Sucker Punch"},
+                    "switches": {"Enamorus"},
+                },
+                26: {
+                    "moves": {"Substitute", "Moonblast", "Superpower"},
+                    "switches": set(),
+                },
+            },
+        ),
+        (
+            "battle2",
+            "battle2.txt",
+            {
+                1: {
+                    "moves": set(),
+                    "switches": {
+                        "Kingambit",
+                        "Ninetales-Alola",
+                        "Toxapex",
+                        "Roaring Moon",
+                        "Glimmora",
+                    },
+                },
+                2: {
+                    "moves": {"Earthquake"},
+                    "switches": {
+                        "Kingambit",
+                        "Ninetales-Alola",
+                        "Toxapex",
+                        "Roaring Moon",
+                        "Glimmora",
+                    },
+                },
+                8: {
+                    "moves": {"Power Gem", "Mortal Spin"},
+                    "switches": {
+                        "Dondozo",
+                        "Kingambit",
+                        "Ninetales-Alola",
+                        "Toxapex",
+                        "Roaring Moon",
+                    },
+                },
+            },
+        ),
+        (
+            "battle3",
+            "battle3.txt",
+            {
+                1: {
+                    "moves": set(),
+                    "switches": {
+                        "Great Tusk",
+                        "Samurott-Hisui",
+                        "Cinderace",
+                        "Weezing-Galar",
+                        "Ribombee",
+                    },
+                },
+                3: {
+                    "moves": {"Ice Beam"},
+                    "switches": {
+                        "Heatran",
+                        "Samurott-Hisui",
+                        "Cinderace",
+                        "Weezing-Galar",
+                        "Ribombee",
+                    },
+                },
+                4: {
+                    "moves": {"Razor Shell", "Aqua Jet"},
+                    "switches": {
+                        "Heatran",
+                        "Great Tusk",
+                        "Cinderace",
+                        "Weezing-Galar",
+                        "Ribombee",
+                    },
+                },
+            },
+        ),
+    )
+    def test_opponent_potential_actions(
+        self,
+        battle_file: str,
+        turn_expectations: Dict[int, Dict[str, Any]],
+    ) -> None:
+        """Test opponent action inference at specific turns across different battles.
+
+        Args:
+            battle_file: Name of battle log file to test
+            turn_expectations: Dict mapping turn number to expected moves and switches
+        """
+        raw_messages = self._load_battle_log(battle_file)
+        events = self._parse_events(raw_messages)
+
+        _, history = self._replay_battle(events)
+
+        for turn_number, expectations in turn_expectations.items():
+            expected_moves = expectations["moves"]
+            expected_switches = expectations["switches"]
+
+            _, state_at_turn = next(
+                (
+                    (event, state)
+                    for event, state in history
+                    if hasattr(event, "turn_number")
+                    and event.turn_number == turn_number
+                ),
+                (None, None),
+            )
+
+            if state_at_turn is None:
+                continue
+
+            if state_at_turn.our_player_id is None:
+                continue
+
+            actions = state_at_turn.get_opponent_potential_actions()
+
+            move_actions = [a for a in actions if a.action_type == ActionType.MOVE]
+            unknown_move_actions = [
+                a for a in actions if a.action_type == ActionType.UNKNOWN_MOVE
+            ]
+            switch_actions = [a for a in actions if a.action_type == ActionType.SWITCH]
+
+            expected_known_moves = len(expected_moves)
+            expected_unknown_moves = 4 - expected_known_moves
+
+            self.assertEqual(
+                len(move_actions),
+                expected_known_moves,
+                f"Turn {turn_number}: expected {expected_known_moves} known moves",
+            )
+            self.assertEqual(
+                len(unknown_move_actions),
+                expected_unknown_moves,
+                f"Turn {turn_number}: expected {expected_unknown_moves} unknown moves",
+            )
+
+            actual_move_names = {a.move_name for a in move_actions}
+            self.assertEqual(
+                actual_move_names,
+                expected_moves,
+                f"Turn {turn_number}: move names don't match",
+            )
+
+            actual_switch_names = {a.switch_pokemon_name for a in switch_actions}
+            self.assertEqual(
+                actual_switch_names,
+                expected_switches,
+                f"Turn {turn_number}: switch options don't match",
+            )
 
 
 if __name__ == "__main__":

@@ -13,6 +13,8 @@ class ActionType(Enum):
     MOVE = "move"
     SWITCH = "switch"
     TEAM_ORDER = "team_order"
+    UNKNOWN_MOVE = "unknown_move"
+    UNKNOWN_SWITCH = "unknown_switch"
 
 
 @dataclass(frozen=True)
@@ -27,8 +29,12 @@ class BattleAction:
     so no validation is performed here - the agent is responsible for choosing
     valid actions.
 
+    Special action types UNKNOWN_MOVE and UNKNOWN_SWITCH are used as placeholders
+    when inferring opponent potential actions but the full moveset or team is not
+    yet revealed. These cannot be converted to Showdown commands.
+
     Attributes:
-        action_type: Type of action (MOVE or SWITCH)
+        action_type: Type of action (MOVE, SWITCH, TEAM_ORDER, UNKNOWN_MOVE, UNKNOWN_SWITCH)
         move_name: Name of the move to use, required for MOVE actions
         switch_pokemon_name: Name of Pokemon to switch to, required for SWITCH actions
         target_index: Target position for doubles battles (0-3), optional
@@ -135,6 +141,12 @@ class BattleAction:
                 raise ValueError("TEAM_ORDER action requires team_order")
 
             return f"/choose team {self.team_order}"
+
+        elif self.action_type in (ActionType.UNKNOWN_MOVE, ActionType.UNKNOWN_SWITCH):
+            raise ValueError(
+                f"Cannot convert {self.action_type.value} to Showdown command. "
+                "Unknown actions are placeholders for opponent move inference only."
+            )
 
         else:
             raise ValueError(f"Unknown action type: {self.action_type}")

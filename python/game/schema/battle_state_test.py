@@ -3,6 +3,7 @@
 import json
 import unittest
 
+from python.game.interface.battle_action import ActionType, BattleAction
 from python.game.schema.battle_state import BattleState
 from python.game.schema.enums import (
     FieldEffect,
@@ -763,6 +764,273 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(parsed["battle_format"], "singles")
         self.assertEqual(parsed["field_state"]["turn_number"], 1)
         self.assertIn("stealthrock", parsed["p1_team"]["side_conditions"])
+
+    def test_opponent_potential_actions_no_revealed_moves(self) -> None:
+        """Test opponent actions when no moves are revealed yet."""
+        our_pikachu = PokemonState(
+            species="Pikachu", current_hp=100, max_hp=100, is_active=True
+        )
+        our_team = TeamState(pokemon=[our_pikachu], active_pokemon_index=0)
+
+        opponent_charizard = PokemonState(
+            species="Charizard", current_hp=80, max_hp=100, is_active=True
+        )
+        opponent_blastoise = PokemonState(
+            species="Blastoise", current_hp=100, max_hp=100
+        )
+        opponent_team = TeamState(
+            pokemon=[opponent_charizard, opponent_blastoise], active_pokemon_index=0
+        )
+
+        state = BattleState(
+            teams={"p1": our_team, "p2": opponent_team}, our_player_id="p1"
+        )
+
+        actions = state.get_opponent_potential_actions()
+
+        move_actions = [a for a in actions if a.action_type == ActionType.UNKNOWN_MOVE]
+        switch_actions = [a for a in actions if a.action_type == ActionType.SWITCH]
+
+        self.assertEqual(len(move_actions), 4)
+        self.assertEqual(len(switch_actions), 1)
+        self.assertEqual(switch_actions[0].switch_pokemon_name, "Blastoise")
+
+    def test_opponent_potential_actions_partial_moves_revealed(self) -> None:
+        """Test opponent actions when some moves are revealed."""
+        our_pikachu = PokemonState(
+            species="Pikachu", current_hp=100, max_hp=100, is_active=True
+        )
+        our_team = TeamState(pokemon=[our_pikachu], active_pokemon_index=0)
+
+        opponent_charizard = PokemonState(
+            species="Charizard",
+            current_hp=80,
+            max_hp=100,
+            moves=[
+                PokemonMove(name="Flamethrower", current_pp=15, max_pp=15),
+                PokemonMove(name="Air Slash", current_pp=20, max_pp=20),
+            ],
+            is_active=True,
+        )
+        opponent_blastoise = PokemonState(
+            species="Blastoise", current_hp=100, max_hp=100
+        )
+        opponent_team = TeamState(
+            pokemon=[opponent_charizard, opponent_blastoise], active_pokemon_index=0
+        )
+
+        state = BattleState(
+            teams={"p1": our_team, "p2": opponent_team}, our_player_id="p1"
+        )
+
+        actions = state.get_opponent_potential_actions()
+
+        move_actions = [a for a in actions if a.action_type == ActionType.MOVE]
+        unknown_move_actions = [
+            a for a in actions if a.action_type == ActionType.UNKNOWN_MOVE
+        ]
+        switch_actions = [a for a in actions if a.action_type == ActionType.SWITCH]
+
+        self.assertEqual(len(move_actions), 2)
+        self.assertEqual(len(unknown_move_actions), 2)
+        self.assertEqual(len(switch_actions), 1)
+
+        move_names = {a.move_name for a in move_actions}
+        self.assertEqual(move_names, {"Flamethrower", "Air Slash"})
+
+    def test_opponent_potential_actions_all_moves_revealed(self) -> None:
+        """Test opponent actions when all 4 moves are revealed."""
+        our_pikachu = PokemonState(
+            species="Pikachu", current_hp=100, max_hp=100, is_active=True
+        )
+        our_team = TeamState(pokemon=[our_pikachu], active_pokemon_index=0)
+
+        opponent_charizard = PokemonState(
+            species="Charizard",
+            current_hp=80,
+            max_hp=100,
+            moves=[
+                PokemonMove(name="Flamethrower", current_pp=15, max_pp=15),
+                PokemonMove(name="Air Slash", current_pp=20, max_pp=20),
+                PokemonMove(name="Dragon Claw", current_pp=10, max_pp=15),
+                PokemonMove(name="Roost", current_pp=5, max_pp=10),
+            ],
+            is_active=True,
+        )
+        opponent_blastoise = PokemonState(
+            species="Blastoise", current_hp=100, max_hp=100
+        )
+        opponent_team = TeamState(
+            pokemon=[opponent_charizard, opponent_blastoise], active_pokemon_index=0
+        )
+
+        state = BattleState(
+            teams={"p1": our_team, "p2": opponent_team}, our_player_id="p1"
+        )
+
+        actions = state.get_opponent_potential_actions()
+
+        move_actions = [a for a in actions if a.action_type == ActionType.MOVE]
+        unknown_move_actions = [
+            a for a in actions if a.action_type == ActionType.UNKNOWN_MOVE
+        ]
+        switch_actions = [a for a in actions if a.action_type == ActionType.SWITCH]
+
+        self.assertEqual(len(move_actions), 4)
+        self.assertEqual(len(unknown_move_actions), 0)
+        self.assertEqual(len(switch_actions), 1)
+
+        move_names = {a.move_name for a in move_actions}
+        self.assertEqual(
+            move_names, {"Flamethrower", "Air Slash", "Dragon Claw", "Roost"}
+        )
+
+    def test_opponent_potential_actions_move_with_no_pp(self) -> None:
+        """Test opponent actions exclude moves with 0 PP."""
+        our_pikachu = PokemonState(
+            species="Pikachu", current_hp=100, max_hp=100, is_active=True
+        )
+        our_team = TeamState(pokemon=[our_pikachu], active_pokemon_index=0)
+
+        opponent_charizard = PokemonState(
+            species="Charizard",
+            current_hp=80,
+            max_hp=100,
+            moves=[
+                PokemonMove(name="Flamethrower", current_pp=0, max_pp=15),
+                PokemonMove(name="Air Slash", current_pp=20, max_pp=20),
+            ],
+            is_active=True,
+        )
+        opponent_team = TeamState(pokemon=[opponent_charizard], active_pokemon_index=0)
+
+        state = BattleState(
+            teams={"p1": our_team, "p2": opponent_team}, our_player_id="p1"
+        )
+
+        actions = state.get_opponent_potential_actions()
+
+        move_actions = [a for a in actions if a.action_type == ActionType.MOVE]
+        unknown_move_actions = [
+            a for a in actions if a.action_type == ActionType.UNKNOWN_MOVE
+        ]
+
+        self.assertEqual(len(move_actions), 1)
+        self.assertEqual(move_actions[0].move_name, "Air Slash")
+        self.assertEqual(len(unknown_move_actions), 2)
+
+    def test_opponent_potential_actions_team_preview(self) -> None:
+        """Test opponent actions return empty during team preview."""
+        our_pikachu = PokemonState(species="Pikachu", current_hp=100, max_hp=100)
+        our_team = TeamState(pokemon=[our_pikachu])
+
+        opponent_charizard = PokemonState(
+            species="Charizard", current_hp=100, max_hp=100
+        )
+        opponent_team = TeamState(pokemon=[opponent_charizard])
+
+        state = BattleState(
+            teams={"p1": our_team, "p2": opponent_team},
+            our_player_id="p1",
+            team_preview=True,
+        )
+
+        actions = state.get_opponent_potential_actions()
+        self.assertEqual(len(actions), 0)
+
+    def test_opponent_potential_actions_fainted_pokemon_excluded(self) -> None:
+        """Test that fainted Pokemon are not included in switch options."""
+        our_pikachu = PokemonState(
+            species="Pikachu", current_hp=100, max_hp=100, is_active=True
+        )
+        our_team = TeamState(pokemon=[our_pikachu], active_pokemon_index=0)
+
+        opponent_charizard = PokemonState(
+            species="Charizard", current_hp=80, max_hp=100, is_active=True
+        )
+        opponent_blastoise = PokemonState(species="Blastoise", current_hp=0, max_hp=100)
+        opponent_venusaur = PokemonState(
+            species="Venusaur", current_hp=50, max_hp=100
+        )
+        opponent_team = TeamState(
+            pokemon=[opponent_charizard, opponent_blastoise, opponent_venusaur],
+            active_pokemon_index=0,
+        )
+
+        state = BattleState(
+            teams={"p1": our_team, "p2": opponent_team}, our_player_id="p1"
+        )
+
+        actions = state.get_opponent_potential_actions()
+
+        switch_actions = [a for a in actions if a.action_type == ActionType.SWITCH]
+
+        self.assertEqual(len(switch_actions), 1)
+        self.assertEqual(switch_actions[0].switch_pokemon_name, "Venusaur")
+
+    def test_opponent_potential_actions_no_our_player_id_requires_param(self) -> None:
+        """Test that player parameter is required when our_player_id is not set."""
+        our_pikachu = PokemonState(
+            species="Pikachu", current_hp=100, max_hp=100, is_active=True
+        )
+        our_team = TeamState(pokemon=[our_pikachu], active_pokemon_index=0)
+
+        opponent_charizard = PokemonState(
+            species="Charizard", current_hp=80, max_hp=100, is_active=True
+        )
+        opponent_team = TeamState(pokemon=[opponent_charizard], active_pokemon_index=0)
+
+        state = BattleState(teams={"p1": our_team, "p2": opponent_team})
+
+        with self.assertRaises(ValueError) as cm:
+            state.get_opponent_potential_actions()
+
+        self.assertIn("our_player_id is not set", str(cm.exception))
+
+    def test_opponent_potential_actions_with_explicit_player(self) -> None:
+        """Test opponent actions work with explicit player parameter."""
+        our_pikachu = PokemonState(
+            species="Pikachu", current_hp=100, max_hp=100, is_active=True
+        )
+        our_team = TeamState(pokemon=[our_pikachu], active_pokemon_index=0)
+
+        opponent_charizard = PokemonState(
+            species="Charizard",
+            current_hp=80,
+            max_hp=100,
+            moves=[PokemonMove(name="Flamethrower", current_pp=15, max_pp=15)],
+            is_active=True,
+        )
+        opponent_team = TeamState(pokemon=[opponent_charizard], active_pokemon_index=0)
+
+        state = BattleState(teams={"p1": our_team, "p2": opponent_team})
+
+        actions = state.get_opponent_potential_actions(player="p2")
+
+        move_actions = [a for a in actions if a.action_type == ActionType.MOVE]
+        self.assertEqual(len(move_actions), 1)
+        self.assertEqual(move_actions[0].move_name, "Flamethrower")
+
+    def test_opponent_potential_actions_error_if_our_own_player(self) -> None:
+        """Test error when trying to get opponent actions for our own player."""
+        our_pikachu = PokemonState(
+            species="Pikachu", current_hp=100, max_hp=100, is_active=True
+        )
+        our_team = TeamState(pokemon=[our_pikachu], active_pokemon_index=0)
+
+        opponent_charizard = PokemonState(
+            species="Charizard", current_hp=80, max_hp=100, is_active=True
+        )
+        opponent_team = TeamState(pokemon=[opponent_charizard], active_pokemon_index=0)
+
+        state = BattleState(
+            teams={"p1": our_team, "p2": opponent_team}, our_player_id="p1"
+        )
+
+        with self.assertRaises(ValueError) as cm:
+            state.get_opponent_potential_actions(player="p1")
+
+        self.assertIn("Cannot get opponent actions for our own player", str(cm.exception))
 
 
 if __name__ == "__main__":
