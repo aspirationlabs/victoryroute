@@ -143,7 +143,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
         self.assertIsNotNone(raging_bolt)
         stats = battle.get_pokemon_battle_state(raging_bolt)  # type: ignore
         self.assertEqual(stats["status"], "brn")
-        self.assertEqual(stats["hp"]["current"], 56)
+        self.assertEqual(stats["hp"]["percentage"], 56.0)
 
     def test_terastallization_plus_supreme_overlord(self) -> None:
         """Test Case 4: Battle 1 Turn 24 - Terastallize + Supreme Overlord.
