@@ -8,6 +8,11 @@
 ## Current Battle State
 {{BATTLE_STATE}}
 
+## Possible Opponent Actions
+Note: This list represents potential actions the opponent could take based on known information. It may be inaccurate or incomplete - some moves may be unknown, and the opponent's full team composition may not yet be revealed. Use this as guidance to consider what the opponent might do, but don't rely on it as definitive.
+
+{{OPPONENT_POTENTIAL_ACTIONS}}
+
 ## Past Player Actions (up to {{PAST_ACTIONS_COUNT}})
 {{PAST_ACTIONS}}
 

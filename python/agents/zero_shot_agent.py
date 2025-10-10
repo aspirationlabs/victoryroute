@@ -213,6 +213,27 @@ class ZeroShotAgent(Agent):
         }
         return json.dumps(available_actions)
 
+    def _format_opponent_potential_actions(self, state: BattleState) -> str:
+        """Format opponent potential actions as JSON string.
+
+        Args:
+            state: Current battle state
+
+        Returns:
+            JSON formatted string of opponent potential actions
+        """
+        try:
+            actions = state.get_opponent_potential_actions()
+            actions_data = [
+                asdict(action) for action in actions
+            ]
+            return json.dumps(
+                actions_data,
+                default=lambda obj: obj.value if isinstance(obj, Enum) else obj
+            )
+        except ValueError:
+            return "[]"
+
     def _format_turn_context(
         self,
         state: BattleState,
@@ -238,12 +259,14 @@ class ZeroShotAgent(Agent):
             template = f.read()
 
         available_moves_data = self._format_available_actions(state)
+        opponent_actions_data = self._format_opponent_potential_actions(state)
 
         return (
             template.replace("{{TURN_NUMBER}}", str(state.field_state.turn_number))
             .replace("{{OUR_PLAYER_ID}}", str(state.our_player_id))
             .replace("{{AVAILABLE_ACTIONS}}", available_moves_data)
             .replace("{{BATTLE_STATE}}", str(state))
+            .replace("{{OPPONENT_POTENTIAL_ACTIONS}}", opponent_actions_data)
             .replace("{{PAST_ACTIONS}}", past_actions_xml)
             .replace("{{PAST_RAW_EVENTS}}", past_raw_events_xml)
             .replace("{{PAST_ACTIONS_COUNT}}", str(self._past_actions_count))
