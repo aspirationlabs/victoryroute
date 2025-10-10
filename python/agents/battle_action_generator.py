@@ -305,6 +305,10 @@ class BattleActionGenerator:
                     role="user",
                 )
 
+            query_text = content.parts[0].text if content.parts else ""
+            if query_text:
+                self._logger.log_user_query(turn_number, query_text, retry_attempt)
+
             action_response: Optional[BattleActionResponse] = None
             event_count: int = 0
             last_event_time: float = time.time()
@@ -320,38 +324,22 @@ class BattleActionGenerator:
                 event_start_time: float = time.time()
                 event_latency: float = event_start_time - last_event_time
 
+                # Serialize event with proper structure
+                serialized_event = self._logger._serialize_event(event)
                 event_info: Dict[str, Any] = {
                     "event_number": event_count,
                     "retry_attempt": retry_attempt,
-                    "id": event.id,
-                    "content": str(event.content),
-                    "actions": str(event.actions),
-                    "invocation_id": event.invocation_id,
-                    "author": event.author,
                     "latency_seconds": round(event_latency, 3),
-                    "error_code": event.error_code,
-                    "error_message": event.error_message,
-                    "custom_metadata": event.custom_metadata,
-                    "usage_metadata": (
-                        str(event.usage_metadata) if event.usage_metadata else None
-                    ),
+                    **serialized_event,
                 }
+                self._logger.log_event(turn_number, event_info)
 
                 if event.usage_metadata:
-                    usage = event.usage_metadata
-                    prompt_tokens: int = usage.prompt_token_count or 0
-                    completion_tokens: int = usage.candidates_token_count or 0
-                    event_total_tokens: int = usage.total_token_count or 0
-
-                    total_prompt_tokens += prompt_tokens
-                    total_completion_tokens += completion_tokens
-                    total_tokens += event_total_tokens
-
-                    event_info["prompt_tokens"] = prompt_tokens
-                    event_info["completion_tokens"] = completion_tokens
-                    event_info["total_tokens"] = event_total_tokens
-
-                self._logger.log_event(turn_number, event_info)
+                    total_prompt_tokens += event.usage_metadata.prompt_token_count or 0
+                    total_completion_tokens += (
+                        event.usage_metadata.candidates_token_count or 0
+                    )
+                    total_tokens += event.usage_metadata.total_token_count or 0
 
                 if event.is_final_response() and event.content and event.content.parts:
                     response_text = event.content.parts[0].text
@@ -376,9 +364,6 @@ class BattleActionGenerator:
             if validation_error:
                 last_error = validation_error
                 continue
-
-            self._logger.log_event(turn_number, action_response.model_dump())
-
             action = self._construct_battle_action(action_response)
             break
 
@@ -394,7 +379,7 @@ class BattleActionGenerator:
             "retry_attempts": retry_attempt,
             "success": action is not None,
         }
-        self._logger.log_event(turn_number, summary_info)
+        self._logger.log_turn_summary(turn_number, summary_info)
         logging.info(
             f"Turn {turn_number}: total_tokens: {total_tokens}, "
             f"total_latency_seconds: {total_latency}, retry_attempts: {retry_attempt}"

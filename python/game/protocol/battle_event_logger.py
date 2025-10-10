@@ -11,7 +11,12 @@ class BattleEventLogger:
     """Logs battle stream events to a file."""
 
     def __init__(
-        self, player_name: str, epoch_secs: int, battle_room: str, opponent_name: str
+        self,
+        player_name: str,
+        epoch_secs: int,
+        battle_room: str,
+        opponent_name: str,
+        log_dir: str = "/tmp/logs",
     ) -> None:
         """Initialize the event logger.
 
@@ -19,12 +24,14 @@ class BattleEventLogger:
             player_name: Name of the player being used
             epoch_secs: Timestamp in epoch seconds for the log filename
             battle_room: Battle room ID
+            opponent_name: Name of the opponent
+            log_dir: Directory for battle event logs (default: /tmp/logs)
         """
         self._player_name = player_name
         self._epoch_secs = epoch_secs
         self._opponent_name = opponent_name
         self._file: Optional[TextIO] = None
-        self._log_dir = "/tmp/logs"
+        self._log_dir = log_dir
         self._battle_room = battle_room
 
         os.makedirs(self._log_dir, exist_ok=True)
@@ -52,3 +59,9 @@ class BattleEventLogger:
         if self._file is not None:
             self._file.close()
             self._file = None
+
+    def __enter__(self) -> "BattleEventLogger":
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        self.close()
