@@ -213,31 +213,13 @@ class ZeroShotNoHistoryAgent(Agent):
         """
 
         def tool_get_object_game_data(name: str) -> str:
-            """Look up detailed game data for a Pokemon, Move, Ability, Item, or Nature.
+            """Look up game data for Pokemon, Move, Ability, Item, or Nature.
 
-            WHEN TO USE:
-            Call this tool whenever you need detailed information about specific game objects
-            to make informed strategic decisions. Maximum 2 calls per turn.
-
-            WHAT IT DOES:
-            Queries the game database and returns comprehensive information about any game
-            object by name. The tool automatically determines the object type (Pokemon, Move,
-            Ability, Item, or Nature) and returns all relevant data fields.
-
-            USE THIS TO LOOK UP:
-            - Pokemon base stats, types, and capabilities
-            - Opponent's revealed Pokemon information
-            - Move details (power, accuracy, type, category, PP, effects)
-            - Ability effects and descriptions
-            - Item effects and descriptions
-            - Nature stat modifications
-
-            This is essential for understanding type matchups, calculating damage potential,
-            and planning strategic decisions.
+            Returns detailed stats, types, effects, and descriptions. Use to check:
+            type matchups, move power/effects, ability mechanics, item effects.
 
             Args:
-                name: Name of the object to look up (e.g., "Landorus", "Earthquake",
-                      "Intimidate", "Choice Scarf", "Adamant")
+                name: Object name (e.g., "Landorus", "Earthquake", "Intimidate", "Choice Scarf")
             """
             return get_object_game_data(name, game_data)
 

@@ -194,6 +194,48 @@ class BattleActionGenerator:
         else:
             raise ValueError(f"Unknown action_type: {action_type_str}")
 
+    def _extract_json(self, response_text: str) -> Dict[str, Any]:
+        """Extract and parse JSON from response text.
+
+        Handles both clean JSON responses and responses with extra text before/after JSON.
+
+        Args:
+            response_text: Raw response text from LLM
+
+        Returns:
+            Parsed JSON as dictionary
+
+        Raises:
+            json.JSONDecodeError: If no valid JSON found
+        """
+        try:
+            return json.loads(response_text)
+        except json.JSONDecodeError:
+            start_idx = response_text.find("{")
+            if start_idx == -1:
+                raise json.JSONDecodeError(
+                    "No JSON object found in response", response_text, 0
+                )
+
+            brace_count = 0
+            end_idx = -1
+            for i in range(start_idx, len(response_text)):
+                if response_text[i] == "{":
+                    brace_count += 1
+                elif response_text[i] == "}":
+                    brace_count -= 1
+                    if brace_count == 0:
+                        end_idx = i + 1
+                        break
+
+            if end_idx == -1:
+                raise json.JSONDecodeError(
+                    "No matching closing brace found", response_text, start_idx
+                )
+
+            json_str = response_text[start_idx:end_idx]
+            return json.loads(json_str)
+
     def _format_available_actions(self, state: BattleState) -> str:
         """Format available actions as JSON string.
 
@@ -253,10 +295,10 @@ class BattleActionGenerator:
                 # On retry, provide error feedback
                 available_moves_data = self._format_available_actions(state)
                 retry_text = (
-                    f"=== RETRY {retry_attempt}/{max_retries} ===\n\n"
-                    f"Previous action INVALID:\n{last_error}\n\n"
-                    f"Available Actions:\n{available_moves_data}\n\n"
-                    f"Provide a valid action from the list above."
+                    f"RETRY {retry_attempt}/{max_retries} - Previous action INVALID:\n"
+                    f"{last_error}\n\n"
+                    f"Available actions:\n{available_moves_data}\n\n"
+                    f"Choose a valid action. Keep reasoning to 1-2 sentences."
                 )
                 content = types.Content(
                     parts=[types.Part(text=retry_text)],
@@ -315,7 +357,7 @@ class BattleActionGenerator:
                     response_text = event.content.parts[0].text
                     if response_text:
                         try:
-                            response_data = json.loads(response_text)
+                            response_data = self._extract_json(response_text)
                             action_response = BattleActionResponse(**response_data)
                         except (json.JSONDecodeError, ValidationError) as e:
                             last_error = (
