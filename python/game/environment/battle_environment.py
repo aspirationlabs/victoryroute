@@ -6,6 +6,8 @@ from absl import logging
 
 from python.game.environment.battle_stream_store import BattleStreamStore
 from python.game.environment.state_transition import StateTransition
+from python.game.events.battle_event import ErrorEvent
+from python.game.exceptions import ServerErrorException
 from python.game.interface.battle_action import BattleAction
 from python.game.protocol.battle_event_logger import BattleEventLogger
 from python.game.protocol.battle_stream import BattleStream
@@ -197,18 +199,11 @@ class BattleEnvironment:
             "[%s] Received %d events from action", self._battle_room, len(event_batch)
         )
 
-        # Add events to battle stream store
         self._battle_stream_store.add_events(event_batch)
 
         current_state = self._state
         for event in event_batch:
-            try:
-                current_state = StateTransition.apply(current_state, event)
-            except Exception as e:
-                logging.error(
-                    "[%s] Failed to apply event %s: %s", self._battle_room, event, e
-                )
-                raise ValueError(f"State transition failed: {e}") from e
+            current_state = StateTransition.apply(current_state, event)
 
         self._state = current_state
 

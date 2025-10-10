@@ -185,7 +185,11 @@ class StateTransition:
             return StateTransition._apply_start_volatile(state, event)
         elif isinstance(event, EndVolatileEvent):
             return StateTransition._apply_end_volatile(state, event)
-        # Informational events that don't modify battle state
+        elif isinstance(event, ErrorEvent):
+            logging.error(f"Error event: {event}")
+            # TODO: Should StateTransition throw on ErrorEvent?
+            # How often do we get a server error that's from an improper agent command? 
+            return state
         elif isinstance(
             event,
             (
@@ -224,7 +228,6 @@ class StateTransition:
                 # Ignored/metadata events
                 IgnoredEvent,
                 PrivateMessageEvent,
-                ErrorEvent,
             ),
         ):
             return state

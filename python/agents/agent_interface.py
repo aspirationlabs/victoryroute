@@ -77,6 +77,7 @@ class Agent(ABC):
 
     Methods:
         choose_action: Abstract method that all agents must implement
+        retry_action_on_server_error: Optional method for handling server errors
     """
 
     @abstractmethod
@@ -139,3 +140,45 @@ class Agent(ABC):
             ...     )
         """
         pass
+
+    async def retry_action_on_server_error(
+        self,
+        error_text: str,
+        state: BattleState,
+        battle_room: str,
+        battle_stream_store: Optional[BattleStreamStore] = None,
+    ) -> Optional[BattleAction]:
+        """Handle a server error and optionally retry with a new action.
+
+        This method is called when the Pokemon Showdown server returns an error
+        after an action is sent. The agent can analyze the error and decide
+        whether to retry with a different action.
+
+        The default implementation returns None (don't retry). Agents can override
+        this to implement retry logic.
+
+        Args:
+            error_text: The error message from the server
+            state: Current battle state (same state that was used for the failed action)
+            battle_room: The battle room identifier
+            battle_stream_store: Optional store containing all battle events
+
+        Returns:
+            A new BattleAction to retry, or None to give up and re-raise the error.
+
+        Examples:
+            No retry (default):
+            >>> retry_action = await agent.retry_action_on_server_error(
+            ...     "Invalid move", state, battle_room
+            ... )
+            >>> retry_action is None
+            True
+
+            Retry with new action:
+            >>> retry_action = await agent.retry_action_on_server_error(
+            ...     "Move locked by choice item", state, battle_room
+            ... )
+            >>> retry_action.action_type
+            ActionType.SWITCH
+        """
+        return None
