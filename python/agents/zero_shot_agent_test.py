@@ -221,6 +221,74 @@ class ZeroShotAgentTest(unittest.TestCase):
 
         self.assertTrue(p1_start < p1_end < p2_start < p2_end)
 
+    def test_format_past_raw_events_empty_store(self) -> None:
+        """Test formatting raw events with empty battle stream store."""
+        mock_store = Mock(spec=BattleStreamStore)
+        mock_store.get_past_raw_events.return_value = {}
+
+        result = self.agent._format_past_raw_events_from_store(mock_store, past_turns=5)
+
+        self.assertEqual(result, "No server events have occurred yet in this battle.")
+
+    def test_format_past_raw_events_single_turn(self) -> None:
+        """Test formatting raw events from a single turn."""
+        mock_store = Mock(spec=BattleStreamStore)
+        raw_events = {
+            1: [
+                "|turn|1",
+                "|move|p1a: Pikachu|Thunderbolt|p2a: Charizard",
+                "|-damage|p2a: Charizard|50/100",
+            ]
+        }
+        mock_store.get_past_raw_events.return_value = raw_events
+
+        result = self.agent._format_past_raw_events_from_store(mock_store, past_turns=5)
+
+        self.assertIn("<past_server_events>", result)
+        self.assertIn("</past_server_events>", result)
+        self.assertIn("<turn_1>", result)
+        self.assertIn("</turn_1>", result)
+        self.assertIn("<event>|turn|1</event>", result)
+        self.assertIn("<event>|move|p1a: Pikachu|Thunderbolt|p2a: Charizard</event>", result)
+        self.assertIn("<event>|-damage|p2a: Charizard|50/100</event>", result)
+
+    def test_format_past_raw_events_multiple_turns(self) -> None:
+        """Test formatting raw events from multiple turns."""
+        mock_store = Mock(spec=BattleStreamStore)
+        raw_events = {
+            1: ["|turn|1", "|move|p1a: Pikachu|Thunderbolt|p2a: Charizard"],
+            2: ["|turn|2", "|switch|p1a: Raichu|Raichu, L50|100/100"],
+            3: ["|turn|3", "|move|p2a: Charizard|Flamethrower|p1a: Raichu"],
+        }
+        mock_store.get_past_raw_events.return_value = raw_events
+
+        result = self.agent._format_past_raw_events_from_store(mock_store, past_turns=5)
+
+        self.assertIn("<turn_1>", result)
+        self.assertIn("<turn_2>", result)
+        self.assertIn("<turn_3>", result)
+        self.assertIn("Thunderbolt", result)
+        self.assertIn("Raichu", result)
+        self.assertIn("Flamethrower", result)
+
+    def test_format_past_raw_events_xml_structure(self) -> None:
+        """Test that XML structure is correct with proper event tags."""
+        mock_store = Mock(spec=BattleStreamStore)
+        raw_events = {
+            1: ["|turn|1", "|move|p1a: Pikachu|Tackle|p2a: Bulbasaur"],
+        }
+        mock_store.get_past_raw_events.return_value = raw_events
+
+        result = self.agent._format_past_raw_events_from_store(mock_store, past_turns=5)
+
+        lines = result.split("\n")
+        self.assertEqual(lines[0], "<past_server_events>")
+        self.assertEqual(lines[1], "<turn_1>")
+        self.assertIn("<event>", lines[2])
+        self.assertIn("</event>", lines[2])
+        self.assertIn("</turn_1>", lines)
+        self.assertEqual(lines[-1], "</past_server_events>")
+
 
 if __name__ == "__main__":
     unittest.main()

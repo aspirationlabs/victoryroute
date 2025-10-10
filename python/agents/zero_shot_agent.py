@@ -161,6 +161,38 @@ class ZeroShotAgent(Agent):
 
         return "\n".join(lines)
 
+    def _format_past_raw_events_from_store(
+        self,
+        store: BattleStreamStore,
+        past_turns: int = 5,
+    ) -> str:
+        """Format past raw server events from BattleStreamStore as XML for inclusion in prompt.
+
+        Args:
+            store: BattleStreamStore containing battle events
+            past_turns: Number of past turns to include (default: 5)
+
+        Returns:
+            XML-formatted string of past raw server events grouped by turn
+        """
+        raw_events_by_turn = store.get_past_raw_events(past_turns=past_turns)
+
+        if not raw_events_by_turn:
+            return "No server events have occurred yet in this battle."
+
+        lines = ["<past_server_events>"]
+
+        for turn_id in sorted(raw_events_by_turn.keys()):
+            events = raw_events_by_turn[turn_id]
+            lines.append(f"<turn_{turn_id}>")
+            for event_str in events:
+                lines.append(f"<event>{event_str}</event>")
+            lines.append(f"</turn_{turn_id}>")
+
+        lines.append("</past_server_events>")
+
+        return "\n".join(lines)
+
     def _format_available_actions(self, state: BattleState) -> str:
         """Format available actions as JSON string.
 
@@ -185,12 +217,14 @@ class ZeroShotAgent(Agent):
         self,
         state: BattleState,
         past_actions_xml: str,
+        past_raw_events_xml: str = "",
     ) -> str:
         """Format turn-specific context for the user message using template.
 
         Args:
             state: Current battle state
             past_actions_xml: Formatted past actions
+            past_raw_events_xml: Formatted past raw server events
 
         Returns:
             Formatted user message with all turn-specific context
@@ -211,6 +245,7 @@ class ZeroShotAgent(Agent):
             .replace("{{AVAILABLE_ACTIONS}}", available_moves_data)
             .replace("{{BATTLE_STATE}}", str(state))
             .replace("{{PAST_ACTIONS}}", past_actions_xml)
+            .replace("{{PAST_RAW_EVENTS}}", past_raw_events_xml)
             .replace("{{PAST_ACTIONS_COUNT}}", str(self._past_actions_count))
         )
 
@@ -272,9 +307,13 @@ class ZeroShotAgent(Agent):
         opponent_player_id = "p2" if state.our_player_id == "p1" else "p1"
 
         past_actions_xml = ""
+        past_raw_events_xml = ""
         if battle_stream_store:
             past_actions_xml = self._format_past_actions_from_store(
                 battle_stream_store, state.our_player_id, opponent_player_id, past_turns=5
+            )
+            past_raw_events_xml = self._format_past_raw_events_from_store(
+                battle_stream_store, past_turns=5
             )
 
         llm_agent = LlmAgent(
@@ -291,7 +330,7 @@ class ZeroShotAgent(Agent):
             app_name=self._app_name,
             session_service=self._session_service,
         )
-        turn_context = self._format_turn_context(state, past_actions_xml)
+        turn_context = self._format_turn_context(state, past_actions_xml, past_raw_events_xml)
         content = types.Content(
             parts=[types.Part(text=turn_context)],
             role="user",
