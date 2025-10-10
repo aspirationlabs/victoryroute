@@ -271,29 +271,36 @@ class RequestValidationIntegrationTest(
                 )
                 state = StateTransition.apply(state, request_event)
 
-                if request_data.get("teamPreview", False) or request_data.get(
-                    "wait", False
-                ):
+                # Skip only wait requests (opponent is choosing)
+                if request_data.get("wait", False):
                     continue
 
-                if not saw_turn_event:
+                # Skip if we haven't seen a turn event yet, UNLESS it's team preview
+                # Team preview happens before turn 1, but we still want to validate it
+                if not saw_turn_event and not request_data.get("teamPreview", False):
                     continue
 
                 player_id = self._identify_player_id(request_data)
 
+                # Extract expected values from request
                 expected_moves = self._extract_expected_moves(request_data)
                 expected_switches = self._extract_expected_switches(request_data)
 
+                # Get inferred values from our state
                 inferred_moves = state._infer_available_moves(player_id)
                 inferred_switches = state._infer_available_switches(player_id)
 
+                # Validate moves match (including team preview and force switch scenarios)
                 self.assertEqual(
                     set(inferred_moves),
                     set(expected_moves),
                     f"Turn {turn_number} MOVE mismatch: "
-                    f"Inferred={sorted(inferred_moves)}, Expected={sorted(expected_moves)}",
+                    f"Inferred={sorted(inferred_moves)}, Expected={sorted(expected_moves)} "
+                    f"(teamPreview={request_data.get('teamPreview', False)}, "
+                    f"forceSwitch={request_data.get('forceSwitch', False)})",
                 )
 
+                # Validate switches match
                 self.assertEqual(
                     set(inferred_switches),
                     set(expected_switches),

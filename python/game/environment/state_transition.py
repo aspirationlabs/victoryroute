@@ -181,6 +181,10 @@ class StateTransition:
             return StateTransition._apply_ability(state, event)
         elif isinstance(event, TurnEvent):
             return StateTransition._apply_turn(state, event)
+        elif isinstance(event, StartVolatileEvent):
+            return StateTransition._apply_start_volatile(state, event)
+        elif isinstance(event, EndVolatileEvent):
+            return StateTransition._apply_end_volatile(state, event)
         # Informational events that don't modify battle state
         elif isinstance(
             event,
@@ -210,9 +214,7 @@ class StateTransition:
                 ItemEvent,
                 EndItemEvent,
                 ActivateEvent,
-                # Volatile condition events (not currently tracked in state)
-                StartVolatileEvent,
-                EndVolatileEvent,
+                # Single-turn/move events (not currently tracked in state)
                 SingleTurnEvent,
                 SingleMoveEvent,
                 # Form change events (cosmetic, not affecting battle mechanics)
@@ -1303,6 +1305,7 @@ class StateTransition:
         When we observe an opponent using a move:
         1. If the move is not in their moveset yet, add it with calculated PP
         2. Decrement the move's current PP by 1
+        3. Track the move as last_move_used for mechanics like Gigaton Hammer
         This allows us to build up knowledge of opponent Pokemon moves and track PP usage.
         """
         pokemon, team, player_id = StateTransition._get_pokemon_and_team(
@@ -1339,7 +1342,11 @@ class StateTransition:
                 )
             )
 
-        new_pokemon = replace(pokemon, moves=new_moves)
+        # Track the last move used for restrictions like Gigaton Hammer (can't use twice in a row)
+        new_volatile_conditions = dict(pokemon.volatile_conditions)
+        new_volatile_conditions["last_move_used"] = event.move_name
+
+        new_pokemon = replace(pokemon, moves=new_moves, volatile_conditions=new_volatile_conditions)
 
         new_team = StateTransition._update_pokemon_in_team(team, pokemon, new_pokemon)
         return StateTransition._update_team_in_state(state, player_id, new_team)
@@ -1381,6 +1388,65 @@ class StateTransition:
         return replace(state, field_state=new_field)
 
     @staticmethod
+    def _apply_start_volatile(state: BattleState, event: StartVolatileEvent) -> BattleState:
+        """Apply start volatile condition event.
+
+        Tracks volatile conditions like trapped, partiallytrapped, encore, disable, etc.
+
+        Args:
+            state: Current battle state
+            event: Start volatile event
+
+        Returns:
+            New battle state with volatile condition added
+        """
+        pokemon, team, player_id = StateTransition._get_pokemon_and_team(
+            state, event.player_id, event.position
+        )
+
+        # Normalize condition name for consistency
+        condition_name = event.condition.lower().replace(" ", "")
+
+        # Track the volatile condition
+        new_volatile_conditions = dict(pokemon.volatile_conditions)
+        new_volatile_conditions[condition_name] = True
+
+        new_pokemon = replace(pokemon, volatile_conditions=new_volatile_conditions)
+
+        new_team = StateTransition._update_pokemon_in_team(team, pokemon, new_pokemon)
+        return StateTransition._update_team_in_state(state, player_id, new_team)
+
+    @staticmethod
+    def _apply_end_volatile(state: BattleState, event: EndVolatileEvent) -> BattleState:
+        """Apply end volatile condition event.
+
+        Removes volatile conditions like trapped, partiallytrapped, encore, disable, etc.
+
+        Args:
+            state: Current battle state
+            event: End volatile event
+
+        Returns:
+            New battle state with volatile condition removed
+        """
+        pokemon, team, player_id = StateTransition._get_pokemon_and_team(
+            state, event.player_id, event.position
+        )
+
+        # Normalize condition name for consistency
+        condition_name = event.condition.lower().replace(" ", "")
+
+        # Remove the volatile condition if it exists
+        new_volatile_conditions = dict(pokemon.volatile_conditions)
+        if condition_name in new_volatile_conditions:
+            del new_volatile_conditions[condition_name]
+
+        new_pokemon = replace(pokemon, volatile_conditions=new_volatile_conditions)
+
+        new_team = StateTransition._update_pokemon_in_team(team, pokemon, new_pokemon)
+        return StateTransition._update_team_in_state(state, player_id, new_team)
+
+    @staticmethod
     def _apply_request(state: BattleState, event: RequestEvent) -> BattleState:
         """Parse request event to extract available actions.
 
@@ -1401,9 +1467,6 @@ class StateTransition:
         # Learn our player ID from the first request we receive
         if state.our_player_id is None:
             state = replace(state, our_player_id=player_id)
-
-        inferred_moves = state._infer_available_moves(player_id)
-        inferred_switches = state._infer_available_switches(player_id)
 
         available_moves = []
         available_switches = []
@@ -1438,26 +1501,6 @@ class StateTransition:
                 bool(request_data["forceSwitch"][0])
                 if request_data["forceSwitch"]
                 else False
-            )
-
-        # Normalize for comparison to avoid false positives from capitalization
-        normalized_inferred_moves = [
-            StateTransition._normalize_move_name(m) for m in inferred_moves
-        ]
-        normalized_available_moves = [
-            StateTransition._normalize_move_name(m) for m in available_moves
-        ]
-
-        if set(normalized_inferred_moves) != set(normalized_available_moves):
-            logging.info(
-                f"Move inference diff for {player_id} - "
-                f"Inferred: {inferred_moves}, Actual: {available_moves}"
-            )
-
-        if set(inferred_switches) != set(available_switches):
-            logging.info(
-                f"Switch inference diff for {player_id} - "
-                f"Inferred: {inferred_switches}, Actual: {available_switches}"
             )
 
         # Populate/update team from request data (for both teams)
@@ -1645,6 +1688,30 @@ class StateTransition:
         # Only update available actions if this is our request
         # (we could be p1 or p2, determined from first request)
         if player_id == updated_state.our_player_id:
+            # Validate inference logic by comparing with actual request data
+            # Only validate for our own player, since opponent requests don't include moves
+            inferred_moves = updated_state._infer_available_moves(player_id)
+            inferred_switches = updated_state._infer_available_switches(player_id)
+
+            # Normalize for comparison to avoid false positives from capitalization
+            normalized_inferred_moves = [
+                StateTransition._normalize_move_name(m) for m in inferred_moves
+            ]
+            normalized_available_moves = [
+                StateTransition._normalize_move_name(m) for m in available_moves
+            ]
+
+            if set(normalized_inferred_moves) != set(normalized_available_moves):
+                logging.info(
+                    f"Move inference diff for {player_id} - "
+                    f"Inferred: {inferred_moves}, Actual: {available_moves}"
+                )
+
+            if set(inferred_switches) != set(available_switches):
+                logging.info(
+                    f"Switch inference diff for {player_id} - "
+                    f"Inferred: {inferred_switches}, Actual: {available_switches}"
+                )
             return replace(
                 updated_state,
                 available_moves=available_moves,
