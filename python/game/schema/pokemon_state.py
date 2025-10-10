@@ -147,7 +147,7 @@ class PokemonState:
 
         Returns:
             Dictionary containing:
-            - hp: Current HP / Max HP
+            - hp: HP as percentage (0-100 with 2 decimal places)
             - atk, def, spa, spd, spe: Effective stats with boosts
             - status: Current status condition
             - accuracy, evasion: Boost stages
@@ -160,8 +160,14 @@ class PokemonState:
             >>> stats["status"]
             "none"
         """
+        hp_percentage = (
+            round((self.current_hp / self.max_hp) * 100, 2)
+            if self.max_hp > 0
+            else 0.0
+        )
+
         result: Dict[str, Any] = {
-            "hp": {"current": self.current_hp, "max": self.max_hp},
+            "hp": {"percentage": hp_percentage},
             "atk": self.get_effective_stat(Stat.ATK, base_stats.get(Stat.ATK, 100)),
             "def": self.get_effective_stat(Stat.DEF, base_stats.get(Stat.DEF, 100)),
             "spa": self.get_effective_stat(Stat.SPA, base_stats.get(Stat.SPA, 100)),
@@ -189,13 +195,19 @@ class PokemonState:
         Returns:
             Dictionary representation of the Pokemon state
         """
+        hp_percentage = (
+            round((self.current_hp / self.max_hp) * 100, 2)
+            if self.max_hp > 0
+            else 0.0
+        )
+
         return {
             "species": self.species,
             "level": self.level,
             "gender": self.gender,
             "shiny": self.shiny,
             "nickname": self.nickname,
-            "hp": {"current": self.current_hp, "max": self.max_hp},
+            "hp": {"percentage": hp_percentage},
             "status": self.status.value,
             "stat_boosts": {
                 stat.value: boost for stat, boost in self.stat_boosts.items()

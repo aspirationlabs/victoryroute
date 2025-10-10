@@ -141,8 +141,7 @@ class PokemonStateTest(unittest.IsolatedAsyncioTestCase):
 
         stats = pokemon.get_all_stats(base_stats)
 
-        self.assertEqual(stats["hp"]["current"], 84)
-        self.assertEqual(stats["hp"]["max"], 100)
+        self.assertEqual(stats["hp"]["percentage"], 84.0)
         self.assertEqual(stats["atk"], 201)  # 134 * 1.5 = 201
         self.assertEqual(stats["spe"], 120)  # 80 * 1.5 = 120
         self.assertEqual(stats["status"], "none")
@@ -167,7 +166,7 @@ class PokemonStateTest(unittest.IsolatedAsyncioTestCase):
         parsed = json.loads(json_str)
 
         self.assertEqual(parsed["species"], "Iron Crown")
-        self.assertEqual(parsed["hp"]["current"], 76)
+        self.assertEqual(parsed["hp"]["percentage"], 76.0)
         self.assertEqual(parsed["stat_boosts"]["def"], 1)
         self.assertEqual(parsed["has_terastallized"], True)
         self.assertEqual(parsed["tera_type"], "Fairy")
@@ -185,6 +184,37 @@ class PokemonStateTest(unittest.IsolatedAsyncioTestCase):
 
         stats = kingambit.get_all_stats({Stat.ATK: 135})
         self.assertEqual(stats["supreme_overlord_fallen"], 4)
+
+    def test_hp_percentage_calculation(self) -> None:
+        """Test that HP is always represented as percentage in serialization."""
+        tinkaton = PokemonState(
+            species="Tinkaton",
+            current_hp=20,
+            max_hp=373,
+        )
+
+        landorus = PokemonState(
+            species="Landorus-Therian",
+            current_hp=88,
+            max_hp=100,
+        )
+
+        tinkaton_dict = tinkaton.to_dict()
+        landorus_dict = landorus.to_dict()
+
+        self.assertAlmostEqual(tinkaton_dict["hp"]["percentage"], 5.36, places=2)
+        self.assertEqual(landorus_dict["hp"]["percentage"], 88.0)
+
+        self.assertNotIn("current", tinkaton_dict["hp"])
+        self.assertNotIn("max", tinkaton_dict["hp"])
+        self.assertNotIn("current", landorus_dict["hp"])
+        self.assertNotIn("max", landorus_dict["hp"])
+
+        tinkaton_stats = tinkaton.get_all_stats({Stat.ATK: 75})
+        landorus_stats = landorus.get_all_stats({Stat.ATK: 145})
+
+        self.assertAlmostEqual(tinkaton_stats["hp"]["percentage"], 5.36, places=2)
+        self.assertEqual(landorus_stats["hp"]["percentage"], 88.0)
 
 
 if __name__ == "__main__":
