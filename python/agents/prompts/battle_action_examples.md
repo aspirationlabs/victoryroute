@@ -21,7 +21,7 @@ These examples demonstrate correct action formatting for various battle scenario
 
 **Correct Response**:
 ```
-{"reasoning": "Lead Ting-Lu for hazards, Corviknight as pivot, Darkrai for late-game.", "action_type": "team_order", "team_order": "163254"}
+{"reasoning": "The opponent doesn't have a Pokemon with typing that can potentially threaten Ting-Lu in one hit. By starting with Ting-Lu, I can attempt to set up hazards, and switch out if necessary.", "action_type": "team_order", "team_order": "163254"}
 ```
 
 ## Example 2: Setting Up Stealth Rock
@@ -43,7 +43,7 @@ These examples demonstrate correct action formatting for various battle scenario
 
 **Correct Response**:
 ```
-{"reasoning": "Stealth Rock provides chip on switches. Critical setup.", "action_type": "move", "move_name": "Stealth Rock", "mega": false, "tera": false}
+{"reasoning": "Stealth Rock provides chip on switches, and it isn't already set up. The opponent Pokemon doesn't have any move that can deal major damage to Ting-Lu, and likely cannot set up either. Ting-Lu can threaten with an offensive move as well.", "action_type": "move", "move_name": "Stealth Rock", "mega": false, "tera": false}
 ```
 
 ## Example 3: Attacking with Type Advantage
@@ -87,12 +87,12 @@ These examples demonstrate correct action formatting for various battle scenario
 
 **Correct Response**:
 ```
-{"reasoning": "Rock weak to Water. Corviknight resists and pivots safely.", "action_type": "switch", "switch_pokemon_name": "Corviknight"}
+{"reasoning": "Rock weak to Water. Rillaboom resists as a grass type, and pivots safely.", "action_type": "switch", "switch_pokemon_name": "Rillaboom"}
 ```
 
 ## Example 5: Forced Switch After Faint
 
-**Scenario**: My Pokemon just fainted, must choose replacement.
+**Scenario**: My Pokemon just fainted, must choose replacement. The opponent has Zamazenta.
 
 **Available Actions**:
 ```json
@@ -109,7 +109,7 @@ These examples demonstrate correct action formatting for various battle scenario
 
 **Correct Response**:
 ```
-{"reasoning": "Forced switch. Darkrai Choice Scarf for speed.", "action_type": "switch", "switch_pokemon_name": "Darkrai"}
+{"reasoning": "Forced switch. Gardevoir is Psychic and Fairy, resisting Zamazenta's Fighting type, and it has moves that threaten Zamazenta.", "action_type": "switch", "switch_pokemon_name": "Gardevoir"}
 ```
 
 ## Example 6: Using Terastallization for STAB Boost
@@ -136,7 +136,7 @@ These examples demonstrate correct action formatting for various battle scenario
 
 ## Example 7: Pivot Move for Momentum
 
-**Scenario**: Opponent likely to switch, want to maintain offensive pressure.
+**Scenario**: My Pokemon has a type advantage over the opponent. I also want to maintain offensive pressure.
 
 **Available Actions**:
 ```json
@@ -153,12 +153,12 @@ These examples demonstrate correct action formatting for various battle scenario
 
 **Correct Response**:
 ```
-{"reasoning": "U-turn for damage and momentum. Opponent likely switching.", "action_type": "move", "move_name": "U-turn", "mega": false, "tera": false}
+{"reasoning": "U-turn for damage and momentum. Opponent might switch, so using a move like Sucker Punch would potentially not be effective, based on its move description.", "action_type": "move", "move_name": "U-turn", "mega": false, "tera": false}
 ```
 
 ## Example 8: Status Move for Disruption
 
-**Scenario**: Facing physical attacker, burning will cripple their offense.
+**Scenario**: Facing physical attacker like Rhyperior, burning will cripple their offense.
 
 **Available Actions**:
 ```json
@@ -175,32 +175,10 @@ These examples demonstrate correct action formatting for various battle scenario
 
 **Correct Response**:
 ```
-{"reasoning": "Will-o-Wisp burns attacker, halves Attack. Long-term value.", "action_type": "move", "move_name": "Will-o-Wisp", "mega": false, "tera": false}
+{"reasoning": "Rhyperior has high Attack stat from game data. Will-o-Wisp burns attacker and halves Attack, so I'll take less damage and deal chip damage.", "action_type": "move", "move_name": "Will-o-Wisp", "mega": false, "tera": false}
 ```
 
-## Example 9: Defensive Play When Low HP
-
-**Scenario**: My Pokemon at 15% HP, opponent at 60% HP, need to preserve Pokemon.
-
-**Available Actions**:
-```json
-{
-  "moves": ["Earthquake", "Stone Edge", "Stealth Rock", "Protect"],
-  "switches": [1, 3, 4, 5],
-  "can_mega": false,
-  "can_tera": false,
-  "can_dynamax": false,
-  "force_switch": false,
-  "team_preview": false
-}
-```
-
-**Correct Response**:
-```
-{"reasoning": "At 15% HP preserve Pokemon. Corviknight defensive answer.", "action_type": "switch", "switch_pokemon_name": "Corviknight"}
-```
-
-## Example 10: Prediction Switch for Advantage
+## Example 9: Prediction Switch for Advantage
 
 **Scenario**: Opponent likely to use Fighting move, switching to Ghost-type for immunity.
 
@@ -219,5 +197,5 @@ These examples demonstrate correct action formatting for various battle scenario
 
 **Correct Response**:
 ```
-{"reasoning": "Predict Close Combat. Slowking-Galar Ghost immunity, free turn.", "action_type": "switch", "switch_pokemon_name": "Slowking-Galar"}
+{"reasoning": "Predict Close Combat. Gengar Ghost immunity, and can threaten with Psychic given its moveset.", "action_type": "switch", "switch_pokemon_name": "Slowking-Galar"}
 ```

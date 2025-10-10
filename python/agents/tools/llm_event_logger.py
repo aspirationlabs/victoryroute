@@ -26,17 +26,19 @@ class LlmEventLogger:
         filepath = os.path.join(self._log_dir, filename)
         self._file = open(filepath, "w")
 
-    def log_event(self, event_info: Dict[str, Any]) -> None:
+    def log_event(self, turn_number: int, event_info: Dict[str, Any]) -> None:
         """Log an LLM event.
 
         Args:
+            turn_number: Current turn number in the battle
             event_info: Dictionary containing event information (id, content, actions,
                        usage_metadata, etc.)
         """
         if self._file is None:
             return
 
-        self._file.write(f"{json.dumps(event_info)}\n")
+        log_entry = {"turn_number": turn_number, "event": event_info}
+        self._file.write(f"{json.dumps(log_entry)}\n")
         self._file.flush()
 
     def close(self) -> None:

@@ -47,6 +47,7 @@ class BattleStream:
         self._logger = logger
         self._buffer: List[BattleEvent] = []
         self._done = False
+        self._current_turn_number: int = 0
 
     def __aiter__(self) -> AsyncIterator[List[BattleEvent]]:
         """Return async iterator (self)."""
@@ -103,13 +104,16 @@ class BattleStream:
                 event = self._parser.parse(line)
                 batch.append(event)
 
+                if isinstance(event, TurnEvent):
+                    self._current_turn_number = event.turn_number
+
                 if isinstance(event, ErrorEvent):
                     logging.error(
                         "[%s] Server error: %s", self._battle_id, event.error_text
                     )
 
                 if self._logger:
-                    self._logger.log_event(event)
+                    self._logger.log_event(self._current_turn_number, event)
 
                 if self._is_decision_point(event):
                     decision_event_found = True
