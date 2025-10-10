@@ -106,6 +106,98 @@ class BattleStreamStoreIntegrationTest(
                 },
             },
         ),
+        (
+            "battle2",
+            "battle2.txt",
+            0,
+            {
+                8: {
+                    "p1": [("switch", "toxapex")],
+                    "p2": [("move", "powergem")],
+                },
+                10: {
+                    "p1": [("move", "seismictoss")],
+                    "p2": [("switch", "kingambit")],
+                },
+                11: {
+                    "p1": [("switch", "talonflame")],
+                    "p2": [("switch", "glimmora")],
+                },
+                12: {
+                    "p1": [("switch", "blissey")],
+                    "p2": [("switch", "gliscor")],
+                },
+            },
+        ),
+        (
+            "battle3",
+            "battle3.txt",
+            0,
+            {
+                1: {
+                    "p1": [("move", "ceaselessedge")],
+                    "p2": [("switch", "greattusk")],
+                },
+                3: {
+                    "p1": [("move", "icebeam")],
+                    "p2": [("switch", "samurotthisui")],
+                },
+                4: {
+                    "p1": [("move", "sludgebomb")],
+                    "p2": [("move", "razorshell")],
+                },
+                8: {
+                    "p1": [("move", "calmmind")],
+                    "p2": [("switch", "cinderace")],
+                },
+            },
+        ),
+        (
+            "live_battle_2",
+            "live_battle_2.txt",
+            0,
+            {
+                1: {
+                    "p1": [("move", "protect")],
+                    "p2": [("move", "stealthrock")],
+                },
+                2: {
+                    "p1": [("move", "knockoff")],
+                    "p2": [("move", "stealthrock")],
+                },
+                10: {
+                    "p1": [("switch", "corviknight")],
+                    "p2": [("move", "stealthrock")],
+                },
+                22: {
+                    "p1": [("switch", "clefable")],
+                    "p2": [("move", "irondefense")],
+                },
+            },
+        ),
+        (
+            "live_battle_3",
+            "live_battle_3.txt",
+            0,
+            {
+                1: {
+                    "p1": [("move", "stealthrock")],
+                    "p2": [("move", "moonlight")],
+                },
+                2: {
+                    "p1": [("move", "stealthrock")],
+                    "p2": [("move", "thunderwave")],
+                },
+                25: {
+                    "p1": [("move", "irondefense")],
+                    "p2": [("switch", "weavile")],
+                },
+                27: {
+                    "p1": [("move", "irondefense")],
+                    "p2": [("switch", "corviknight")],
+                },
+            },
+        ),
     )
     def test_battle_with_expectations(
         self,
