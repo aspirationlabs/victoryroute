@@ -132,7 +132,9 @@ class ZeroShotAgent(Agent):
 
         all_turn_ids = sorted(set(our_actions.keys()) | set(opponent_actions.keys()))
         recent_turn_ids = (
-            all_turn_ids[-past_turns:] if len(all_turn_ids) > past_turns else all_turn_ids
+            all_turn_ids[-past_turns:]
+            if len(all_turn_ids) > past_turns
+            else all_turn_ids
         )
 
         if not recent_turn_ids:
@@ -146,7 +148,9 @@ class ZeroShotAgent(Agent):
                     for action in actions[turn_id]:
                         action_json = json.dumps(
                             asdict(action),
-                            default=lambda obj: obj.value if isinstance(obj, Enum) else obj
+                            default=lambda obj: obj.value
+                            if isinstance(obj, Enum)
+                            else obj,
                         )
                         lines.append(f"<turn_{turn_id}>{action_json}</turn_{turn_id}>")
             lines.append(f"</{player_id}>")
@@ -224,12 +228,10 @@ class ZeroShotAgent(Agent):
         """
         try:
             actions = state.get_opponent_potential_actions()
-            actions_data = [
-                asdict(action) for action in actions
-            ]
+            actions_data = [asdict(action) for action in actions]
             return json.dumps(
                 actions_data,
-                default=lambda obj: obj.value if isinstance(obj, Enum) else obj
+                default=lambda obj: obj.value if isinstance(obj, Enum) else obj,
             )
         except ValueError:
             return "[]"
@@ -333,7 +335,10 @@ class ZeroShotAgent(Agent):
         past_raw_events_xml = ""
         if battle_stream_store:
             past_actions_xml = self._format_past_actions_from_store(
-                battle_stream_store, state.our_player_id, opponent_player_id, past_turns=5
+                battle_stream_store,
+                state.our_player_id,
+                opponent_player_id,
+                past_turns=5,
             )
             past_raw_events_xml = self._format_past_raw_events_from_store(
                 battle_stream_store, past_turns=5
@@ -353,7 +358,9 @@ class ZeroShotAgent(Agent):
             app_name=self._app_name,
             session_service=self._session_service,
         )
-        turn_context = self._format_turn_context(state, past_actions_xml, past_raw_events_xml)
+        turn_context = self._format_turn_context(
+            state, past_actions_xml, past_raw_events_xml
+        )
         content = types.Content(
             parts=[types.Part(text=turn_context)],
             role="user",
@@ -368,6 +375,32 @@ class ZeroShotAgent(Agent):
         )
 
         return action
+
+    async def retry_action_on_server_error(
+        self,
+        error_text: str,
+        state: BattleState,
+        battle_room: str,
+        battle_stream_store: Optional[BattleStreamStore] = None,
+    ) -> Optional[BattleAction]:
+        """Handle server error by retrying with choose_action.
+
+        This method is called when the server returns an error. The ZeroShotAgent
+        will retry by calling choose_action again with the same state.
+
+        Args:
+            error_text: The error message from the server (not used for now)
+            state: Current battle state
+            battle_room: The battle room identifier
+            battle_stream_store: Optional store containing all battle events
+
+        Returns:
+            A new BattleAction from choose_action, or None if choose_action fails
+        """
+        try:
+            return await self.choose_action(state, battle_room, battle_stream_store)
+        except Exception:
+            return None
 
     async def cleanup_battle(self, battle_room: str) -> None:
         """Clean up resources for a completed battle.

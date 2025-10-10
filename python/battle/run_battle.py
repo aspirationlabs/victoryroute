@@ -14,6 +14,7 @@ from python.agents.agent_registry import AgentRegistry
 from python.agents.zero_shot_agent import ZeroShotAgent
 from python.battle.opponent_stats_tracker import OpponentStatsTracker
 from python.game.environment.battle_environment import BattleEnvironment
+from python.game.exceptions import ServerErrorException
 from python.game.interface.challenge_handler import ChallengeHandler
 from python.game.interface.team_loader import TeamLoader
 from python.game.protocol.battle_event_logger import BattleEventLogger
@@ -81,6 +82,11 @@ flags.DEFINE_bool(
     "enable_timer",
     True,
     "Enable Pokemon Showdown's built-in battle timer (default: True)",
+)
+flags.DEFINE_integer(
+    "server_error_retries",
+    5,
+    "Maximum number of retries when server returns an error (default: 5)",
 )
 
 
@@ -184,7 +190,39 @@ async def run_battle() -> None:
                 if FLAGS.move_delay > 0:
                     await asyncio.sleep(FLAGS.move_delay)
 
-                state = await env.step(action)
+                server_error_retries = 0
+                while server_error_retries < FLAGS.server_error_retries:
+                    try:
+                        state = await env.step(action)
+                        break
+                    except ServerErrorException as e:
+                        logging.warning(
+                            f"Server error on turn {turn_count}: {e.error_text}"
+                        )
+                        retry_action = await agent.retry_action_on_server_error(
+                            error_text=e.error_text,
+                            state=state,
+                            battle_room=battle_room,
+                            battle_stream_store=env.get_battle_stream_store(),
+                        )
+
+                        if retry_action is None:
+                            logging.error(
+                                f"Agent declined to retry after server error: {e.error_text}"
+                            )
+                            raise
+
+                        action = retry_action
+                        server_error_retries += 1
+                        logging.info(
+                            f"Retrying with new action (attempt {server_error_retries}/{FLAGS.server_error_retries}): {action}"
+                        )
+
+                        if server_error_retries >= FLAGS.server_error_retries:
+                            logging.error(
+                                f"Exhausted all {FLAGS.server_error_retries} retries for server error"
+                            )
+                            raise
 
             logging.info(f"Battle {battle_room} ended after {turn_count} turns")
             if isinstance(agent, ZeroShotAgent):
