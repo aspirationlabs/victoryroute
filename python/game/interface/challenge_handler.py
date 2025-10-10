@@ -57,6 +57,7 @@ class ChallengeHandler:
         try:
             while self._client.is_connected:
                 raw_message = await self._client.receive_message()
+                logging.debug("Received raw message: %s", raw_message[:200])
 
                 if not raw_message.strip():
                     continue
@@ -64,6 +65,8 @@ class ChallengeHandler:
                 for line in raw_message.split("\n"):
                     if not line.strip():
                         continue
+
+                    logging.debug("Processing line: %s", line[:100])
 
                     # Check for battle room join
                     if line.startswith(">battle-"):
@@ -77,6 +80,9 @@ class ChallengeHandler:
                     event = self._parser.parse(line)
 
                     if isinstance(event, PrivateMessageEvent):
+                        logging.debug(
+                            "Received PM from %s: %s", event.sender, event.message
+                        )
                         await self._handle_pm(event)
                     elif isinstance(event, PopupEvent):
                         logging.warning("Server popup:\n%s", event.popup_text)
@@ -207,6 +213,10 @@ class ChallengeHandler:
     async def _handle_challenge_timeout(self) -> None:
         """Handle challenge timeout by sending proactive challenge."""
         try:
+            logging.debug(
+                "Challenge timeout task started, waiting %s seconds",
+                self._challenge_timeout,
+            )
             await asyncio.sleep(self._challenge_timeout)
 
             if self._opponent and not self._accepted_battle:
@@ -215,6 +225,12 @@ class ChallengeHandler:
                     self._opponent,
                 )
                 await self.send_challenge(self._opponent)
+            else:
+                logging.debug(
+                    "Timeout reached but not sending challenge (opponent=%s, accepted=%s)",
+                    self._opponent,
+                    self._accepted_battle,
+                )
         except asyncio.CancelledError:
             logging.debug("Challenge timeout task cancelled")
 

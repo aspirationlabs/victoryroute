@@ -67,27 +67,55 @@ class RandomAgentTest(unittest.IsolatedAsyncioTestCase):
             with patch(
                 "python.agents.random_agent.random.choice", return_value="move3"
             ):
-                action = await self.agent.choose_action(state, self.game_data)
+                action = await self.agent.choose_action(
+                    state, self.game_data, "test-battle"
+                )
 
         self.assertIsInstance(action, BattleAction)
         self.assertEqual(action.action_type, ActionType.MOVE)
-        self.assertEqual(action.move_index, 2)
+        self.assertEqual(action.move_name, "move3")
 
     async def test_random_agent_returns_switch_action_when_no_moves(self) -> None:
         """Test that agent returns switch action when only switches available."""
-        state = BattleState(available_moves=[], available_switches=[1, 2, 3, 4, 5])
+        pokemon_list = [
+            PokemonState(species="Pokemon0", current_hp=100, max_hp=100),
+            PokemonState(species="Pokemon1", current_hp=100, max_hp=100),
+            PokemonState(species="Pokemon2", current_hp=100, max_hp=100),
+            PokemonState(species="Pokemon3", current_hp=100, max_hp=100),
+            PokemonState(species="Pokemon4", current_hp=100, max_hp=100),
+            PokemonState(species="Pokemon5", current_hp=100, max_hp=100),
+        ]
+        team = TeamState(pokemon=pokemon_list, active_pokemon_index=0)
+        state = BattleState(
+            teams={"p1": team, "p2": TeamState()},
+            available_moves=[],
+            available_switches=[1, 2, 3, 4, 5],
+            our_player_id="p1",
+        )
 
         with patch("python.agents.random_agent.random.choice", return_value=3):
-            action = await self.agent.choose_action(state, self.game_data)
+            action = await self.agent.choose_action(
+                state, self.game_data, "test-battle"
+            )
 
         self.assertIsInstance(action, BattleAction)
         self.assertEqual(action.action_type, ActionType.SWITCH)
-        self.assertEqual(action.switch_index, 3)
+        self.assertEqual(action.switch_pokemon_name, "Pokemon3")
 
     async def test_random_agent_sometimes_chooses_switch_over_move(self) -> None:
         """Test that agent can choose switch even when moves are available."""
+        pokemon_list = [
+            PokemonState(species="Pokemon0", current_hp=100, max_hp=100),
+            PokemonState(species="Pokemon1", current_hp=100, max_hp=100),
+            PokemonState(species="Pokemon2", current_hp=100, max_hp=100),
+            PokemonState(species="Pokemon3", current_hp=100, max_hp=100),
+        ]
+        team = TeamState(pokemon=pokemon_list, active_pokemon_index=0)
         state = BattleState(
-            available_moves=["move1", "move2"], available_switches=[1, 2, 3]
+            teams={"p1": team, "p2": TeamState()},
+            available_moves=["move1", "move2"],
+            available_switches=[1, 2, 3],
+            our_player_id="p1",
         )
 
         # Mock random to choose switch (< switch_probability)
@@ -95,31 +123,47 @@ class RandomAgentTest(unittest.IsolatedAsyncioTestCase):
             "python.agents.random_agent.random.random", return_value=0.05
         ):  # < 0.1
             with patch("python.agents.random_agent.random.choice", return_value=2):
-                action = await self.agent.choose_action(state, self.game_data)
+                action = await self.agent.choose_action(
+                    state, self.game_data, "test-battle"
+                )
 
         self.assertEqual(action.action_type, ActionType.SWITCH)
-        self.assertEqual(action.switch_index, 2)
+        self.assertEqual(action.switch_pokemon_name, "Pokemon2")
 
     async def test_random_agent_with_force_switch(self) -> None:
         """Test agent behavior when force switch is required."""
+        pokemon_list = [
+            PokemonState(species="Pokemon0", current_hp=100, max_hp=100),
+            PokemonState(species="Pokemon1", current_hp=100, max_hp=100),
+            PokemonState(species="Pokemon2", current_hp=100, max_hp=100),
+            PokemonState(species="Pokemon3", current_hp=100, max_hp=100),
+            PokemonState(species="Pokemon4", current_hp=100, max_hp=100),
+        ]
+        team = TeamState(pokemon=pokemon_list, active_pokemon_index=1)
         state = BattleState(
+            teams={"p1": team, "p2": TeamState()},
             available_moves=["move1", "move2"],
             available_switches=[0, 2, 4],
             force_switch=True,
+            our_player_id="p1",
         )
 
         with patch("python.agents.random_agent.random.choice", return_value=2):
-            action = await self.agent.choose_action(state, self.game_data)
+            action = await self.agent.choose_action(
+                state, self.game_data, "test-battle"
+            )
 
         self.assertEqual(action.action_type, ActionType.SWITCH)
-        self.assertEqual(action.switch_index, 2)
+        self.assertEqual(action.switch_pokemon_name, "Pokemon2")
 
     async def test_random_agent_raises_error_when_no_actions_available(self) -> None:
         """Test that agent raises error when no actions are available."""
-        state = BattleState(available_moves=[], available_switches=[])
+        state = BattleState(
+            available_moves=[], available_switches=[], our_player_id="p1"
+        )
 
         with self.assertRaises(ValueError) as context:
-            await self.agent.choose_action(state, self.game_data)
+            await self.agent.choose_action(state, self.game_data, "test-battle")
 
         self.assertIn("switch", str(context.exception).lower())
 
@@ -128,24 +172,54 @@ class RandomAgentTest(unittest.IsolatedAsyncioTestCase):
     ) -> None:
         """Test error when force switch is true but no switches available."""
         state = BattleState(
-            available_moves=["move1"], available_switches=[], force_switch=True
+            available_moves=["move1"],
+            available_switches=[],
+            force_switch=True,
+            our_player_id="p1",
         )
 
         with self.assertRaises(ValueError):
-            await self.agent.choose_action(state, self.game_data)
+            await self.agent.choose_action(state, self.game_data, "test-battle")
 
     async def test_random_agent_produces_varied_results(self) -> None:
         """Test that agent produces different results across multiple calls."""
-        state = self._create_test_state(
+        pokemon_moves = [
+            PokemonMove(name="move1", current_pp=10, max_pp=10),
+            PokemonMove(name="move2", current_pp=10, max_pp=10),
+            PokemonMove(name="move3", current_pp=10, max_pp=10),
+            PokemonMove(name="move4", current_pp=10, max_pp=10),
+        ]
+        pokemon_list = [
+            PokemonState(
+                species="Pokemon0",
+                moves=pokemon_moves,
+                is_active=True,
+                current_hp=100,
+                max_hp=100,
+            ),
+            PokemonState(species="Pokemon1", current_hp=100, max_hp=100),
+            PokemonState(species="Pokemon2", current_hp=100, max_hp=100),
+            PokemonState(species="Pokemon3", current_hp=100, max_hp=100),
+            PokemonState(species="Pokemon4", current_hp=100, max_hp=100),
+            PokemonState(species="Pokemon5", current_hp=100, max_hp=100),
+        ]
+        team = TeamState(pokemon=pokemon_list, active_pokemon_index=0)
+        state = BattleState(
+            teams={"p1": team, "p2": TeamState()},
             available_moves=["move1", "move2", "move3", "move4"],
-            available_switches=[0, 1, 2, 3, 4, 5],
+            available_switches=[1, 2, 3, 4, 5],
+            our_player_id="p1",
         )
 
         # Collect results from multiple calls
         results = []
         for _ in range(100):
-            action = await self.agent.choose_action(state, self.game_data)
-            results.append((action.action_type, action.move_index, action.switch_index))
+            action = await self.agent.choose_action(
+                state, self.game_data, "test-battle"
+            )
+            results.append(
+                (action.action_type, action.move_name, action.switch_pokemon_name)
+            )
 
         # Check that we got at least some variety (not all the same)
         unique_results = set(results)
@@ -161,25 +235,35 @@ class RandomAgentTest(unittest.IsolatedAsyncioTestCase):
         """Test RandomAgent with custom switch probability."""
         # Agent that switches 50% of the time
         agent = RandomAgent(switch_probability=0.5)
+        pokemon_list = [
+            PokemonState(species="Pokemon0", current_hp=100, max_hp=100),
+            PokemonState(species="Pokemon1", current_hp=100, max_hp=100),
+            PokemonState(species="Pokemon2", current_hp=100, max_hp=100),
+            PokemonState(species="Pokemon3", current_hp=100, max_hp=100),
+        ]
+        team = TeamState(pokemon=pokemon_list, active_pokemon_index=0)
         state = BattleState(
-            available_moves=["move1", "move2"], available_switches=[1, 2, 3]
+            teams={"p1": team, "p2": TeamState()},
+            available_moves=["move1", "move2"],
+            available_switches=[1, 2, 3],
+            our_player_id="p1",
         )
 
         # Mock random to be just below switch probability
         with patch("python.agents.random_agent.random.random", return_value=0.49):
             with patch("python.agents.random_agent.random.choice", return_value=2):
-                action = await agent.choose_action(state, self.game_data)
+                action = await agent.choose_action(state, self.game_data, "test-battle")
 
         self.assertEqual(action.action_type, ActionType.SWITCH)
-        self.assertEqual(action.switch_index, 2)
+        self.assertEqual(action.switch_pokemon_name, "Pokemon2")
 
-    async def test_random_agent_all_move_indices_can_be_selected(self) -> None:
-        """Test that all move indices can potentially be selected."""
+    async def test_random_agent_all_moves_can_be_selected(self) -> None:
+        """Test that all moves can potentially be selected."""
         state = self._create_test_state(["move1", "move2", "move3", "move4"])
 
-        # Test each possible move index by mocking the move name choice
+        # Test each possible move by mocking the move name choice
         move_names = ["move1", "move2", "move3", "move4"]
-        for expected_index, move_name in enumerate(move_names):
+        for move_name in move_names:
             with patch(
                 "python.agents.random_agent.random.random", return_value=0.5
             ):  # choose move
@@ -187,22 +271,40 @@ class RandomAgentTest(unittest.IsolatedAsyncioTestCase):
                     "python.agents.random_agent.random.choice",
                     return_value=move_name,
                 ):
-                    action = await self.agent.choose_action(state, self.game_data)
+                    action = await self.agent.choose_action(
+                        state, self.game_data, "test-battle"
+                    )
 
-            self.assertEqual(action.move_index, expected_index)
+            self.assertEqual(action.move_name, move_name)
 
-    async def test_random_agent_all_switch_indices_can_be_selected(self) -> None:
-        """Test that all switch indices can potentially be selected."""
-        state = BattleState(available_moves=[], available_switches=[0, 1, 2, 3, 4, 5])
+    async def test_random_agent_all_switches_can_be_selected(self) -> None:
+        """Test that all switches can potentially be selected."""
+        pokemon_list = [
+            PokemonState(species="Pokemon0", current_hp=100, max_hp=100),
+            PokemonState(species="Pokemon1", current_hp=100, max_hp=100),
+            PokemonState(species="Pokemon2", current_hp=100, max_hp=100),
+            PokemonState(species="Pokemon3", current_hp=100, max_hp=100),
+            PokemonState(species="Pokemon4", current_hp=100, max_hp=100),
+            PokemonState(species="Pokemon5", current_hp=100, max_hp=100),
+        ]
+        team = TeamState(pokemon=pokemon_list, active_pokemon_index=0)
+        state = BattleState(
+            teams={"p1": team, "p2": TeamState()},
+            available_moves=[],
+            available_switches=[0, 1, 2, 3, 4, 5],
+            our_player_id="p1",
+        )
 
-        # Test each possible switch index
+        # Test each possible switch
         for expected_index in [0, 1, 2, 3, 4, 5]:
             with patch(
                 "python.agents.random_agent.random.choice", return_value=expected_index
             ):
-                action = await self.agent.choose_action(state, self.game_data)
+                action = await self.agent.choose_action(
+                    state, self.game_data, "test-battle"
+                )
 
-            self.assertEqual(action.switch_index, expected_index)
+            self.assertEqual(action.switch_pokemon_name, f"Pokemon{expected_index}")
 
 
 if __name__ == "__main__":

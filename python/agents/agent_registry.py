@@ -5,6 +5,7 @@ from typing import Callable, Dict
 from python.agents.agent_interface import Agent
 from python.agents.first_available_agent import FirstAvailableAgent
 from python.agents.random_agent import RandomAgent
+from python.agents.zero_shot_no_history_agent import ZeroShotNoHistoryAgent
 
 
 class AgentRegistry:
@@ -34,6 +35,7 @@ class AgentRegistry:
     _AGENT_MAP: Dict[str, Callable[[], Agent]] = {
         "random": lambda: RandomAgent(),
         "first_move": lambda: FirstAvailableAgent(),
+        "zero_shot": lambda: ZeroShotNoHistoryAgent(),
     }
 
     @classmethod

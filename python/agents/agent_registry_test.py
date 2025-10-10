@@ -85,7 +85,7 @@ class AgentRegistryTest(unittest.TestCase):
 
         class TestAgent(Agent):
             async def choose_action(
-                self, state: BattleState, game_data: GameData
+                self, state: BattleState, game_data: GameData, battle_room: str
             ) -> BattleAction:
                 return BattleAction(action_type=ActionType.MOVE, move_index=0)
 

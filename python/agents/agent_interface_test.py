@@ -16,15 +16,17 @@ class FirstMoveAgent(Agent):
     """
 
     async def choose_action(
-        self, state: BattleState, game_data: GameData
+        self, state: BattleState, game_data: GameData, battle_room: str
     ) -> BattleAction:
         """Choose first move or first switch from available options."""
         if state.available_moves:
-            return BattleAction(action_type=ActionType.MOVE, move_index=0)
+            return BattleAction(
+                action_type=ActionType.MOVE, move_name=state.available_moves[0]
+            )
 
         if state.available_switches:
             return BattleAction(
-                action_type=ActionType.SWITCH, switch_index=state.available_switches[0]
+                action_type=ActionType.SWITCH, switch_pokemon_name="TestPokemon"
             )
 
         raise ValueError("No available moves or switches")
@@ -52,11 +54,11 @@ class AgentInterfaceTest(unittest.IsolatedAsyncioTestCase):
 
         state = BattleState(available_moves=["move1", "move2", "move3", "move4"])
 
-        action = await agent.choose_action(state, game_data)
+        action = await agent.choose_action(state, game_data, "test-battle")
 
         self.assertIsInstance(action, BattleAction)
         self.assertEqual(action.action_type, ActionType.MOVE)
-        self.assertEqual(action.move_index, 0)
+        self.assertEqual(action.move_name, "move1")
 
     async def test_agent_returns_switch_action_when_no_moves(self) -> None:
         """Test that agent returns switch action when only switches available."""
@@ -65,11 +67,11 @@ class AgentInterfaceTest(unittest.IsolatedAsyncioTestCase):
 
         state = BattleState(available_moves=[], available_switches=[1, 2, 3, 4, 5])
 
-        action = await agent.choose_action(state, game_data)
+        action = await agent.choose_action(state, game_data, "test-battle")
 
         self.assertIsInstance(action, BattleAction)
         self.assertEqual(action.action_type, ActionType.SWITCH)
-        self.assertEqual(action.switch_index, 1)
+        self.assertEqual(action.switch_pokemon_name, "TestPokemon")
 
     async def test_agent_chooses_first_move_consistently(self) -> None:
         """Test that agent consistently chooses first move."""
@@ -79,13 +81,13 @@ class AgentInterfaceTest(unittest.IsolatedAsyncioTestCase):
             available_moves=["thunderbolt", "earthquake", "protect", "volt switch"]
         )
 
-        action1 = await agent.choose_action(state, game_data)
-        action2 = await agent.choose_action(state, game_data)
-        action3 = await agent.choose_action(state, game_data)
+        action1 = await agent.choose_action(state, game_data, "test-battle")
+        action2 = await agent.choose_action(state, game_data, "test-battle")
+        action3 = await agent.choose_action(state, game_data, "test-battle")
 
-        self.assertEqual(action1.move_index, 0)
-        self.assertEqual(action2.move_index, 0)
-        self.assertEqual(action3.move_index, 0)
+        self.assertEqual(action1.move_name, "thunderbolt")
+        self.assertEqual(action2.move_name, "thunderbolt")
+        self.assertEqual(action3.move_name, "thunderbolt")
 
     async def test_agent_with_force_switch(self) -> None:
         """Test agent behavior when force switch is required."""
@@ -98,10 +100,10 @@ class AgentInterfaceTest(unittest.IsolatedAsyncioTestCase):
             force_switch=True,
         )
 
-        action = await agent.choose_action(state, game_data)
+        action = await agent.choose_action(state, game_data, "test-battle")
 
         self.assertEqual(action.action_type, ActionType.SWITCH)
-        self.assertEqual(action.switch_index, 0)
+        self.assertEqual(action.switch_pokemon_name, "TestPokemon")
 
     async def test_agent_raises_error_when_no_actions_available(self) -> None:
         """Test that agent raises error when no actions are available."""
@@ -111,7 +113,7 @@ class AgentInterfaceTest(unittest.IsolatedAsyncioTestCase):
         state = BattleState(available_moves=[], available_switches=[])
 
         with self.assertRaises(ValueError):
-            await agent.choose_action(state, game_data)
+            await agent.choose_action(state, game_data, "test-battle")
 
 
 if __name__ == "__main__":

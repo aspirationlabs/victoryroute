@@ -1559,15 +1559,30 @@ class DetailsChangeEvent(BattleEvent):
 
         new_details = parts[3]
 
-        hp_parts = parts[4].split("/") if len(parts) > 4 else ["100", "100"]
-        hp_status_parts = hp_parts[1].split(" ") if len(hp_parts) > 1 else ["100", ""]
-        hp_current = int(hp_parts[0]) if hp_parts[0] else 100
-        hp_max = int(hp_status_parts[0]) if hp_status_parts[0] else 100
-        status = (
-            hp_status_parts[1]
-            if len(hp_status_parts) > 1 and hp_status_parts[1]
-            else None
-        )
+        # HP data is optional in detailschange events
+        # Skip metadata flags like [silent], [from], etc.
+        if (
+            len(parts) > 4
+            and parts[4]
+            and not parts[4].startswith("[")
+            and "/" in parts[4]
+        ):
+            hp_parts = parts[4].split("/")
+            hp_status_parts = (
+                hp_parts[1].split(" ") if len(hp_parts) > 1 else ["100", ""]
+            )
+            hp_current = int(hp_parts[0]) if hp_parts[0] else 100
+            hp_max = int(hp_status_parts[0]) if hp_status_parts[0] else 100
+            status = (
+                hp_status_parts[1]
+                if len(hp_status_parts) > 1 and hp_status_parts[1]
+                else None
+            )
+        else:
+            # No HP data provided, use defaults
+            hp_current = 100
+            hp_max = 100
+            status = None
 
         return cls(
             raw_message=raw_message,

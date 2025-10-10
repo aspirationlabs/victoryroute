@@ -14,3 +14,4 @@ class Move(GameDataObject):
     pp: int
     priority: int
     category: str
+    description: str = ""

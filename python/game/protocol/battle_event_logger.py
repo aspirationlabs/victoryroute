@@ -1,7 +1,8 @@
 """Logs battle events to file for debugging and analysis."""
 
+import json
 import os
-from typing import Optional, TextIO
+from typing import Any, Dict, Optional, TextIO
 
 from python.game.events.battle_event import BattleEvent
 
@@ -31,17 +32,19 @@ class BattleEventLogger:
         filepath = os.path.join(self._log_dir, filename)
         self._file = open(filepath, "w")
 
-    def log_event(self, event: BattleEvent) -> None:
+    def log_event(self, turn_number: int, event: BattleEvent) -> None:
         """Log a battle event.
 
         Args:
+            turn_number: Current turn number in the battle
             event: BattleEvent to log
         """
         if self._file is None:
             return
 
         raw_message = getattr(event, "raw_message", str(event))
-        self._file.write(f"{raw_message}\n")
+        log_entry: Dict[str, Any] = {"turn_number": turn_number, "event": raw_message}
+        self._file.write(f"{json.dumps(log_entry)}\n")
         self._file.flush()
 
     def close(self) -> None:

@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
 
+from python.game.schema.utils import normalize_move_name
+
 
 class ActionType(Enum):
     """Type of action an agent can take."""
@@ -27,42 +29,42 @@ class BattleAction:
 
     Attributes:
         action_type: Type of action (MOVE or SWITCH)
-        move_index: Which move to use (0-3), required for MOVE actions
-        switch_index: Which Pokemon to switch to (0-5), required for SWITCH actions
+        move_name: Name of the move to use, required for MOVE actions
+        switch_pokemon_name: Name of Pokemon to switch to, required for SWITCH actions
         target_index: Target position for doubles battles (0-3), optional
         mega: Whether to Mega Evolve with this move (MOVE only)
         tera: Whether to Terastallize with this move (MOVE only)
 
     Examples:
         Basic move action:
-        >>> action = BattleAction(action_type=ActionType.MOVE, move_index=0)
+        >>> action = BattleAction(action_type=ActionType.MOVE, move_name="earthquake")
         >>> action.to_showdown_command()
-        '/choose move 1'
+        '/choose move earthquake'
 
         Move with Mega Evolution:
-        >>> action = BattleAction(action_type=ActionType.MOVE, move_index=2, mega=True)
+        >>> action = BattleAction(action_type=ActionType.MOVE, move_name="thunderbolt", mega=True)
         >>> action.to_showdown_command()
-        '/choose move 3 mega'
+        '/choose move thunderbolt mega'
 
         Switch action:
-        >>> action = BattleAction(action_type=ActionType.SWITCH, switch_index=3)
+        >>> action = BattleAction(action_type=ActionType.SWITCH, switch_pokemon_name="pikachu")
         >>> action.to_showdown_command()
-        '/choose switch 4'
+        '/choose switch pikachu'
 
         Targeted move in doubles (opponent):
-        >>> action = BattleAction(action_type=ActionType.MOVE, move_index=1, target_index=0)
+        >>> action = BattleAction(action_type=ActionType.MOVE, move_name="surf", target_index=0)
         >>> action.to_showdown_command()
-        '/choose move 2 +1'
+        '/choose move surf +1'
 
         Targeted move in doubles (ally support):
-        >>> action = BattleAction(action_type=ActionType.MOVE, move_index=1, target_index=2)
+        >>> action = BattleAction(action_type=ActionType.MOVE, move_name="helpinghand", target_index=2)
         >>> action.to_showdown_command()
-        '/choose move 2 -1'
+        '/choose move helpinghand -1'
     """
 
     action_type: ActionType
-    move_index: Optional[int] = None
-    switch_index: Optional[int] = None
+    move_name: Optional[str] = None
+    switch_pokemon_name: Optional[str] = None
     target_index: Optional[int] = (
         None  # For doubles: 0-1 = opponents (+1,+2), 2-3 = allies (-1,-2)
     )
@@ -73,32 +75,31 @@ class BattleAction:
     def to_showdown_command(self) -> str:
         """Convert this action to a Showdown protocol command.
 
-        Converts the 0-indexed internal representation to 1-indexed Showdown
-        protocol commands. Handles move actions (with optional mega/tera/target)
-        and switch actions.
+        Uses explicit move and Pokemon names in the Showdown protocol commands.
+        Handles move actions (with optional mega/tera/target) and switch actions.
 
         Returns:
             A string command ready to send to the Showdown server.
 
         Raises:
-            ValueError: If the action is invalid (e.g., MOVE without move_index,
-                       SWITCH without switch_index)
+            ValueError: If the action is invalid (e.g., MOVE without move_name,
+                       SWITCH without switch_pokemon_name)
 
         Examples:
-            >>> BattleAction(ActionType.MOVE, move_index=0).to_showdown_command()
-            '/choose move 1'
-            >>> BattleAction(ActionType.MOVE, move_index=2, mega=True).to_showdown_command()
-            '/choose move 3 mega'
-            >>> BattleAction(ActionType.SWITCH, switch_index=4).to_showdown_command()
-            '/choose switch 5'
+            >>> BattleAction(ActionType.MOVE, move_name="earthquake").to_showdown_command()
+            '/choose move earthquake'
+            >>> BattleAction(ActionType.MOVE, move_name="flamethrower", mega=True).to_showdown_command()
+            '/choose move flamethrower mega'
+            >>> BattleAction(ActionType.SWITCH, switch_pokemon_name="pikachu").to_showdown_command()
+            '/choose switch pikachu'
         """
         if self.action_type == ActionType.MOVE:
-            if self.move_index is None:
-                raise ValueError("MOVE action requires move_index")
+            if self.move_name is None:
+                raise ValueError("MOVE action requires move_name")
 
-            # Convert 0-indexed to 1-indexed
-            move_num = self.move_index + 1
-            command = f"/choose move {move_num}"
+            # Normalize move name for Showdown protocol (lowercase, no spaces/hyphens)
+            normalized_move = normalize_move_name(self.move_name)
+            command = f"/choose move {normalized_move}"
 
             # Add target index if specified (doubles)
             # Protocol uses +/- prefix: +1,+2 for opponents, -1,-2 for allies
@@ -113,22 +114,21 @@ class BattleAction:
                 command = f"{command} {target_spec}"
 
             # Add mega/tera flags
-            # Protocol: "mega" for Mega Evolution, "max" for Dynamax
-            # Using "tera" for Terastallize (follows same shortened pattern)
+            # Protocol: "mega" for Mega Evolution, "max" for Dynamax, "terastallize" for Terastallization
             if self.mega:
                 command = f"{command} mega"
             if self.tera:
-                command = f"{command} tera"
+                command = f"{command} terastallize"
 
             return command
 
         elif self.action_type == ActionType.SWITCH:
-            if self.switch_index is None:
-                raise ValueError("SWITCH action requires switch_index")
+            if self.switch_pokemon_name is None:
+                raise ValueError("SWITCH action requires switch_pokemon_name")
 
-            # Convert 0-indexed to 1-indexed
-            switch_num = self.switch_index + 1
-            return f"/choose switch {switch_num}"
+            # Normalize Pokemon name for Showdown protocol (lowercase, no spaces/hyphens)
+            normalized_pokemon = normalize_move_name(self.switch_pokemon_name)
+            return f"/choose switch {normalized_pokemon}"
 
         elif self.action_type == ActionType.TEAM_ORDER:
             if self.team_order is None:

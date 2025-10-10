@@ -11,6 +11,7 @@ from typing import List
 from absl import app, flags, logging
 
 from python.agents.agent_registry import AgentRegistry
+from python.agents.zero_shot_no_history_agent import ZeroShotNoHistoryAgent
 from python.battle.opponent_stats_tracker import OpponentStatsTracker
 from python.game.data.game_data import GameData
 from python.game.environment.battle_environment import BattleEnvironment
@@ -99,8 +100,10 @@ def generate_default_username(agent_name: str) -> str:
 
 async def run_battle() -> None:
     """Main function to continuously run battles with the specified agent."""
+    logging.info("Creating agent: %s", FLAGS.agent)
     try:
         agent = AgentRegistry.create_agent(FLAGS.agent)
+        logging.info("Agent created successfully: %s", type(agent).__name__)
     except ValueError as e:
         logging.error("%s", e)
         return
@@ -175,7 +178,7 @@ async def run_battle() -> None:
                         f"Battle {battle_room} - Turn {turn_count} - Agent choosing action..."
                     )
 
-                action = await agent.choose_action(state, game_data)
+                action = await agent.choose_action(state, game_data, battle_room)
                 logging.info(f"Action selected: {action}")
 
                 if FLAGS.move_delay > 0:
@@ -184,14 +187,14 @@ async def run_battle() -> None:
                 state = await env.step(action)
 
             logging.info(f"Battle {battle_room} ended after {turn_count} turns")
+            if isinstance(agent, ZeroShotNoHistoryAgent):
+                await agent.cleanup_battle(battle_room)
 
-            # Determine opponent username from battle state
             opponent_username = None
             if state.our_player_id:
                 opponent_id = "p2" if state.our_player_id == "p1" else "p1"
                 opponent_username = state.player_usernames.get(opponent_id)
 
-            # Record battle result
             if state.winner is None:
                 logging.info("Result: Tie")
                 if opponent_username:
@@ -205,7 +208,6 @@ async def run_battle() -> None:
                 if opponent_username:
                     stats_tracker.record_battle(opponent_username, won=False)
 
-            # Log updated stats for this opponent
             if opponent_username:
                 stats = stats_tracker.get_stats(opponent_username)
                 if stats:

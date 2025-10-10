@@ -55,7 +55,7 @@ class RandomAgent(Agent):
         self.switch_probability = switch_probability
 
     async def choose_action(
-        self, state: BattleState, game_data: GameData
+        self, state: BattleState, game_data: GameData, battle_room: str
     ) -> BattleAction:
         """Choose a random action from available moves and switches.
 
@@ -67,6 +67,7 @@ class RandomAgent(Agent):
         Args:
             state: Current battle state with available actions
             game_data: Game data (unused by this agent)
+            battle_room: Battle room identifier (unused by this agent)
 
         Returns:
             BattleAction with randomly selected move or switch
@@ -97,14 +98,19 @@ class RandomAgent(Agent):
                 action_type=ActionType.TEAM_ORDER, team_order=team_order
             )
 
+        if state.our_player_id is None:
+            raise ValueError("our_player_id is not set in battle state")
+
         if state.force_switch or not state.available_moves:
             if not state.available_switches:
                 raise ValueError("No available switches when switch is required")
 
             switch_index = random.choice(state.available_switches)
+            team = state.get_team(state.our_player_id)
+            pokemon = team.pokemon[switch_index]
             return BattleAction(
                 action_type=ActionType.SWITCH,
-                switch_index=switch_index,
+                switch_pokemon_name=pokemon.species,
             )
 
         should_switch = (
@@ -113,16 +119,17 @@ class RandomAgent(Agent):
 
         if should_switch:
             switch_index = random.choice(state.available_switches)
+            team = state.get_team(state.our_player_id)
+            pokemon = team.pokemon[switch_index]
             return BattleAction(
                 action_type=ActionType.SWITCH,
-                switch_index=switch_index,
+                switch_pokemon_name=pokemon.species,
             )
 
-        # Pick a random available move and map it to its index
+        # Pick a random available move
         random_move_name = random.choice(state.available_moves)
-        move_index = state.get_move_index(random_move_name)
 
         return BattleAction(
             action_type=ActionType.MOVE,
-            move_index=move_index,
+            move_name=random_move_name,
         )
