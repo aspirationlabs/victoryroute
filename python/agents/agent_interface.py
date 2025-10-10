@@ -1,8 +1,9 @@
 """Abstract base class for battle agents."""
 
 from abc import ABC, abstractmethod
+from typing import Optional
 
-from python.game.data.game_data import GameData
+from python.game.environment.battle_stream_store import BattleStreamStore
 from python.game.interface.battle_action import BattleAction
 from python.game.schema.battle_state import BattleState
 
@@ -80,13 +81,15 @@ class Agent(ABC):
 
     @abstractmethod
     async def choose_action(
-        self, state: BattleState, game_data: GameData, battle_room: str
+        self,
+        state: BattleState,
+        battle_room: str,
+        battle_stream_store: Optional[BattleStreamStore] = None,
     ) -> BattleAction:
         """Choose a battle action based on the current state.
 
         This is the core method that defines an agent's behavior. Given the
-        current battle state and access to game data, the agent must return
-        a valid battle action.
+        current battle state, the agent must return a valid battle action.
 
         The agent should:
         1. Analyze the current battle state (active Pokemon, field conditions, etc.)
@@ -102,9 +105,9 @@ class Agent(ABC):
                 - Both teams' Pokemon (HP, status, stat boosts, etc.)
                 - Field conditions (weather, terrain, side conditions)
                 - Available actions (moves, switches, mega/tera flags)
-            game_data: Access to game database for querying Pokemon, moves,
-                      abilities, items, natures, and type chart
             battle_room: The battle room identifier (e.g., "battle-gen9ou-12345")
+            battle_stream_store: Optional store containing all battle events seen
+                               so far, for accessing historical battle actions
 
         Returns:
             A BattleAction representing the agent's chosen action. This will be

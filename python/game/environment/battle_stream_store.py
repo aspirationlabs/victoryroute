@@ -21,20 +21,38 @@ class BattleStreamStore:
     2. Extract player actions (moves, switches) for each turn
     """
 
-    def __init__(self, events: List[BattleEvent]) -> None:
+    def __init__(self, events: List[BattleEvent] | None = None) -> None:
         """Initialize the store with a list of battle events.
 
         Args:
-            events: List of BattleEvent objects to process
+            events: List of BattleEvent objects to process (default: empty list)
         """
-        self._events = events
+        self._events = events or []
         self._events_by_turn: Dict[int, List[BattleEvent]] = {}
         self._current_turn = 0
-        self._process_events()
+        if self._events:
+            self._process_events()
 
     def _process_events(self) -> None:
         """Process events and group them by turn number."""
         for event in self._events:
+            if isinstance(event, TurnEvent):
+                self._current_turn = event.turn_number
+                if self._current_turn not in self._events_by_turn:
+                    self._events_by_turn[self._current_turn] = []
+            elif self._current_turn > 0:
+                if self._current_turn not in self._events_by_turn:
+                    self._events_by_turn[self._current_turn] = []
+                self._events_by_turn[self._current_turn].append(event)
+
+    def add_events(self, events: List[BattleEvent]) -> None:
+        """Add new events to the store and process them incrementally.
+
+        Args:
+            events: List of new BattleEvent objects to add and process
+        """
+        self._events.extend(events)
+        for event in events:
             if isinstance(event, TurnEvent):
                 self._current_turn = event.turn_number
                 if self._current_turn not in self._events_by_turn:

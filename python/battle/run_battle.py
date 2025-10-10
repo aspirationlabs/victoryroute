@@ -11,9 +11,8 @@ from typing import List
 from absl import app, flags, logging
 
 from python.agents.agent_registry import AgentRegistry
-from python.agents.zero_shot_no_history_agent import ZeroShotNoHistoryAgent
+from python.agents.zero_shot_agent import ZeroShotAgent
 from python.battle.opponent_stats_tracker import OpponentStatsTracker
-from python.game.data.game_data import GameData
 from python.game.environment.battle_environment import BattleEnvironment
 from python.game.interface.challenge_handler import ChallengeHandler
 from python.game.interface.team_loader import TeamLoader
@@ -108,7 +107,6 @@ async def run_battle() -> None:
         logging.error("%s", e)
         return
     username = FLAGS.username or generate_default_username(FLAGS.agent)
-    game_data = GameData()
     client = ShowdownClient()
     stats_tracker = OpponentStatsTracker()
 
@@ -178,7 +176,9 @@ async def run_battle() -> None:
                         f"Battle {battle_room} - Turn {turn_count} - Agent choosing action..."
                     )
 
-                action = await agent.choose_action(state, game_data, battle_room)
+                action = await agent.choose_action(
+                    state, battle_room, env.get_battle_stream_store()
+                )
                 logging.info(f"Action selected: {action}")
 
                 if FLAGS.move_delay > 0:
@@ -187,7 +187,7 @@ async def run_battle() -> None:
                 state = await env.step(action)
 
             logging.info(f"Battle {battle_room} ended after {turn_count} turns")
-            if isinstance(agent, ZeroShotNoHistoryAgent):
+            if isinstance(agent, ZeroShotAgent):
                 await agent.cleanup_battle(battle_room)
 
             opponent_username = None

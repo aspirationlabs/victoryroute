@@ -4,6 +4,7 @@ from typing import Any, List, Optional
 
 from absl import logging
 
+from python.game.environment.battle_stream_store import BattleStreamStore
 from python.game.environment.state_transition import StateTransition
 from python.game.interface.battle_action import BattleAction
 from python.game.protocol.battle_event_logger import BattleEventLogger
@@ -68,6 +69,7 @@ class BattleEnvironment:
         self._state = BattleState()
         self._track_history = track_history
         self._history: List[BattleState] = []
+        self._battle_stream_store = BattleStreamStore()
 
     async def reset(self) -> BattleState:
         """Initialize battle state by waiting for battle start events.
@@ -95,6 +97,9 @@ class BattleEnvironment:
             self._battle_room,
             len(event_batch),
         )
+
+        # Add events to battle stream store
+        self._battle_stream_store.add_events(event_batch)
 
         # Apply all events to build initial state
         current_state = BattleState()
@@ -192,6 +197,9 @@ class BattleEnvironment:
             "[%s] Received %d events from action", self._battle_room, len(event_batch)
         )
 
+        # Add events to battle stream store
+        self._battle_stream_store.add_events(event_batch)
+
         current_state = self._state
         for event in event_batch:
             try:
@@ -236,6 +244,9 @@ class BattleEnvironment:
             len(event_batch),
         )
 
+        # Add events to battle stream store
+        self._battle_stream_store.add_events(event_batch)
+
         current_state = self._state
         for event in event_batch:
             try:
@@ -252,3 +263,11 @@ class BattleEnvironment:
             self._history.append(current_state)
 
         return current_state
+
+    def get_battle_stream_store(self) -> BattleStreamStore:
+        """Get the battle stream store containing all events seen so far.
+
+        Returns:
+            BattleStreamStore with all battle events processed up to this point
+        """
+        return self._battle_stream_store
