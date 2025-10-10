@@ -12,7 +12,7 @@ import litellm
 from google.adk.agents import LlmAgent
 from google.adk.models.lite_llm import LiteLlm
 from google.adk.runners import Runner
-from google.adk.sessions import BaseSessionService, InMemorySessionService
+from google.adk.sessions import BaseSessionService, InMemorySessionService, Session
 from google.genai import types
 
 from python.agents.agent_interface import Agent
@@ -227,10 +227,15 @@ class ZeroShotNoHistoryAgent(Agent):
             raise ValueError("our_player_id must be set in the battle state")
 
         if battle_room not in self._battle_room_to_logger:
-            self._battle_room_to_logger[battle_room] = LlmEventLogger(
+            logger = LlmEventLogger(
                 player_name=state.player_usernames[state.our_player_id],
                 model_name=self._model_name,
                 battle_room=battle_room,
+            )
+            self._battle_room_to_logger[battle_room] = logger
+            # Log system instruction once at battle start
+            logger.log_system_instruction(
+                turn_number=0, instruction=self._system_instruction
             )
         logger = self._battle_room_to_logger[battle_room]
 
@@ -287,6 +292,7 @@ class ZeroShotNoHistoryAgent(Agent):
             battle_room: The battle room identifier to clean up
         """
         if battle_room in self._battle_room_to_logger:
+            self._battle_room_to_logger[battle_room].close()
             del self._battle_room_to_logger[battle_room]
 
         if battle_room in self._battle_room_to_actions:
