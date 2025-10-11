@@ -12,6 +12,7 @@ from typing import Any, Dict, Optional
 
 import litellm
 from google.adk.agents import LlmAgent
+from google.adk.planners import BuiltInPlanner
 from google.adk.models.lite_llm import LiteLlm
 from google.adk.runners import Runner
 from google.adk.sessions import BaseSessionService, InMemorySessionService, Session
@@ -348,6 +349,11 @@ class ZeroShotAgent(Agent):
             model=LiteLlm(model=self._model_name),
             name=self._app_name,
             instruction=self._system_instruction,
+            planner=BuiltInPlanner(
+                thinking_config=types.ThinkingConfig(
+                include_thoughts=True,
+                thinking_budget=1024,
+            )),
             tools=[tool_get_object_game_data],
             output_schema=BattleActionResponse,
             disallow_transfer_to_parent=True,
@@ -363,7 +369,7 @@ class ZeroShotAgent(Agent):
         )
         content = types.Content(
             parts=[types.Part(text=turn_context)],
-            role="user",
+            role="bot",
         )
         action_generator = BattleActionGenerator(runner=runner, logger=logger)
         action = await action_generator.generate_action(
