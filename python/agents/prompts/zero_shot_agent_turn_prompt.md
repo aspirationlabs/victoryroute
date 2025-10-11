@@ -20,4 +20,9 @@ Note: This list represents potential actions the opponent could take based on kn
 {{PAST_RAW_EVENTS}}
 
 ## Directive
-Use the available actions and what you've observed about both your and the opponent's past actions to choose your optimal BattleAction. Return the JSON, writing the reasoning first, then the exact BattleAction fields.
+Based on the battle state, choose your optimal action considering:
+- Current HP situation: Can you finish low-HP opponents? Are you at risk of being KO'd?
+- Setup opportunities: Do you have time to setup, or is immediate action required?
+- Information gaps: What crucial details should you verify with tool calls first before committing a battle action?
+
+Return your decision as JSON with **brief reasoning (1-2 sentences max)** focused on the single most important factor driving your choice.

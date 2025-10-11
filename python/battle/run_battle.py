@@ -220,6 +220,13 @@ async def run_battle() -> None:
             if logger:
                 logger.close()
 
+            # Reload random team if team_index was not specified
+            if FLAGS.team_index is None:
+                logging.info("Loading new random team for next battle...")
+                team_data = team_loader.load_team(team_index=None)
+                challenge_handler.update_team(team_data)
+                logging.info(f"New team loaded (length {len(team_data)})")
+
             logging.info(f"=== End of Battle {battle_room} #{battle_count} ===\n")
 
     except KeyboardInterrupt:

@@ -241,3 +241,12 @@ class ChallengeHandler:
             Battle room ID if a battle was accepted, None otherwise
         """
         return self._accepted_battle
+
+    def update_team(self, team_data: str) -> None:
+        """Update the team data for future challenges.
+
+        Args:
+            team_data: New packed team data
+        """
+        self._team_data = team_data
+        logging.info("Team data updated in ChallengeHandler")
