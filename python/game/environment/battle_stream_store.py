@@ -6,6 +6,7 @@ from python.game.events.battle_event import (
     BattleEvent,
     FaintEvent,
     MoveEvent,
+    RequestEvent,
     SwitchEvent,
     TurnEvent,
 )
@@ -92,7 +93,7 @@ class BattleStreamStore:
                 continue
 
             raw_events_by_turn[turn_id] = [
-                event.raw_message for event in self._events_by_turn[turn_id]  # type: ignore[attr-defined]
+                event.raw_message for event in self._events_by_turn[turn_id] if not isinstance(event, RequestEvent)  # type: ignore[attr-defined]
             ]
 
         return raw_events_by_turn
