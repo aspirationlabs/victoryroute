@@ -169,7 +169,7 @@ class ZeroShotAgent(Agent):
     def _format_past_raw_events_from_store(
         self,
         store: BattleStreamStore,
-        past_turns: int = 5,
+        past_turns: int = 1,
     ) -> str:
         """Format past raw server events from BattleStreamStore as XML for inclusion in prompt.
 
@@ -272,6 +272,7 @@ class ZeroShotAgent(Agent):
             .replace("{{OPPONENT_POTENTIAL_ACTIONS}}", opponent_actions_data)
             .replace("{{PAST_ACTIONS}}", past_actions_xml)
             .replace("{{PAST_RAW_EVENTS}}", past_raw_events_xml)
+            .replace("{{PAST_SERVER_COUNT}}", str(2))
             .replace("{{PAST_ACTIONS_COUNT}}", str(self._past_actions_count))
         )
 
@@ -342,7 +343,7 @@ class ZeroShotAgent(Agent):
                 past_turns=5,
             )
             past_raw_events_xml = self._format_past_raw_events_from_store(
-                battle_stream_store, past_turns=5
+                battle_stream_store, past_turns=2
             )
 
         llm_agent = LlmAgent(
@@ -351,9 +352,10 @@ class ZeroShotAgent(Agent):
             instruction=self._system_instruction,
             planner=BuiltInPlanner(
                 thinking_config=types.ThinkingConfig(
-                include_thoughts=True,
-                thinking_budget=1024,
-            )),
+                    include_thoughts=True,
+                    thinking_budget=1024,
+                )
+            ),
             tools=[tool_get_object_game_data],
             output_schema=BattleActionResponse,
             disallow_transfer_to_parent=True,

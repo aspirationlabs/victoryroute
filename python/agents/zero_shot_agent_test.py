@@ -63,7 +63,9 @@ class ZeroShotAgentTest(unittest.TestCase):
         p1_actions = {
             1: [BattleAction(action_type=ActionType.MOVE, move_name="thunderbolt")],
             2: [
-                BattleAction(action_type=ActionType.SWITCH, switch_pokemon_name="pikachu")
+                BattleAction(
+                    action_type=ActionType.SWITCH, switch_pokemon_name="pikachu"
+                )
             ],
         }
         p2_actions = {
@@ -125,7 +127,9 @@ class ZeroShotAgentTest(unittest.TestCase):
         p1_actions = {
             1: [
                 BattleAction(action_type=ActionType.MOVE, move_name="voltswitch"),
-                BattleAction(action_type=ActionType.SWITCH, switch_pokemon_name="raichu"),
+                BattleAction(
+                    action_type=ActionType.SWITCH, switch_pokemon_name="raichu"
+                ),
             ],
         }
         p2_actions = {
@@ -249,7 +253,9 @@ class ZeroShotAgentTest(unittest.TestCase):
         self.assertIn("<turn_1>", result)
         self.assertIn("</turn_1>", result)
         self.assertIn("<event>|turn|1</event>", result)
-        self.assertIn("<event>|move|p1a: Pikachu|Thunderbolt|p2a: Charizard</event>", result)
+        self.assertIn(
+            "<event>|move|p1a: Pikachu|Thunderbolt|p2a: Charizard</event>", result
+        )
         self.assertIn("<event>|-damage|p2a: Charizard|50/100</event>", result)
 
     def test_format_past_raw_events_multiple_turns(self) -> None:

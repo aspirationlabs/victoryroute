@@ -262,8 +262,7 @@ class FirstAvailableAgentTest(unittest.IsolatedAsyncioTestCase):
 
         # Same state should always produce same result
         actions = [
-            await self.agent.choose_action(state, "test-battle")
-            for _ in range(10)
+            await self.agent.choose_action(state, "test-battle") for _ in range(10)
         ]
 
         # All actions should be identical
