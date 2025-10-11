@@ -5,7 +5,7 @@ from typing import Callable, Dict
 from python.agents.agent_interface import Agent
 from python.agents.first_available_agent import FirstAvailableAgent
 from python.agents.random_agent import RandomAgent
-from python.agents.zero_shot_agent import ZeroShotAgent
+from python.agents.zero_shot.zero_shot_agent import ZeroShotAgent
 
 
 class AgentRegistry:

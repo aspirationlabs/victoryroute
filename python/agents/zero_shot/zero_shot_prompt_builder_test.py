@@ -1,35 +1,34 @@
-"""Unit tests for ZeroShotAgent._format_past_actions_from_store()."""
+"""Unit tests for ZeroShotPromptBuilder formatting methods."""
 
 import json
 import unittest
 from unittest.mock import Mock
 
-from python.agents.zero_shot_agent import ZeroShotAgent
+from python.agents.zero_shot.zero_shot_prompt_builder import ZeroShotPromptBuilder
 from python.game.environment.battle_stream_store import BattleStreamStore
 from python.game.interface.battle_action import ActionType, BattleAction
 
 
-class ZeroShotAgentTest(unittest.TestCase):
-    """Test ZeroShotAgent formatting methods."""
+class ZeroShotPromptBuilderTest(unittest.TestCase):
+    """Test ZeroShotPromptBuilder formatting methods."""
 
     def setUp(self) -> None:
         """Set up test fixtures."""
-        self.agent = ZeroShotAgent()
+        self.mock_store = Mock(spec=BattleStreamStore)
+        self.builder = ZeroShotPromptBuilder(self.mock_store)
 
     def test_format_past_actions_empty_store(self) -> None:
         """Test formatting with empty battle stream store."""
-        mock_store = Mock(spec=BattleStreamStore)
-        mock_store.get_past_battle_actions.return_value = {}
+        self.mock_store.get_past_battle_actions.return_value = {}
 
-        result = self.agent._format_past_actions_from_store(
-            mock_store, "p1", "p2", past_turns=5
+        result = self.builder._format_past_actions_from_store(
+            "p1", "p2", past_turns=5
         )
 
-        self.assertEqual(result, "No actions have been taken yet in this battle.")
+        self.assertEqual(result, "")
 
     def test_format_past_actions_single_player(self) -> None:
         """Test formatting with actions from only one player."""
-        mock_store = Mock(spec=BattleStreamStore)
         p1_actions = {
             1: [BattleAction(action_type=ActionType.MOVE, move_name="thunderbolt")],
             2: [BattleAction(action_type=ActionType.MOVE, move_name="earthquake")],
@@ -39,10 +38,10 @@ class ZeroShotAgentTest(unittest.TestCase):
         def get_actions_side_effect(player_id: str, past_turns: int):
             return p1_actions if player_id == "p1" else p2_actions
 
-        mock_store.get_past_battle_actions.side_effect = get_actions_side_effect
+        self.mock_store.get_past_battle_actions.side_effect = get_actions_side_effect
 
-        result = self.agent._format_past_actions_from_store(
-            mock_store, "p1", "p2", past_turns=5
+        result = self.builder._format_past_actions_from_store(
+            "p1", "p2", past_turns=5
         )
 
         self.assertIn("<past_actions>", result)
@@ -59,7 +58,6 @@ class ZeroShotAgentTest(unittest.TestCase):
 
     def test_format_past_actions_both_players(self) -> None:
         """Test formatting with actions from both players."""
-        mock_store = Mock(spec=BattleStreamStore)
         p1_actions = {
             1: [BattleAction(action_type=ActionType.MOVE, move_name="thunderbolt")],
             2: [
@@ -76,10 +74,10 @@ class ZeroShotAgentTest(unittest.TestCase):
         def get_actions_side_effect(player_id: str, past_turns: int):
             return p1_actions if player_id == "p1" else p2_actions
 
-        mock_store.get_past_battle_actions.side_effect = get_actions_side_effect
+        self.mock_store.get_past_battle_actions.side_effect = get_actions_side_effect
 
-        result = self.agent._format_past_actions_from_store(
-            mock_store, "p1", "p2", past_turns=5
+        result = self.builder._format_past_actions_from_store(
+            "p1", "p2", past_turns=5
         )
 
         self.assertIn("thunderbolt", result)
@@ -92,7 +90,6 @@ class ZeroShotAgentTest(unittest.TestCase):
 
     def test_format_past_actions_limits_turns(self) -> None:
         """Test that past_turns parameter limits number of turns shown."""
-        mock_store = Mock(spec=BattleStreamStore)
         p1_actions = {
             1: [BattleAction(action_type=ActionType.MOVE, move_name="move1")],
             2: [BattleAction(action_type=ActionType.MOVE, move_name="move2")],
@@ -107,10 +104,10 @@ class ZeroShotAgentTest(unittest.TestCase):
         def get_actions_side_effect(player_id: str, past_turns: int):
             return p1_actions if player_id == "p1" else p2_actions
 
-        mock_store.get_past_battle_actions.side_effect = get_actions_side_effect
+        self.mock_store.get_past_battle_actions.side_effect = get_actions_side_effect
 
-        result = self.agent._format_past_actions_from_store(
-            mock_store, "p1", "p2", past_turns=3
+        result = self.builder._format_past_actions_from_store(
+            "p1", "p2", past_turns=3
         )
 
         self.assertNotIn("move1", result)
@@ -123,7 +120,6 @@ class ZeroShotAgentTest(unittest.TestCase):
 
     def test_format_past_actions_multiple_actions_per_turn(self) -> None:
         """Test formatting when multiple actions occur in same turn (e.g., volt switch)."""
-        mock_store = Mock(spec=BattleStreamStore)
         p1_actions = {
             1: [
                 BattleAction(action_type=ActionType.MOVE, move_name="voltswitch"),
@@ -139,10 +135,10 @@ class ZeroShotAgentTest(unittest.TestCase):
         def get_actions_side_effect(player_id: str, past_turns: int):
             return p1_actions if player_id == "p1" else p2_actions
 
-        mock_store.get_past_battle_actions.side_effect = get_actions_side_effect
+        self.mock_store.get_past_battle_actions.side_effect = get_actions_side_effect
 
-        result = self.agent._format_past_actions_from_store(
-            mock_store, "p1", "p2", past_turns=5
+        result = self.builder._format_past_actions_from_store(
+            "p1", "p2", past_turns=5
         )
 
         self.assertIn("voltswitch", result)
@@ -156,7 +152,6 @@ class ZeroShotAgentTest(unittest.TestCase):
 
     def test_format_past_actions_json_structure(self) -> None:
         """Test that action JSON has correct structure using asdict()."""
-        mock_store = Mock(spec=BattleStreamStore)
         p1_actions = {
             1: [
                 BattleAction(
@@ -172,10 +167,10 @@ class ZeroShotAgentTest(unittest.TestCase):
         def get_actions_side_effect(player_id: str, past_turns: int):
             return p1_actions if player_id == "p1" else p2_actions
 
-        mock_store.get_past_battle_actions.side_effect = get_actions_side_effect
+        self.mock_store.get_past_battle_actions.side_effect = get_actions_side_effect
 
-        result = self.agent._format_past_actions_from_store(
-            mock_store, "p1", "p2", past_turns=5
+        result = self.builder._format_past_actions_from_store(
+            "p1", "p2", past_turns=5
         )
 
         action_start = result.find("<turn_1>") + len("<turn_1>")
@@ -194,7 +189,6 @@ class ZeroShotAgentTest(unittest.TestCase):
 
     def test_format_past_actions_xml_structure(self) -> None:
         """Test that XML structure is correct with proper tags."""
-        mock_store = Mock(spec=BattleStreamStore)
         p1_actions = {
             1: [BattleAction(action_type=ActionType.MOVE, move_name="tackle")],
         }
@@ -205,10 +199,10 @@ class ZeroShotAgentTest(unittest.TestCase):
         def get_actions_side_effect(player_id: str, past_turns: int):
             return p1_actions if player_id == "p1" else p2_actions
 
-        mock_store.get_past_battle_actions.side_effect = get_actions_side_effect
+        self.mock_store.get_past_battle_actions.side_effect = get_actions_side_effect
 
-        result = self.agent._format_past_actions_from_store(
-            mock_store, "p1", "p2", past_turns=5
+        result = self.builder._format_past_actions_from_store(
+            "p1", "p2", past_turns=5
         )
 
         lines = result.split("\n")
@@ -227,16 +221,14 @@ class ZeroShotAgentTest(unittest.TestCase):
 
     def test_format_past_raw_events_empty_store(self) -> None:
         """Test formatting raw events with empty battle stream store."""
-        mock_store = Mock(spec=BattleStreamStore)
-        mock_store.get_past_raw_events.return_value = {}
+        self.mock_store.get_past_raw_events.return_value = {}
 
-        result = self.agent._format_past_raw_events_from_store(mock_store, past_turns=5)
+        result = self.builder._format_past_raw_events(past_turns=5)
 
-        self.assertEqual(result, "No server events have occurred yet in this battle.")
+        self.assertEqual(result, "")
 
     def test_format_past_raw_events_single_turn(self) -> None:
         """Test formatting raw events from a single turn."""
-        mock_store = Mock(spec=BattleStreamStore)
         raw_events = {
             1: [
                 "|turn|1",
@@ -244,9 +236,9 @@ class ZeroShotAgentTest(unittest.TestCase):
                 "|-damage|p2a: Charizard|50/100",
             ]
         }
-        mock_store.get_past_raw_events.return_value = raw_events
+        self.mock_store.get_past_raw_events.return_value = raw_events
 
-        result = self.agent._format_past_raw_events_from_store(mock_store, past_turns=5)
+        result = self.builder._format_past_raw_events(past_turns=5)
 
         self.assertIn("<past_server_events>", result)
         self.assertIn("</past_server_events>", result)
@@ -260,15 +252,14 @@ class ZeroShotAgentTest(unittest.TestCase):
 
     def test_format_past_raw_events_multiple_turns(self) -> None:
         """Test formatting raw events from multiple turns."""
-        mock_store = Mock(spec=BattleStreamStore)
         raw_events = {
             1: ["|turn|1", "|move|p1a: Pikachu|Thunderbolt|p2a: Charizard"],
             2: ["|turn|2", "|switch|p1a: Raichu|Raichu, L50|100/100"],
             3: ["|turn|3", "|move|p2a: Charizard|Flamethrower|p1a: Raichu"],
         }
-        mock_store.get_past_raw_events.return_value = raw_events
+        self.mock_store.get_past_raw_events.return_value = raw_events
 
-        result = self.agent._format_past_raw_events_from_store(mock_store, past_turns=5)
+        result = self.builder._format_past_raw_events(past_turns=5)
 
         self.assertIn("<turn_1>", result)
         self.assertIn("<turn_2>", result)
@@ -279,13 +270,12 @@ class ZeroShotAgentTest(unittest.TestCase):
 
     def test_format_past_raw_events_xml_structure(self) -> None:
         """Test that XML structure is correct with proper event tags."""
-        mock_store = Mock(spec=BattleStreamStore)
         raw_events = {
             1: ["|turn|1", "|move|p1a: Pikachu|Tackle|p2a: Bulbasaur"],
         }
-        mock_store.get_past_raw_events.return_value = raw_events
+        self.mock_store.get_past_raw_events.return_value = raw_events
 
-        result = self.agent._format_past_raw_events_from_store(mock_store, past_turns=5)
+        result = self.builder._format_past_raw_events(past_turns=5)
 
         lines = result.split("\n")
         self.assertEqual(lines[0], "<past_server_events>")
