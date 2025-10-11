@@ -79,8 +79,9 @@ class ChallengeHandlerTest(unittest.IsolatedAsyncioTestCase, parameterized.TestC
 
         self.assertEqual(battle_room, "battle-gen9ou-12345")
         sent_messages = client.get_sent_messages()
-        self.assertEqual(len(sent_messages), 1)
-        self.assertEqual(sent_messages[0], "|/accept challenger")
+        self.assertEqual(len(sent_messages), 2)
+        self.assertEqual(sent_messages[0], "|/search gen9ou")
+        self.assertEqual(sent_messages[1], "|/accept challenger")
 
     async def test_ignore_wrong_format(self) -> None:
         """Test that challenges with wrong format are ignored."""
@@ -97,8 +98,9 @@ class ChallengeHandlerTest(unittest.IsolatedAsyncioTestCase, parameterized.TestC
 
         self.assertEqual(battle_room, "battle-gen9ou-12345")
         sent_messages = client.get_sent_messages()
-        self.assertEqual(len(sent_messages), 1)
-        self.assertEqual(sent_messages[0], "|/accept correctchallenger")
+        self.assertEqual(len(sent_messages), 2)
+        self.assertEqual(sent_messages[0], "|/search gen9ou")
+        self.assertEqual(sent_messages[1], "|/accept correctchallenger")
 
     async def test_ignore_non_challenge_pms(self) -> None:
         """Test that non-challenge PMs are ignored."""
@@ -116,8 +118,9 @@ class ChallengeHandlerTest(unittest.IsolatedAsyncioTestCase, parameterized.TestC
 
         self.assertEqual(battle_room, "battle-gen9ou-12345")
         sent_messages = client.get_sent_messages()
-        self.assertEqual(len(sent_messages), 1)
-        self.assertEqual(sent_messages[0], "|/accept challenger")
+        self.assertEqual(len(sent_messages), 2)
+        self.assertEqual(sent_messages[0], "|/search gen9ou")
+        self.assertEqual(sent_messages[1], "|/accept challenger")
 
     @parameterized.parameters(
         ("~Username", "username"),
@@ -230,7 +233,7 @@ class ChallengeHandlerTest(unittest.IsolatedAsyncioTestCase, parameterized.TestC
         self.assertEqual(sent_messages[0], "|/accept targetopponent")
 
     async def test_no_proactive_challenge_without_opponent(self) -> None:
-        """Test that no proactive challenge is sent without opponent specified."""
+        """Test that ladder search is sent instead of proactive challenge without opponent."""
         messages = [
             "|pm|~SomeChallenger| BotPlayer|/challenge gen9ou",
             ">battle-gen9ou-12345",
@@ -243,8 +246,9 @@ class ChallengeHandlerTest(unittest.IsolatedAsyncioTestCase, parameterized.TestC
 
         self.assertEqual(battle_room, "battle-gen9ou-12345")
         sent_messages = client.get_sent_messages()
-        self.assertEqual(len(sent_messages), 1)
-        self.assertEqual(sent_messages[0], "|/accept somechallenger")
+        self.assertEqual(len(sent_messages), 2)
+        self.assertEqual(sent_messages[0], "|/search gen9ou")
+        self.assertEqual(sent_messages[1], "|/accept somechallenger")
 
     @parameterized.parameters(
         ("/challenge gen9ou", "gen9ou"),
@@ -296,6 +300,29 @@ class ChallengeHandlerTest(unittest.IsolatedAsyncioTestCase, parameterized.TestC
         battle_room = await handler.listen_for_challenges()
 
         self.assertEqual(battle_room, "battle-gen9ou-12345")
+
+    async def test_duplicate_battle_room_ignored(self) -> None:
+        """Test that duplicate battle room joins are ignored."""
+        messages = [
+            ">battle-gen9ou-12345",
+        ]
+
+        client = FakeShowdownClient(messages)
+        handler = ChallengeHandler(client, format="gen9ou")
+
+        battle_room = await handler.listen_for_challenges()
+        self.assertEqual(battle_room, "battle-gen9ou-12345")
+
+        messages2 = [
+            ">battle-gen9ou-12345",
+            ">battle-gen9ou-67890",
+        ]
+
+        client2 = FakeShowdownClient(messages2)
+        handler._client = client2
+
+        battle_room2 = await handler.listen_for_challenges()
+        self.assertEqual(battle_room2, "battle-gen9ou-67890")
 
 
 if __name__ == "__main__":

@@ -1702,6 +1702,21 @@ class PrivateMessageEvent(BattleEvent):
 
 
 @dataclass(frozen=True)
+class UpdateSearchEvent(BattleEvent):
+    """Event for ladder search status updates."""
+
+    raw_message: str
+    search_json: str
+    timestamp: Optional[datetime] = None
+
+    @classmethod
+    def parse_raw_message(cls, raw_message: str) -> "UpdateSearchEvent":
+        parts = raw_message.split("|")
+        search_json = parts[2] if len(parts) > 2 else "{}"
+        return cls(raw_message=raw_message, search_json=search_json)
+
+
+@dataclass(frozen=True)
 class PopupEvent(BattleEvent):
     """Event for popup messages from the server (usually errors or notifications)."""
 

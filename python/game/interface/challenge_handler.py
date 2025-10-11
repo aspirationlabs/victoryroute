@@ -1,11 +1,15 @@
 """Challenge handler for accepting and sending Pokemon Showdown challenges."""
 
 import asyncio
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Set
 
 from absl import logging
 
-from python.game.events.battle_event import PopupEvent, PrivateMessageEvent
+from python.game.events.battle_event import (
+    PopupEvent,
+    PrivateMessageEvent,
+    UpdateSearchEvent,
+)
 from python.game.protocol.message_parser import MessageParser
 
 
@@ -38,9 +42,12 @@ class ChallengeHandler:
         self._pending_challenges: Dict[str, str] = {}
         self._accepted_battle: Optional[str] = None
         self._timeout_task: Optional[asyncio.Task[None]] = None
+        self._joined_battle_rooms: Set[str] = set()
 
     async def listen_for_challenges(self) -> str:
         """Listen for challenges and handle them according to configuration.
+
+        If no opponent is specified, joins the ladder queue first.
 
         Returns:
             Battle room ID when a challenge is accepted
@@ -53,6 +60,8 @@ class ChallengeHandler:
 
         if self._opponent and self._challenge_timeout > 0:
             self._timeout_task = asyncio.create_task(self._handle_challenge_timeout())
+        elif not self._opponent:
+            await self.search_ladder()
 
         try:
             while self._client.is_connected:
@@ -71,7 +80,13 @@ class ChallengeHandler:
                     # Check for battle room join
                     if line.startswith(">battle-"):
                         battle_room = line[1:].strip()
+                        if battle_room in self._joined_battle_rooms:
+                            logging.debug(
+                                "Ignoring already joined battle room: %s", battle_room
+                            )
+                            continue
                         logging.info("Joined battle room: %s", battle_room)
+                        self._joined_battle_rooms.add(battle_room)
                         self._accepted_battle = battle_room
                         if self._timeout_task:
                             self._timeout_task.cancel()
@@ -87,6 +102,8 @@ class ChallengeHandler:
                     elif isinstance(event, PopupEvent):
                         logging.warning("Server popup:\n%s", event.popup_text)
                         logging.debug("Raw popup message: %s", event.raw_message)
+                    elif isinstance(event, UpdateSearchEvent):
+                        logging.debug("Ladder search update: %s", event.search_json)
 
         except asyncio.CancelledError:
             raise
@@ -209,6 +226,19 @@ class ChallengeHandler:
 
         await self._client.send_message(f"|/challenge {username}, {self._format}")
         logging.info("Sent challenge to %s with format %s", username, self._format)
+
+    async def search_ladder(self) -> None:
+        """Join the ladder queue to search for a random opponent.
+
+        Sends team data and then searches for a ladder match.
+        """
+        if self._team_data:
+            logging.info("Sending team before searching ladder...")
+            await self._client.send_message(f"|/utm {self._team_data}")
+            await asyncio.sleep(0.1)
+
+        await self._client.send_message(f"|/search {self._format}")
+        logging.info("Joined ladder queue for format %s", self._format)
 
     async def _handle_challenge_timeout(self) -> None:
         """Handle challenge timeout by sending proactive challenge."""
