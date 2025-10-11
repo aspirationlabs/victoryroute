@@ -141,10 +141,10 @@ async def run_battle() -> None:
                     f"Waiting for challenges from {FLAGS.opponent} (timeout: {FLAGS.challenge_timeout}s)..."
                 )
             else:
-                logging.info("Waiting for challenges from any opponent...")
+                logging.info("Joining ladder queue and waiting for match...")
 
             battle_room = await challenge_handler.listen_for_challenges()
-            logging.info(f"Challenge accepted! Battle room: {battle_room}")
+            logging.info(f"Match found! Battle room: {battle_room}")
 
             if FLAGS.enable_timer:
                 logging.info("Enabling battle timer...")
@@ -258,7 +258,9 @@ async def run_battle() -> None:
             if logger:
                 logger.close()
 
-            # Reload random team if team_index was not specified
+            await client.send_message(f"{battle_room}|/leave")
+            logging.debug(f"Left battle room: {battle_room}")
+
             if FLAGS.team_index is None:
                 logging.info("Loading new random team for next battle...")
                 team_data = team_loader.load_team(team_index=None)

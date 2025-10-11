@@ -63,6 +63,7 @@ from python.game.events.battle_event import (
     TurnEvent,
     UnboostEvent,
     UnknownEvent,
+    UpdateSearchEvent,
     UpkeepEvent,
     WeatherEvent,
 )
@@ -81,6 +82,7 @@ class MessageParser:
         "pm": PrivateMessageEvent,
         "popup": PopupEvent,
         "error": ErrorEvent,
+        "updatesearch": UpdateSearchEvent,
         "switch": SwitchEvent,
         "drag": DragEvent,
         "-damage": DamageEvent,
