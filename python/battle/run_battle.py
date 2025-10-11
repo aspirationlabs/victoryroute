@@ -11,7 +11,7 @@ from typing import List
 from absl import app, flags, logging
 
 from python.agents.agent_registry import AgentRegistry
-from python.agents.zero_shot_agent import ZeroShotAgent
+from python.agents.zero_shot.zero_shot_agent import ZeroShotAgent
 from python.battle.opponent_stats_tracker import OpponentStatsTracker
 from python.game.environment.battle_environment import BattleEnvironment
 from python.game.exceptions import ServerErrorException

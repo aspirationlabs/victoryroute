@@ -71,8 +71,6 @@
 
 **Speed**: Faster Pokemon move first. Priority moves bypass speed. Paralysis and Trick Room affect order.
 
-**Choice Items**: Band/Specs/Scarf boost stat 1.5x but lock into one move until switch.
-
 ## Decision Process
 
 **4-Step Process**:
