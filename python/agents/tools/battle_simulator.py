@@ -85,15 +85,6 @@ class BattleSimulator:
         self.game_data = game_data
 
     def get_nature_boosts(self, nature: str) -> Dict[str, float]:
-        """Get nature stat multipliers.
-
-        Args:
-            nature: Name of the nature (e.g., "Jolly", "Bashful")
-
-        Returns:
-            Dictionary mapping stat names to their nature multipliers
-            (1.1 for boosted stat, 0.9 for hindered stat, 1.0 otherwise)
-        """
         nature_data = self.game_data.get_nature(nature)
 
         stat_name_map = {
@@ -135,22 +126,6 @@ class BattleSimulator:
         evs: EffortValues = EffortValues(252, 252, 252, 252, 252, 252),
         nature: str = "Bashful",
     ) -> PokemonStats:
-        """Calculate the actual stats for a Pokemon given IVs, EVs, level, and nature.
-
-        Uses the standard Pokemon stat calculation formula from Generation 3 onwards:
-        - HP: floor(floor(2*base + IV + floor(EV/4) + 100) * level / 100 + 10)
-        - Other: floor(floor(2*base + IV + floor(EV/4)) * level / 100 + 5) * nature_multiplier)
-
-        Args:
-            pokemon: The Pokemon state containing species information
-            level: Pokemon level (default: 100)
-            ivs: Individual Values (default: all 31s)
-            evs: Effort Values (default: all 252s)
-            nature: Nature name (default: "Bashful" - neutral nature)
-
-        Returns:
-            PokemonStats object with calculated HP, Attack, Defense, Sp. Atk, Sp. Def, Speed
-        """
         pokemon_data = self.game_data.get_pokemon(pokemon.species)
         base_stats = pokemon_data.base_stats
         nature_multipliers = self.get_nature_boosts(nature)
