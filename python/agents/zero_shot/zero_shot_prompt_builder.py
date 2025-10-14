@@ -7,6 +7,7 @@ from typing import Any, Dict
 from python.game.schema.battle_state import BattleState
 from python.game.environment.battle_stream_store import BattleStreamStore
 
+
 class ZeroShotPromptBuilder:
     def __init__(self, BattleStreamStore: BattleStreamStore):
         self._battle_stream_store = BattleStreamStore
@@ -24,7 +25,9 @@ class ZeroShotPromptBuilder:
         return json.dumps(available_actions)
 
     def _format_opponent_potential_actions(self, state: BattleState) -> str:
-        actions_data = [asdict(action) for action in state.get_opponent_potential_actions()]
+        actions_data = [
+            asdict(action) for action in state.get_opponent_potential_actions()
+        ]
         return json.dumps(
             actions_data,
             default=lambda obj: obj.value if isinstance(obj, Enum) else obj,
@@ -37,10 +40,15 @@ class ZeroShotPromptBuilder:
         past_turns: int = 3,
     ) -> str:
         actions = {
-            player_id: self._battle_stream_store.get_past_battle_actions(player_id, past_turns) for player_id in [our_player_id, opponent_player_id]
+            player_id: self._battle_stream_store.get_past_battle_actions(
+                player_id, past_turns
+            )
+            for player_id in [our_player_id, opponent_player_id]
         }
 
-        all_turn_ids = sorted(set(actions[our_player_id].keys()) | set(actions[opponent_player_id].keys()))
+        all_turn_ids = sorted(
+            set(actions[our_player_id].keys()) | set(actions[opponent_player_id].keys())
+        )
         recent_turn_ids = (
             all_turn_ids[-past_turns:]
             if len(all_turn_ids) > past_turns
@@ -56,14 +64,17 @@ class ZeroShotPromptBuilder:
             for turn_id in recent_turn_ids:
                 if turn_id in actions[player_id]:
                     for action in actions[player_id][turn_id]:
-                        lines.append(f"<turn_{turn_id}>{json.dumps(asdict(action), default=lambda obj: obj.value if isinstance(obj, Enum) else obj)}</turn_{turn_id}>")
+                        lines.append(
+                            f"<turn_{turn_id}>{json.dumps(asdict(action), default=lambda obj: obj.value if isinstance(obj, Enum) else obj)}</turn_{turn_id}>"
+                        )
             lines.append(f"</{player_id}>")
         lines.append("</past_actions>")
-        return "\n".join(lines) 
-
+        return "\n".join(lines)
 
     def _format_past_raw_events(self, past_turns: int) -> str:
-        raw_events_by_turn = self._battle_stream_store.get_past_raw_events(past_turns=past_turns)
+        raw_events_by_turn = self._battle_stream_store.get_past_raw_events(
+            past_turns=past_turns
+        )
 
         if not raw_events_by_turn:
             return ""
@@ -86,7 +97,6 @@ class ZeroShotPromptBuilder:
         state: BattleState,
         opponent_player_id,
     ) -> str:
-
         current_dir = os.path.dirname(os.path.abspath(__file__))
         template_path = os.path.join(
             current_dir, "..", "prompts", "zero_shot_agent_turn_prompt.md"
@@ -104,7 +114,12 @@ class ZeroShotPromptBuilder:
             .replace("{{AVAILABLE_ACTIONS}}", available_moves_data)
             .replace("{{BATTLE_STATE}}", str(state))
             .replace("{{OPPONENT_POTENTIAL_ACTIONS}}", opponent_actions_data)
-            .replace("{{PAST_ACTIONS}}", self._format_past_actions_from_store(state.our_player_id, opponent_player_id))
+            .replace(
+                "{{PAST_ACTIONS}}",
+                self._format_past_actions_from_store(
+                    state.our_player_id, opponent_player_id
+                ),
+            )
             .replace("{{PAST_RAW_EVENTS}}", self._format_past_raw_events(past_turns=2))
             .replace("{{PAST_SERVER_COUNT}}", str(2))
             .replace("{{PAST_ACTIONS_COUNT}}", str(3))

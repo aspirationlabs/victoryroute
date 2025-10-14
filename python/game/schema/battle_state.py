@@ -7,9 +7,9 @@ from typing import Any, Dict, List, Optional
 from python.game.interface.battle_action import ActionType, BattleAction
 from python.game.schema.enums import Stat
 from python.game.schema.field_state import FieldState
+from python.game.schema.object_name_normalizer import normalize_name
 from python.game.schema.pokemon_state import PokemonState
 from python.game.schema.team_state import TeamState
-from python.game.schema.utils import normalize_move_name
 
 
 @dataclass(frozen=True)
@@ -96,7 +96,11 @@ class BattleState:
         # return empty list to match server behavior. The server doesn't re-send
         # move lists once moves are revealed through battle actions.
         # Only apply this logic if we know our player ID and this is the opponent
-        if self.our_player_id is not None and player != self.our_player_id and active.moves:
+        if (
+            self.our_player_id is not None
+            and player != self.our_player_id
+            and active.moves
+        ):
             return []
 
         # Check for Encore - only the encored move is available
@@ -140,8 +144,7 @@ class BattleState:
         # Track the last move used to detect this restriction
         last_move_used = active.volatile_conditions.get("last_move_used")
         gigaton_hammer_disabled = (
-            last_move_used and
-            normalize_move_name(last_move_used) == "gigatonhammer"
+            last_move_used and normalize_name(last_move_used) == "gigatonhammer"
         )
 
         available = []
@@ -155,7 +158,7 @@ class BattleState:
                 continue
 
             # Skip Gigaton Hammer if it was just used
-            if gigaton_hammer_disabled and normalize_move_name(move.name) == "gigatonhammer":
+            if gigaton_hammer_disabled and normalize_name(move.name) == "gigatonhammer":
                 continue
 
             available.append(move.name)
@@ -293,9 +296,7 @@ class BattleState:
         actions.extend(self._infer_opponent_switch_actions(opponent_id))
         return actions
 
-    def _infer_opponent_move_actions(
-        self, active: PokemonState
-    ) -> List[BattleAction]:
+    def _infer_opponent_move_actions(self, active: PokemonState) -> List[BattleAction]:
         """Infer opponent's potential move actions from revealed moves.
 
         Args:
@@ -375,10 +376,10 @@ class BattleState:
             raise ValueError(f"No active Pokemon for player {player}")
 
         # Normalize move name for comparison
-        normalized_search = normalize_move_name(move_name)
+        normalized_search = normalize_name(move_name)
 
         for i, move in enumerate(active_pokemon.moves):
-            normalized_move = normalize_move_name(move.name)
+            normalized_move = normalize_name(move.name)
             if normalized_move == normalized_search:
                 return i
 

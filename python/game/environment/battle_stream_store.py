@@ -11,7 +11,7 @@ from python.game.events.battle_event import (
     TurnEvent,
 )
 from python.game.interface.battle_action import ActionType, BattleAction
-from python.game.schema.utils import normalize_move_name
+from python.game.schema.object_name_normalizer import normalize_name
 
 
 class BattleStreamStore:
@@ -86,14 +86,20 @@ class BattleStreamStore:
             turn_ids = self._events_by_turn.keys()
         else:
             all_turn_ids = sorted(self._events_by_turn.keys())
-            turn_ids = all_turn_ids[-past_turns:] if len(all_turn_ids) > past_turns else all_turn_ids
+            turn_ids = (
+                all_turn_ids[-past_turns:]
+                if len(all_turn_ids) > past_turns
+                else all_turn_ids
+            )
 
         for turn_id in turn_ids:
             if turn_id not in self._events_by_turn:
                 continue
 
             raw_events_by_turn[turn_id] = [
-                event.raw_message for event in self._events_by_turn[turn_id] if not isinstance(event, RequestEvent)  # type: ignore[attr-defined]
+                event.raw_message
+                for event in self._events_by_turn[turn_id]
+                if not isinstance(event, RequestEvent)  # type: ignore[attr-defined]
             ]
 
         return raw_events_by_turn
@@ -148,7 +154,7 @@ class BattleStreamStore:
                 fainted_positions.add(event.position)
 
             elif isinstance(event, MoveEvent) and event.player_id == player_id:
-                move_name = normalize_move_name(event.move_name)
+                move_name = normalize_name(event.move_name)
                 action = BattleAction(action_type=ActionType.MOVE, move_name=move_name)
                 actions.append(action)
                 last_move_name = move_name
@@ -161,7 +167,7 @@ class BattleStreamStore:
                 ):
                     continue
 
-                pokemon_name = normalize_move_name(event.species)
+                pokemon_name = normalize_name(event.species)
                 action = BattleAction(
                     action_type=ActionType.SWITCH, switch_pokemon_name=pokemon_name
                 )
@@ -193,7 +199,7 @@ class BattleStreamStore:
         parts = switch_event.raw_message.split("|")
         for part in parts:
             if part.startswith("[from]"):
-                from_move = normalize_move_name(part[7:])
+                from_move = normalize_name(part[7:])
                 return from_move == last_move_name
 
         return False

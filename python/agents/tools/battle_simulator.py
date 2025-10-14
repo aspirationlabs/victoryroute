@@ -6,8 +6,13 @@ from typing import Dict, List, Optional, Tuple
 
 from python.game.data.game_data import GameData
 from python.game.schema.enums import SideCondition, Stat, Status, Terrain, Weather
-from python.game.schema.pokemon_state import PokemonMove, PokemonState
-from python.game.schema.pokemon_state import STAT_STAGE_MULTIPLIERS
+from python.game.schema.object_name_normalizer import normalize_name
+from python.game.schema.pokemon_state import (
+    STAT_STAGE_MULTIPLIERS,
+    PokemonMove,
+    PokemonState,
+)
+
 
 @dataclass(frozen=True)
 class IndividualValues:
@@ -78,6 +83,7 @@ class PokemonStats:
 @dataclass(frozen=True)
 class MoveAction:
     """Represents a move action with its priority and speed."""
+
     pokemon: PokemonState
     move: PokemonMove
     priority: int
@@ -221,23 +227,26 @@ class BattleSimulator:
         base_priority = move_data.priority
         fractional_priority = 0.0
 
-        if pokemon.ability == "Prankster" and move_data.category == "Status":
+        ability = normalize_name(pokemon.ability) if pokemon.ability else ""
+        item = normalize_name(pokemon.item) if pokemon.item else ""
+
+        if ability == "prankster" and move_data.category == "Status":
             base_priority += 1
 
-        if pokemon.ability == "Gale Wings" and move_data.type == "Flying":
+        if ability == "galewings" and move_data.type == "Flying":
             if pokemon.current_hp == pokemon.max_hp:
                 base_priority += 1
 
-        if pokemon.ability == "Triage":
+        if ability == "triage":
             move_flags = self._get_move_flags(move.name)
             if "heal" in move_flags:
                 base_priority += 3
 
-        if pokemon.item == "Quick Claw":
+        if item == "quickclaw":
             if random.random() < 0.2:
                 fractional_priority = 0.1
 
-        if pokemon.item in ["Lagging Tail", "Full Incense"]:
+        if item in ["laggingtail", "fullincense"]:
             fractional_priority = -0.1
 
         return base_priority, fractional_priority
@@ -272,34 +281,38 @@ class BattleSimulator:
             pokemon.get_stat_boost(Stat.SPE), 1.0
         )
         speed = speed_stat * boost_multiplier
-        if pokemon.ability == "Swift Swim" and weather in [
+
+        ability = normalize_name(pokemon.ability) if pokemon.ability else ""
+        item = normalize_name(pokemon.item) if pokemon.item else ""
+
+        if ability == "swiftswim" and weather in [
             Weather.RAIN,
             Weather.HEAVY_RAIN,
         ]:
             speed *= 2
-        if pokemon.ability == "Chlorophyll" and weather in [
+        if ability == "chlorophyll" and weather in [
             Weather.SUN,
             Weather.HARSH_SUN,
         ]:
             speed *= 2
-        if pokemon.ability == "Sand Rush" and weather == Weather.SANDSTORM:
+        if ability == "sandrush" and weather == Weather.SANDSTORM:
             speed *= 2
-        if pokemon.ability == "Slush Rush" and weather == Weather.SNOW:
+        if ability == "slushrush" and weather == Weather.SNOW:
             speed *= 2
-        if pokemon.ability == "Surge Surfer" and terrain == Terrain.ELECTRIC:
+        if ability == "surgesurfer" and terrain == Terrain.ELECTRIC:
             speed *= 2
-        if pokemon.item == "Choice Scarf":
+        if item == "choicescarf":
             speed *= 1.5
 
-        if pokemon.item in [
-            "Iron Ball",
-            "Macho Brace",
-            "Power Bracer",
-            "Power Belt",
-            "Power Lens",
-            "Power Band",
-            "Power Anklet",
-            "Power Weight",
+        if item in [
+            "ironball",
+            "machobrace",
+            "powerbracer",
+            "powerbelt",
+            "powerlens",
+            "powerband",
+            "poweranklet",
+            "powerweight",
         ]:
             speed *= 0.5
 

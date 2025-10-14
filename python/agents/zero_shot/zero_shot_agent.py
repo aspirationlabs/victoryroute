@@ -100,8 +100,10 @@ class ZeroShotAgent(Agent):
         self._session_service: BaseSessionService = session_service
         self._past_actions_count: int = past_actions_count
         self._system_instruction: str = _load_static_system_instruction(mode)
-        self._agent: LlmAgent = self._create_llm_agent(model_name, self._app_name, self._system_instruction)
-    
+        self._agent: LlmAgent = self._create_llm_agent(
+            model_name, self._app_name, self._system_instruction
+        )
+
     def _create_llm_agent(self, model_name, app_name, system_instructions) -> LlmAgent:
         def tool_get_object_game_data(name: str) -> str:
             """Look up game data for Pokemon, Move, Ability, Item, or Nature.
@@ -124,14 +126,16 @@ class ZeroShotAgent(Agent):
                     thinking_budget=1024,
                 )
             ),
-            include_contents='none',
+            include_contents="none",
             tools=[tool_get_object_game_data],
             output_schema=BattleActionResponse,
             disallow_transfer_to_parent=True,
             disallow_transfer_to_peers=True,
         )
 
-    def _get_action_generator(self, battle_room: str, player_name: str) -> BattleActionGenerator:
+    def _get_action_generator(
+        self, battle_room: str, player_name: str
+    ) -> BattleActionGenerator:
         """Get a action generator for a battle room."""
         if battle_room not in self._battle_room_to_action_generator:
             runner = Runner(
@@ -148,9 +152,10 @@ class ZeroShotAgent(Agent):
                 runner=runner,
                 logger=logger,
             )
-            logger.log_system_instruction(turn_number=0, instruction=self._system_instruction)
+            logger.log_system_instruction(
+                turn_number=0, instruction=self._system_instruction
+            )
         return self._battle_room_to_action_generator[battle_room]
-
 
     async def choose_action(
         self,
@@ -190,7 +195,9 @@ class ZeroShotAgent(Agent):
             parts=[types.Part(text=turn_context)],
             role="player_" + state.our_player_id,
         )
-        action_generator = self._get_action_generator(battle_room, state.player_usernames[state.our_player_id])
+        action_generator = self._get_action_generator(
+            battle_room, state.player_usernames[state.our_player_id]
+        )
         action = await action_generator.generate_action(
             user_query=content,
             state=state,

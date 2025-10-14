@@ -392,7 +392,14 @@ class BattleSimulatorMoveOrderTest(parameterized.TestCase):
             ["Pikachu", "Alakazam"],
         ),
     )
-    def test_trick_room(self, pokemon_1: PokemonState, move_1: PokemonMove, pokemon_2: PokemonState, move_2: PokemonMove, expected_order_species: List[str]) -> None:
+    def test_trick_room(
+        self,
+        pokemon_1: PokemonState,
+        move_1: PokemonMove,
+        pokemon_2: PokemonState,
+        move_2: PokemonMove,
+        expected_order_species: List[str],
+    ) -> None:
         result = self.simulator.get_move_order(
             pokemon_1, move_1, pokemon_2, move_2, trick_room_active=True
         )

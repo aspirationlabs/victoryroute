@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
 
-from python.game.schema.utils import normalize_move_name
+from python.game.schema.object_name_normalizer import normalize_name
 
 
 class ActionType(Enum):
@@ -104,7 +104,7 @@ class BattleAction:
                 raise ValueError("MOVE action requires move_name")
 
             # Normalize move name for Showdown protocol (lowercase, no spaces/hyphens)
-            normalized_move = normalize_move_name(self.move_name)
+            normalized_move = normalize_name(self.move_name)
             command = f"/choose move {normalized_move}"
 
             # Add target index if specified (doubles)
@@ -133,7 +133,7 @@ class BattleAction:
                 raise ValueError("SWITCH action requires switch_pokemon_name")
 
             # Normalize Pokemon name for Showdown protocol (lowercase, no spaces/hyphens)
-            normalized_pokemon = normalize_move_name(self.switch_pokemon_name)
+            normalized_pokemon = normalize_name(self.switch_pokemon_name)
             return f"/choose switch {normalized_pokemon}"
 
         elif self.action_type == ActionType.TEAM_ORDER:

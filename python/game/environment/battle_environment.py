@@ -6,8 +6,6 @@ from absl import logging
 
 from python.game.environment.battle_stream_store import BattleStreamStore
 from python.game.environment.state_transition import StateTransition
-from python.game.events.battle_event import ErrorEvent
-from python.game.exceptions import ServerErrorException
 from python.game.interface.battle_action import BattleAction
 from python.game.protocol.battle_event_logger import BattleEventLogger
 from python.game.protocol.battle_stream import BattleStream
