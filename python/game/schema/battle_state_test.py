@@ -3,7 +3,7 @@
 import json
 import unittest
 
-from python.game.interface.battle_action import ActionType, BattleAction
+from python.game.interface.battle_action import ActionType
 from python.game.schema.battle_state import BattleState
 from python.game.schema.enums import (
     FieldEffect,
@@ -563,8 +563,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
 
         # Create state with our_player_id set to p1
         state = BattleState(
-            teams={"p1": our_team, "p2": opponent_team},
-            our_player_id="p1"
+            teams={"p1": our_team, "p2": opponent_team}, our_player_id="p1"
         )
 
         # Opponent moves should return empty (already revealed via MoveEvent)
@@ -600,7 +599,9 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
         blastoise = PokemonState(species="Blastoise", current_hp=100, max_hp=100)
 
         # active_pokemon_index is None (no Pokemon has switched in yet)
-        team = TeamState(pokemon=[pikachu, charizard, blastoise], active_pokemon_index=None)
+        team = TeamState(
+            pokemon=[pikachu, charizard, blastoise], active_pokemon_index=None
+        )
         state = BattleState(teams={"p1": team, "p2": TeamState()})
 
         switches = state.get_available_switches("p1")
@@ -949,9 +950,7 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
             species="Charizard", current_hp=80, max_hp=100, is_active=True
         )
         opponent_blastoise = PokemonState(species="Blastoise", current_hp=0, max_hp=100)
-        opponent_venusaur = PokemonState(
-            species="Venusaur", current_hp=50, max_hp=100
-        )
+        opponent_venusaur = PokemonState(species="Venusaur", current_hp=50, max_hp=100)
         opponent_team = TeamState(
             pokemon=[opponent_charizard, opponent_blastoise, opponent_venusaur],
             active_pokemon_index=0,
@@ -1030,7 +1029,9 @@ class BattleStateTest(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(ValueError) as cm:
             state.get_opponent_potential_actions(player="p1")
 
-        self.assertIn("Cannot get opponent actions for our own player", str(cm.exception))
+        self.assertIn(
+            "Cannot get opponent actions for our own player", str(cm.exception)
+        )
 
 
 if __name__ == "__main__":

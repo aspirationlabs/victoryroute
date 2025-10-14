@@ -188,7 +188,7 @@ class StateTransition:
         elif isinstance(event, ErrorEvent):
             logging.error(f"Error event: {event}")
             # TODO: Should StateTransition throw on ErrorEvent?
-            # How often do we get a server error that's from an improper agent command? 
+            # How often do we get a server error that's from an improper agent command?
             return state
         elif isinstance(
             event,
@@ -1349,7 +1349,9 @@ class StateTransition:
         new_volatile_conditions = dict(pokemon.volatile_conditions)
         new_volatile_conditions["last_move_used"] = event.move_name
 
-        new_pokemon = replace(pokemon, moves=new_moves, volatile_conditions=new_volatile_conditions)
+        new_pokemon = replace(
+            pokemon, moves=new_moves, volatile_conditions=new_volatile_conditions
+        )
 
         new_team = StateTransition._update_pokemon_in_team(team, pokemon, new_pokemon)
         return StateTransition._update_team_in_state(state, player_id, new_team)
@@ -1391,7 +1393,9 @@ class StateTransition:
         return replace(state, field_state=new_field)
 
     @staticmethod
-    def _apply_start_volatile(state: BattleState, event: StartVolatileEvent) -> BattleState:
+    def _apply_start_volatile(
+        state: BattleState, event: StartVolatileEvent
+    ) -> BattleState:
         """Apply start volatile condition event.
 
         Tracks volatile conditions like trapped, partiallytrapped, encore, disable, etc.

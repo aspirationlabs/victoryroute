@@ -21,9 +21,7 @@ class ZeroShotPromptBuilderTest(unittest.TestCase):
         """Test formatting with empty battle stream store."""
         self.mock_store.get_past_battle_actions.return_value = {}
 
-        result = self.builder._format_past_actions_from_store(
-            "p1", "p2", past_turns=5
-        )
+        result = self.builder._format_past_actions_from_store("p1", "p2", past_turns=5)
 
         self.assertEqual(result, "")
 
@@ -40,9 +38,7 @@ class ZeroShotPromptBuilderTest(unittest.TestCase):
 
         self.mock_store.get_past_battle_actions.side_effect = get_actions_side_effect
 
-        result = self.builder._format_past_actions_from_store(
-            "p1", "p2", past_turns=5
-        )
+        result = self.builder._format_past_actions_from_store("p1", "p2", past_turns=5)
 
         self.assertIn("<past_actions>", result)
         self.assertIn("<p1>", result)
@@ -76,9 +72,7 @@ class ZeroShotPromptBuilderTest(unittest.TestCase):
 
         self.mock_store.get_past_battle_actions.side_effect = get_actions_side_effect
 
-        result = self.builder._format_past_actions_from_store(
-            "p1", "p2", past_turns=5
-        )
+        result = self.builder._format_past_actions_from_store("p1", "p2", past_turns=5)
 
         self.assertIn("thunderbolt", result)
         self.assertIn("pikachu", result)
@@ -106,9 +100,7 @@ class ZeroShotPromptBuilderTest(unittest.TestCase):
 
         self.mock_store.get_past_battle_actions.side_effect = get_actions_side_effect
 
-        result = self.builder._format_past_actions_from_store(
-            "p1", "p2", past_turns=3
-        )
+        result = self.builder._format_past_actions_from_store("p1", "p2", past_turns=3)
 
         self.assertNotIn("move1", result)
         self.assertNotIn("move2", result)
@@ -137,9 +129,7 @@ class ZeroShotPromptBuilderTest(unittest.TestCase):
 
         self.mock_store.get_past_battle_actions.side_effect = get_actions_side_effect
 
-        result = self.builder._format_past_actions_from_store(
-            "p1", "p2", past_turns=5
-        )
+        result = self.builder._format_past_actions_from_store("p1", "p2", past_turns=5)
 
         self.assertIn("voltswitch", result)
         self.assertIn("raichu", result)
@@ -169,9 +159,7 @@ class ZeroShotPromptBuilderTest(unittest.TestCase):
 
         self.mock_store.get_past_battle_actions.side_effect = get_actions_side_effect
 
-        result = self.builder._format_past_actions_from_store(
-            "p1", "p2", past_turns=5
-        )
+        result = self.builder._format_past_actions_from_store("p1", "p2", past_turns=5)
 
         action_start = result.find("<turn_1>") + len("<turn_1>")
         action_end = result.find("</turn_1>")
@@ -201,9 +189,7 @@ class ZeroShotPromptBuilderTest(unittest.TestCase):
 
         self.mock_store.get_past_battle_actions.side_effect = get_actions_side_effect
 
-        result = self.builder._format_past_actions_from_store(
-            "p1", "p2", past_turns=5
-        )
+        result = self.builder._format_past_actions_from_store("p1", "p2", past_turns=5)
 
         lines = result.split("\n")
         self.assertEqual(lines[0], "<past_actions>")

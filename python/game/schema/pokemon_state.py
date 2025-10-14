@@ -161,9 +161,7 @@ class PokemonState:
             "none"
         """
         hp_percentage = (
-            round((self.current_hp / self.max_hp) * 100, 2)
-            if self.max_hp > 0
-            else 0.0
+            round((self.current_hp / self.max_hp) * 100, 2) if self.max_hp > 0 else 0.0
         )
 
         result: Dict[str, Any] = {
@@ -196,9 +194,7 @@ class PokemonState:
             Dictionary representation of the Pokemon state
         """
         hp_percentage = (
-            round((self.current_hp / self.max_hp) * 100, 2)
-            if self.max_hp > 0
-            else 0.0
+            round((self.current_hp / self.max_hp) * 100, 2) if self.max_hp > 0 else 0.0
         )
 
         return {

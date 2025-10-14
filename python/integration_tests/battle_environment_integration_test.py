@@ -2,7 +2,7 @@
 
 import os
 import unittest
-from typing import Any, Dict, List, Set, Tuple
+from typing import Any, Dict, List, Tuple
 
 from absl.testing import absltest, parameterized
 
@@ -12,7 +12,6 @@ from python.game.events.battle_event import (
     FaintEvent,
     BattleEndEvent,
     PlayerEvent,
-    MoveEvent,
 )
 from python.game.interface.battle_action import ActionType
 from python.game.protocol.message_parser import MessageParser
