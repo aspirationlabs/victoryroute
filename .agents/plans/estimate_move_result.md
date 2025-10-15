@@ -80,7 +80,7 @@ Priority abilities to implement:
   - Type boosters (plates, incenses, bows, etc.) for all elemental types
   - Signature species boosts (Adamant Orb/Crystal, Lustrous Orb/Globe, Griseous Orb/Core, Soul Dew, Vile Vial, Ogerpon masks)
   - Species-based stat doublers (Light Ball, Thick Club, Deep Sea Tooth)
-- ✅ Added regression cases in `battle_simulator_test` to cover Choice Band, Choice Specs, Life Orb, Expert Belt, and Mystic Water scenarios.
+- ✅ Added regression cases in `battle_simulator_test` to cover Choice Band, Choice Specs, Life Orb, Expert Belt, Mystic Water, and item mismatch scenarios that should have no effect.
 
 ### 7. Weather Edge Cases
 **Status:** Planned
