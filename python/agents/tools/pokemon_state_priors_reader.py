@@ -73,7 +73,7 @@ class PokemonStatePriorsReader:
 
             module_dir = Path(__file__).resolve().parent
             repo_root = module_dir.parent.parent.parent
-            self.data_file = str(repo_root / "data" / "stats" / mode / file_name)
+            self.data_file = repo_root / "data" / "stats" / mode / file_name
             self._stats_lookup: Dict[str, PokemonStatePriors] = {}
             self._load_stats()
             self._initialized = True
