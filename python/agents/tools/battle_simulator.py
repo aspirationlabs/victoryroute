@@ -737,31 +737,42 @@ class BattleSimulator:
         crit_max_damage = int(crit_damage * 1.0)
 
         hit_count: Union[int, str] = 1
-        hit_multiplier = 1.0
+        min_hit_multiplier = 1
+        max_hit_multiplier = 1
 
         if move_data.multihit:
             if isinstance(move_data.multihit, int):
                 hit_count = move_data.multihit
-                hit_multiplier = float(move_data.multihit)
+                min_hit_multiplier = move_data.multihit
+                max_hit_multiplier = move_data.multihit
             elif isinstance(move_data.multihit, (tuple, list)):
                 min_hits, max_hits = move_data.multihit
-                if min_hits == 2 and max_hits == 5:
-                    hit_multiplier = 0.35 * 2 + 0.35 * 3 + 0.15 * 4 + 0.15 * 5
-                    hit_count = f"{min_hits}-{max_hits}"
-                else:
-                    hit_multiplier = (min_hits + max_hits) / 2.0
-                    hit_count = f"{min_hits}-{max_hits}"
+                min_hit_multiplier = min_hits
+                max_hit_multiplier = max_hits
+                hit_count = f"{min_hits}-{max_hits}"
 
-        min_damage = int(min_damage * hit_multiplier)
-        max_damage = int(max_damage * hit_multiplier)
-        crit_min_damage = int(crit_min_damage * hit_multiplier)
-        crit_max_damage = int(crit_max_damage * hit_multiplier)
+        min_damage = int(min_damage * min_hit_multiplier)
+        max_damage = int(max_damage * max_hit_multiplier)
+        crit_min_damage = int(crit_min_damage * min_hit_multiplier)
+        crit_max_damage = int(crit_max_damage * max_hit_multiplier)
 
         ko_prob = 0.0
         if min_damage >= target_pokemon.current_hp:
             ko_prob = 1.0
         elif max_damage >= target_pokemon.current_hp:
-            ko_prob = 0.5
+            if move_data.multihit and isinstance(move_data.multihit, (tuple, list)):
+                min_hits, max_hits = move_data.multihit
+                if min_hits == 2 and max_hits == 5:
+                    ko_count = 0.0
+                    for hits, prob in [(2, 0.35), (3, 0.35), (4, 0.15), (5, 0.15)]:
+                        damage_for_hits = int(damage * 0.85 * hits)
+                        if damage_for_hits >= target_pokemon.current_hp:
+                            ko_count += prob
+                    ko_prob = ko_count
+                else:
+                    ko_prob = 0.5
+            else:
+                ko_prob = 0.5
 
         status_effects: Dict[str, float] = {}
         additional_effects: List[str] = []
