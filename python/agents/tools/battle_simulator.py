@@ -608,6 +608,12 @@ class BattleSimulator:
         attacker_ability = self._get_ability(attacking_pokemon)
         defender_ability = self._get_ability(target_pokemon)
 
+        ignores_defender_ability = attacker_ability in {
+            "moldbreaker",
+            "teravolt",
+            "turboblaze",
+        }
+
         attack_multiplier = attacking_pokemon.get_stat_multiplier(attack_stat)
         defense_multiplier = target_pokemon.get_stat_multiplier(defense_stat)
 
@@ -625,7 +631,11 @@ class BattleSimulator:
             weather,
         )
         defense = self._modify_defense_for_ability(
-            defense, defense_stat, defender_ability, target_pokemon
+            defense,
+            defense_stat,
+            defender_ability,
+            target_pokemon,
+            ignores_defender_ability,
         )
 
         level = attacking_pokemon.level
@@ -683,7 +693,11 @@ class BattleSimulator:
             weather,
         )
         crit_defense = self._modify_defense_for_ability(
-            crit_defense, defense_stat, defender_ability, target_pokemon
+            crit_defense,
+            defense_stat,
+            defender_ability,
+            target_pokemon,
+            ignores_defender_ability,
         )
 
         crit_base_damage = (
@@ -792,8 +806,11 @@ class BattleSimulator:
         defense_stat: Stat,
         defender_ability: str,
         defender: PokemonState,
+        ignore_defender_ability: bool,
     ) -> int:
         modified_defense = defense_value
+        if ignore_defender_ability:
+            return modified_defense
         if defense_stat == Stat.DEF:
             if defender_ability == "furcoat":
                 modified_defense = int(modified_defense * 2.0)
