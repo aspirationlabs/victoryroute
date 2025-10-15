@@ -1,6 +1,6 @@
 """Unit tests for battle simulator."""
 
-from typing import Dict
+from typing import Dict, List
 
 from absl.testing import absltest, parameterized
 
@@ -11,7 +11,7 @@ from python.agents.tools.battle_simulator import (
     MoveResult,
 )
 from python.game.data.game_data import GameData
-from python.game.schema.enums import Stat, Status, Weather
+from python.game.schema.enums import SideCondition, Stat, Status, Weather
 from python.game.schema.field_state import FieldState
 from python.game.schema.pokemon_state import PokemonMove, PokemonState
 
@@ -233,7 +233,7 @@ class BattleSimulatorTest(parameterized.TestCase):
                 min_damage=0,
                 max_damage=0,
                 knockout_probability=0.0,
-                critical_hit_probability=1.0 / 24.0,
+                critical_hit_probability=1 / 24,
                 status_effects={},
                 additional_effects=[],
             ),
@@ -254,7 +254,7 @@ class BattleSimulatorTest(parameterized.TestCase):
                 min_damage=601,
                 max_damage=708,
                 knockout_probability=1.0,
-                critical_hit_probability=1.0 / 24.0,
+                critical_hit_probability=1.0 / 24,
                 status_effects={},
                 additional_effects=[],
             ),
@@ -277,7 +277,7 @@ class BattleSimulatorTest(parameterized.TestCase):
                 min_damage=153,
                 max_damage=180,
                 knockout_probability=0.0,
-                critical_hit_probability=1.0 / 24.0,
+                critical_hit_probability=1 / 24,
                 status_effects={},
                 additional_effects=[],
             ),
@@ -298,7 +298,7 @@ class BattleSimulatorTest(parameterized.TestCase):
                 min_damage=151,
                 max_damage=178,
                 knockout_probability=0.0,
-                critical_hit_probability=1.0 / 24.0,
+                critical_hit_probability=1 / 24,
                 status_effects={},
                 additional_effects=[],
             ),
@@ -313,7 +313,7 @@ class BattleSimulatorTest(parameterized.TestCase):
                 min_damage=696,
                 max_damage=819,
                 knockout_probability=1.0,
-                critical_hit_probability=1.0 / 24.0,
+                critical_hit_probability=1 / 24,
                 status_effects={},
                 additional_effects=[],
             ),
@@ -328,7 +328,7 @@ class BattleSimulatorTest(parameterized.TestCase):
                 min_damage=232,
                 max_damage=273,
                 knockout_probability=0.0,
-                critical_hit_probability=1.0 / 24.0,
+                critical_hit_probability=1 / 24,
                 status_effects={},
                 additional_effects=[],
             ),
@@ -397,6 +397,86 @@ class BattleSimulatorTest(parameterized.TestCase):
         result = self.simulator.estimate_move_result(attacker, defender, move)
 
         self.assertEqual(result.knockout_probability, 1.0)
+
+    @parameterized.named_parameters(
+        (
+            "reflect_physical",
+            PokemonState(
+                species="Landorus-Therian", level=100, current_hp=300, max_hp=300
+            ),
+            PokemonState(species="Incineroar", level=100, current_hp=300, max_hp=300),
+            PokemonMove(name="Earthquake", current_pp=10, max_pp=16),
+            [SideCondition.REFLECT],
+            MoveResult(
+                min_damage=151,
+                max_damage=178,
+                knockout_probability=0.0,
+                critical_hit_probability=1 / 24,
+                status_effects={},
+                additional_effects=[],
+            ),
+        ),
+        (
+            "light_screen_special",
+            PokemonState(species="Kyogre", level=100, current_hp=300, max_hp=300),
+            PokemonState(species="Groudon", level=100, current_hp=300, max_hp=300),
+            PokemonMove(name="Water Spout", current_pp=5, max_pp=8),
+            [SideCondition.LIGHT_SCREEN],
+            MoveResult(
+                min_damage=232,
+                max_damage=273,
+                knockout_probability=0.0,
+                critical_hit_probability=1 / 24,
+                status_effects={},
+                additional_effects=[],
+            ),
+        ),
+        (
+            "aurora_veil_physical",
+            PokemonState(
+                species="Landorus-Therian", level=100, current_hp=300, max_hp=300
+            ),
+            PokemonState(species="Incineroar", level=100, current_hp=300, max_hp=300),
+            PokemonMove(name="Earthquake", current_pp=10, max_pp=16),
+            [SideCondition.AURORA_VEIL],
+            MoveResult(
+                min_damage=151,
+                max_damage=178,
+                knockout_probability=0.0,
+                critical_hit_probability=1 / 24,
+                status_effects={},
+                additional_effects=[],
+            ),
+        ),
+        (
+            "aurora_veil_special",
+            PokemonState(species="Kyogre", level=100, current_hp=300, max_hp=300),
+            PokemonState(species="Incineroar", level=100, current_hp=300, max_hp=300),
+            PokemonMove(name="Surf", current_pp=15, max_pp=24),
+            [SideCondition.AURORA_VEIL],
+            MoveResult(
+                min_damage=140,
+                max_damage=165,
+                knockout_probability=0.0,
+                critical_hit_probability=1 / 24,
+                status_effects={},
+                additional_effects=[],
+            ),
+        ),
+    )
+    def test_screen_effects(
+        self,
+        attacker: PokemonState,
+        defender: PokemonState,
+        move: PokemonMove,
+        screens: List[SideCondition],
+        expected_result: MoveResult,
+    ) -> None:
+        result = self.simulator.estimate_move_result(
+            attacker, defender, move, None, screens
+        )
+
+        self.assertEqual(result, expected_result)
 
 
 if __name__ == "__main__":
