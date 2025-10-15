@@ -11,7 +11,7 @@ from python.agents.tools.battle_simulator import (
     MoveResult,
 )
 from python.game.data.game_data import GameData
-from python.game.schema.enums import SideCondition, Stat, Status, Weather
+from python.game.schema.enums import SideCondition, Stat, Status, Terrain, Weather
 from python.game.schema.field_state import FieldState
 from python.game.schema.pokemon_state import PokemonMove, PokemonState
 
@@ -397,6 +397,123 @@ class BattleSimulatorTest(parameterized.TestCase):
         result = self.simulator.estimate_move_result(attacker, defender, move)
 
         self.assertEqual(result.knockout_probability, 1.0)
+
+    @parameterized.named_parameters(
+        (
+            "body_press",
+            PokemonState(species="Corviknight", level=100, current_hp=300, max_hp=300),
+            PokemonState(species="Blissey", level=100, current_hp=300, max_hp=300),
+            PokemonMove(name="Body Press", current_pp=10, max_pp=16),
+            MoveResult(
+                min_damage=299,
+                max_damage=352,
+                knockout_probability=0.5,
+                critical_hit_probability=1 / 24,
+                status_effects={},
+                additional_effects=[],
+            ),
+        ),
+        (
+            "psyshock",
+            PokemonState(species="Alakazam", level=100, current_hp=300, max_hp=300),
+            PokemonState(species="Blissey", level=100, current_hp=300, max_hp=300),
+            PokemonMove(name="Psyshock", current_pp=10, max_pp=16),
+            MoveResult(
+                min_damage=267,
+                max_damage=315,
+                knockout_probability=0.5,
+                critical_hit_probability=1 / 24,
+                status_effects={},
+                additional_effects=[],
+            ),
+        ),
+    )
+    def test_stat_override_moves(
+        self,
+        attacker: PokemonState,
+        defender: PokemonState,
+        move: PokemonMove,
+        expected_result: MoveResult,
+    ) -> None:
+        result = self.simulator.estimate_move_result(attacker, defender, move)
+
+        self.assertEqual(result, expected_result)
+
+    @parameterized.named_parameters(
+        (
+            "electric_terrain",
+            PokemonState(species="Zapdos", level=100, current_hp=300, max_hp=300),
+            PokemonState(species="Gyarados", level=100, current_hp=300, max_hp=300),
+            PokemonMove(name="Thunderbolt", current_pp=15, max_pp=24),
+            FieldState(terrain=Terrain.ELECTRIC, terrain_turns_remaining=5),
+            MoveResult(
+                min_damage=459,
+                max_damage=540,
+                knockout_probability=1.0,
+                critical_hit_probability=1 / 24,
+                status_effects={},
+                additional_effects=[],
+            ),
+        ),
+        (
+            "grassy_terrain",
+            PokemonState(species="Venusaur", level=100, current_hp=300, max_hp=300),
+            PokemonState(species="Blastoise", level=100, current_hp=300, max_hp=300),
+            PokemonMove(name="Solar Beam", current_pp=10, max_pp=16),
+            FieldState(terrain=Terrain.GRASSY, terrain_turns_remaining=5),
+            MoveResult(
+                min_damage=328,
+                max_damage=386,
+                knockout_probability=1.0,
+                critical_hit_probability=1 / 24,
+                status_effects={},
+                additional_effects=[],
+            ),
+        ),
+        (
+            "psychic_terrain",
+            PokemonState(species="Alakazam", level=100, current_hp=300, max_hp=300),
+            PokemonState(species="Machamp", level=100, current_hp=300, max_hp=300),
+            PokemonMove(name="Psychic", current_pp=10, max_pp=16),
+            FieldState(terrain=Terrain.PSYCHIC, terrain_turns_remaining=5),
+            MoveResult(
+                min_damage=348,
+                max_damage=409,
+                knockout_probability=1.0,
+                critical_hit_probability=1 / 24,
+                status_effects={},
+                additional_effects=[],
+            ),
+        ),
+        (
+            "misty_terrain",
+            PokemonState(species="Dragonite", level=100, current_hp=300, max_hp=300),
+            PokemonState(species="Togekiss", level=100, current_hp=300, max_hp=300),
+            PokemonMove(name="Dragon Claw", current_pp=15, max_pp=24),
+            FieldState(terrain=Terrain.MISTY, terrain_turns_remaining=5),
+            MoveResult(
+                min_damage=0,
+                max_damage=0,
+                knockout_probability=0.0,
+                critical_hit_probability=1 / 24,
+                status_effects={},
+                additional_effects=[],
+            ),
+        ),
+    )
+    def test_terrain_effects(
+        self,
+        attacker: PokemonState,
+        defender: PokemonState,
+        move: PokemonMove,
+        field_state: FieldState,
+        expected_result: MoveResult,
+    ) -> None:
+        result = self.simulator.estimate_move_result(
+            attacker, defender, move, field_state
+        )
+
+        self.assertEqual(result, expected_result)
 
     @parameterized.named_parameters(
         (
