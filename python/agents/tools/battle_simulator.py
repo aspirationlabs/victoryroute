@@ -617,8 +617,15 @@ class BattleSimulator:
         attack_multiplier = attacking_pokemon.get_stat_multiplier(attack_stat)
         defense_multiplier = target_pokemon.get_stat_multiplier(defense_stat)
 
+        weather = field_state.get_weather() if field_state else None
+        weather_defense_modifier = self._get_weather_stat_modifier(
+            target_pokemon, defense_stat, weather
+        )
+
         attack = int(attacker_stat_value * attack_multiplier)
-        defense = int(defender_stat_value * defense_multiplier)
+        defense = int(
+            defender_stat_value * defense_multiplier * weather_defense_modifier
+        )
 
         weather = field_state.get_weather() if field_state else None
 
@@ -682,7 +689,9 @@ class BattleSimulator:
         )
 
         crit_attack = int(attacker_stat_value * crit_attack_multiplier)
-        crit_defense = int(defender_stat_value * crit_defense_multiplier)
+        crit_defense = int(
+            defender_stat_value * crit_defense_multiplier * weather_defense_modifier
+        )
 
         crit_attack = self._modify_attack_for_ability(
             crit_attack,
@@ -845,6 +854,24 @@ class BattleSimulator:
             return False
 
         return True
+
+    def _get_weather_stat_modifier(
+        self, pokemon: PokemonState, stat: Stat, weather: Optional[Weather]
+    ) -> float:
+        if not weather or weather == Weather.NONE:
+            return 1.0
+
+        pokemon_data = self.game_data.get_pokemon(pokemon.species)
+        types = pokemon_data.types
+
+        if stat == Stat.SPD and weather == Weather.SANDSTORM:
+            if "Rock" in types:
+                return 1.5
+        elif stat == Stat.DEF and weather == Weather.SNOW:
+            if "Ice" in types:
+                return 1.5
+
+        return 1.0
 
     def _apply_modifiers(
         self,
@@ -1056,7 +1083,11 @@ class BattleSimulator:
         ):
             multiplier *= 2.0
 
-        if item == "deepseatooth" and species == "clamperl" and move_category == "Special":
+        if (
+            item == "deepseatooth"
+            and species == "clamperl"
+            and move_category == "Special"
+        ):
             multiplier *= 2.0
 
         return multiplier
