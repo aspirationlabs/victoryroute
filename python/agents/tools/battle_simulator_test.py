@@ -1304,7 +1304,7 @@ class BattleSimulatorTest(parameterized.TestCase):
             MoveResult(
                 min_damage=136,
                 max_damage=405,
-                knockout_probability=0.15,
+                knockout_probability=0.3,
                 critical_hit_probability=1 / 24,
                 crit_min_damage=206,
                 crit_max_damage=605,
@@ -1327,7 +1327,7 @@ class BattleSimulatorTest(parameterized.TestCase):
             MoveResult(
                 min_damage=198,
                 max_damage=585,
-                knockout_probability=0.3,
+                knockout_probability=0.65,
                 critical_hit_probability=1 / 24,
                 crit_min_damage=298,
                 crit_max_damage=875,

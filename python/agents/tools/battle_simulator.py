@@ -765,8 +765,8 @@ class BattleSimulator:
                 if min_hits == 2 and max_hits == 5:
                     ko_count = 0.0
                     for hits, prob in [(2, 0.35), (3, 0.35), (4, 0.15), (5, 0.15)]:
-                        damage_for_hits = int(damage * 0.85 * hits)
-                        if damage_for_hits >= target_pokemon.current_hp:
+                        max_damage_for_hits = int(damage * 1.0 * hits)
+                        if max_damage_for_hits >= target_pokemon.current_hp:
                             ko_count += prob
                     ko_prob = ko_count
                 else:
