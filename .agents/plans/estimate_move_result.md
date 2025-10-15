@@ -6,27 +6,25 @@ Add missing damage calculation effects to `estimate_move_result` to match Pokemo
 ## Implementation Order
 
 ### 1. Stat Override Moves (Body Press, Psyshock)
-**Status:** Not started
+**Status:** ✅ COMPLETED
 **Complexity:** Easy
 **Value:** High (commonly used moves)
 
-- Add `override_offensive_stat` and `override_defensive_stat` to Move dataclass
-- Update sync script to include these fields
-- Modify stat selection in `estimate_move_result()` to check overrides first
-- Test with Body Press (uses Defense for attack) and Psyshock (uses Defense for defense against Special moves)
+- ✅ `override_offensive_stat` and `override_defensive_stat` added to Move dataclass
+- ✅ Stat selection in `estimate_move_result()` checks overrides (lines 445-485)
+- ✅ Parameterized test `test_stat_override_moves` with 2 test cases (body_press, psyshock)
 
 ### 2. Terrain Effects
-**Status:** Not started
+**Status:** ✅ COMPLETED
 **Complexity:** Moderate
 **Value:** High (common in competitive)
 
-- Add terrain damage modifier (1.3x) in `_apply_modifiers()`
-- Check if attacker is "grounded" (not Flying-type, no Levitate ability)
-- Apply 1.3x multiplier for:
-  - Electric Terrain + Electric moves
-  - Grassy Terrain + Grass moves
-  - Psychic Terrain + Psychic moves
-- Test with each terrain type
+- ✅ Terrain damage modifiers implemented in `_apply_modifiers()` (lines 581-590)
+- ✅ `_is_grounded()` helper checks for Flying-type and Levitate ability (lines 542-552)
+- ✅ Multipliers applied:
+  - Electric/Grassy/Psychic Terrain + matching type: 1.3x
+  - Misty Terrain + Dragon moves: 0.5x
+- ✅ Parameterized test `test_terrain_effects` with 4 test cases (electric, grassy, psychic, misty)
 
 ### 3. Screen Effects (Reflect/Light Screen)
 **Status:** ✅ COMPLETED
@@ -41,18 +39,23 @@ Add missing damage calculation effects to `estimate_move_result` to match Pokemo
 - ✅ Parameterized test `test_screen_effects` with 4 test cases (reflect_physical, light_screen_special, aurora_veil_physical, aurora_veil_special)
 
 ### 4. Critical Hit Stat Boost Handling
-**Status:** Not started
+**Status:** ✅ COMPLETED
 **Complexity:** Moderate
 **Value:** Medium (improves accuracy)
 
-- When is_crit=True, ignore negative attack boosts
-- When is_crit=True, ignore positive defense boosts
-- Calculate both crit and non-crit damage ranges
-- Update MoveResult to include crit damage range
-- Test with boosted/dropped stats + crit
+- ✅ Added `crit_min_damage` and `crit_max_damage` fields to MoveResult dataclass
+- ✅ `_get_crit_stat_multiplier()` helper method ignores bad boosts:
+  - For attackers: `max(boost, 0)` to ignore negative attack boosts
+  - For defenders: `min(boost, 0)` to ignore positive defense boosts
+- ✅ `estimate_move_result()` calculates both regular and crit damage ranges
+- ✅ Parameterized test `test_critical_hit_stat_boosts` with 4 test cases:
+  - Negative attack boost ignored on crit
+  - Positive defense boost ignored on crit
+  - Positive attack boost kept on crit
+  - Negative defense boost kept on crit
 
 ### 5. Common Abilities
-**Status:** Deferred (Phase 2)
+**Status:** Planned
 **Complexity:** High
 **Value:** High (affects many calculations)
 
@@ -80,7 +83,7 @@ Priority abilities to implement:
 - ✅ Added regression cases in `battle_simulator_test` to cover Choice Band, Choice Specs, Life Orb, Expert Belt, and Mystic Water scenarios.
 
 ### 7. Weather Edge Cases
-**Status:** Deferred (Phase 2)
+**Status:** Planned
 **Complexity:** Low
 **Value:** Low (less common)
 
