@@ -605,14 +605,44 @@ class BattleSimulator:
             defense_stat = Stat.SPD
             defender_stat_value = defender_stats.special_defense
 
+        attacker_ability = self._get_ability(attacking_pokemon)
+        defender_ability = self._get_ability(target_pokemon)
+
+        ignores_defender_ability = attacker_ability in {
+            "moldbreaker",
+            "teravolt",
+            "turboblaze",
+        }
+
         attack_multiplier = attacking_pokemon.get_stat_multiplier(attack_stat)
         defense_multiplier = target_pokemon.get_stat_multiplier(defense_stat)
 
         attack = int(attacker_stat_value * attack_multiplier)
         defense = int(defender_stat_value * defense_multiplier)
 
+        weather = field_state.get_weather() if field_state else None
+
+        attack = self._modify_attack_for_ability(
+            attack,
+            attack_stat,
+            attacker_ability,
+            move_data,
+            attacking_pokemon,
+            weather,
+        )
+        defense = self._modify_defense_for_ability(
+            defense,
+            defense_stat,
+            defender_ability,
+            target_pokemon,
+            ignores_defender_ability,
+        )
+
         level = attacking_pokemon.level
         base_power = move_data.base_power
+
+        if attacker_ability == "technician" and base_power <= 60:
+            base_power = int(base_power * 1.5)
 
         base_damage = (
             int(int(int(int(2 * level / 5 + 2) * base_power * attack) / defense) / 50)
@@ -637,6 +667,8 @@ class BattleSimulator:
             field_state,
             defender_side_conditions,
             is_crit=False,
+            attacker_ability=attacker_ability,
+            defender_ability=defender_ability,
         )
 
         min_damage = int(damage * 0.85)
@@ -651,6 +683,22 @@ class BattleSimulator:
 
         crit_attack = int(attacker_stat_value * crit_attack_multiplier)
         crit_defense = int(defender_stat_value * crit_defense_multiplier)
+
+        crit_attack = self._modify_attack_for_ability(
+            crit_attack,
+            attack_stat,
+            attacker_ability,
+            move_data,
+            attacking_pokemon,
+            weather,
+        )
+        crit_defense = self._modify_defense_for_ability(
+            crit_defense,
+            defense_stat,
+            defender_ability,
+            target_pokemon,
+            ignores_defender_ability,
+        )
 
         crit_base_damage = (
             int(
@@ -671,6 +719,8 @@ class BattleSimulator:
             field_state,
             defender_side_conditions,
             is_crit=True,
+            attacker_ability=attacker_ability,
+            defender_ability=defender_ability,
         )
 
         crit_min_damage = int(crit_damage * 0.85)
@@ -696,6 +746,81 @@ class BattleSimulator:
             additional_effects=additional_effects,
         )
 
+    def _modify_attack_for_ability(
+        self,
+        attack_value: int,
+        attack_stat: Stat,
+        attacker_ability: str,
+        move_data,
+        attacker: PokemonState,
+        weather: Optional[Weather],
+    ) -> int:
+        modified_attack = attack_value
+        if attack_stat == Stat.ATK:
+            if attacker_ability in {"hugepower", "purepower"}:
+                modified_attack = int(modified_attack * 2.0)
+            if (
+                attacker_ability == "guts"
+                and move_data.category == "Physical"
+                and attacker.status != Status.NONE
+            ):
+                modified_attack = int(modified_attack * 1.5)
+            if attacker_ability == "hustle" and move_data.category == "Physical":
+                modified_attack = int(modified_attack * 1.5)
+        if (
+            attack_stat == Stat.SPA
+            and attacker_ability == "solarpower"
+            and weather == Weather.SUN
+        ):
+            modified_attack = int(modified_attack * 1.5)
+        if attack_stat in {Stat.ATK, Stat.SPA}:
+            low_hp_boosts = {
+                "overgrow": "Grass",
+                "blaze": "Fire",
+                "torrent": "Water",
+                "swarm": "Bug",
+            }
+            boosted_type = low_hp_boosts.get(attacker_ability)
+            if (
+                boosted_type
+                and move_data.type == boosted_type
+                and attacker.max_hp > 0
+                and attacker.current_hp * 3 <= attacker.max_hp
+            ):
+                modified_attack = int(modified_attack * 1.5)
+            if attacker_ability == "steelworker" and move_data.type == "Steel":
+                modified_attack = int(modified_attack * 1.5)
+            if attacker_ability == "waterbubble" and move_data.type == "Water":
+                modified_attack = int(modified_attack * 2.0)
+            if (
+                attacker_ability == "defeatist"
+                and attacker.max_hp > 0
+                and attacker.current_hp * 2 <= attacker.max_hp
+            ):
+                modified_attack = int(modified_attack * 0.5)
+        return modified_attack
+
+    def _modify_defense_for_ability(
+        self,
+        defense_value: int,
+        defense_stat: Stat,
+        defender_ability: str,
+        defender: PokemonState,
+        ignore_defender_ability: bool,
+    ) -> int:
+        modified_defense = defense_value
+        if ignore_defender_ability:
+            return modified_defense
+        if defense_stat == Stat.DEF:
+            if defender_ability == "furcoat":
+                modified_defense = int(modified_defense * 2.0)
+            if (
+                defender_ability == "marvelscale"
+                and defender.status != Status.NONE
+            ):
+                modified_defense = int(modified_defense * 1.5)
+        return modified_defense
+
     def _get_crit_stat_multiplier(
         self, pokemon: PokemonState, stat: Stat, is_attacker: bool
     ) -> float:
@@ -706,8 +831,11 @@ class BattleSimulator:
             boost = min(boost, 0)
         return STAT_STAGE_MULTIPLIERS[boost]
 
+    def _get_ability(self, pokemon: PokemonState) -> str:
+        return normalize_name(pokemon.ability) if pokemon.ability else ""
+
     def _is_grounded(self, pokemon: PokemonState) -> bool:
-        ability = normalize_name(pokemon.ability) if pokemon.ability else ""
+        ability = self._get_ability(pokemon)
         if ability == "levitate":
             return False
 
@@ -727,8 +855,17 @@ class BattleSimulator:
         field_state: Optional[FieldState],
         defender_side_conditions: Optional[List[SideCondition]],
         is_crit: bool,
+        attacker_ability: str,
+        defender_ability: str,
     ) -> float:
         damage = float(base_damage)
+
+        ignore_defender_ability = attacker_ability in {
+            "moldbreaker",
+            "teravolt",
+            "turboblaze",
+        }
+        effective_defender_ability = "" if ignore_defender_ability else defender_ability
 
         weather = field_state.get_weather() if field_state else None
         if weather == Weather.RAIN:
@@ -763,10 +900,10 @@ class BattleSimulator:
 
         is_stab = move_data.type in attacker_types
         if is_stab:
-            if attacker.has_terastallized:
-                damage *= 2.0
-            else:
-                damage *= 1.5
+            stab_multiplier = 2.0 if attacker.has_terastallized else 1.5
+            if attacker_ability == "adaptability":
+                stab_multiplier = 2.25 if stab_multiplier > 1.5 else 2.0
+            damage *= stab_multiplier
 
         defender_pokemon_data = self.game_data.get_pokemon(defender.species)
         defender_types = defender_pokemon_data.types
@@ -777,14 +914,74 @@ class BattleSimulator:
         type_chart = self.game_data.get_type_chart()
         for defender_type in defender_types:
             effectiveness = type_chart.get_effectiveness(move_data.type, defender_type)
+            if (
+                effectiveness == 0.0
+                and attacker_ability == "scrappy"
+                and defender_type == "Ghost"
+                and move_data.type in {"Normal", "Fighting"}
+            ):
+                effectiveness = 1.0
             type_effectiveness *= effectiveness
+        ability_type_immunities = {
+            "levitate": {"Ground"},
+            "flashfire": {"Fire"},
+            "waterabsorb": {"Water"},
+            "dryskin": {"Water"},
+            "stormdrain": {"Water"},
+            "voltabsorb": {"Electric"},
+            "lightningrod": {"Electric"},
+            "motordrive": {"Electric"},
+            "sapsipper": {"Grass"},
+        }
+
+        if (
+            effective_defender_ability in ability_type_immunities
+            and move_data.type in ability_type_immunities[effective_defender_ability]
+        ):
+            type_effectiveness = 0.0
+
         damage *= type_effectiveness
 
         damage *= self._get_item_damage_multiplier(
             attacker, move_data, type_effectiveness
         )
 
-        if attacker.status == Status.BURN and move_data.category == "Physical":
+        is_resisted = 0.0 < type_effectiveness < 1.0
+        if attacker_ability == "tintedlens" and is_resisted:
+            damage *= 2.0
+
+        if (
+            attacker.status == Status.BURN
+            and move_data.category == "Physical"
+            and attacker_ability not in {"guts", "waterbubble"}
+        ):
+            damage *= 0.5
+
+        if effective_defender_ability == "thickfat" and move_data.type in {"Fire", "Ice"}:
+            damage *= 0.5
+        if effective_defender_ability == "waterbubble" and move_data.type == "Fire":
+            damage *= 0.5
+        if effective_defender_ability == "heatproof" and move_data.type == "Fire":
+            damage *= 0.5
+        if effective_defender_ability == "dryskin" and move_data.type == "Fire":
+            damage *= 1.25
+        if (
+            type_effectiveness > 1.0
+            and effective_defender_ability in {"filter", "solidrock", "prismarmor"}
+        ):
+            damage *= 0.75
+        if (
+            effective_defender_ability in {"multiscale", "shadowshield"}
+            and defender.max_hp > 0
+            and defender.current_hp == defender.max_hp
+        ):
+            damage *= 0.5
+        if (
+            effective_defender_ability == "icescales"
+            and move_data.category == "Special"
+        ):
+            damage *= 0.5
+        if effective_defender_ability == "purifyingsalt" and move_data.type == "Ghost":
             damage *= 0.5
 
         if defender_side_conditions:
