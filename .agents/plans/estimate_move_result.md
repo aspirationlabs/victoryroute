@@ -64,15 +64,20 @@ Priority abilities to implement:
 - Thick Fat (halves Fire/Ice damage)
 
 ### 6. Common Items
-**Status:** Deferred (Phase 2)
+**Status:** ✅ COMPLETED
 **Complexity:** Moderate
 **Value:** High (very common in competitive)
 
-Priority items to implement:
-- Choice Band/Specs (1.5x Attack/Sp.Atk)
-- Life Orb (1.3x damage)
-- Expert Belt (1.2x on super-effective)
-- Type-boosting items (1.2x for specific type)
+- ✅ Added `_get_item_damage_multiplier()` to mirror Showdown's `items.ts` logic and integrate with `_apply_modifiers()`.
+- ✅ Implemented multipliers for:
+  - Choice Band / Choice Specs (1.5× category-specific power)
+  - Life Orb (1.3× final damage with recoil tracking left to future work)
+  - Muscle Band & Wise Glasses (1.1× physical/special)
+  - Expert Belt (1.2× when type effectiveness > 1×)
+  - Type boosters (plates, incenses, bows, etc.) for all elemental types
+  - Signature species boosts (Adamant Orb/Crystal, Lustrous Orb/Globe, Griseous Orb/Core, Soul Dew, Vile Vial, Ogerpon masks)
+  - Species-based stat doublers (Light Ball, Thick Club, Deep Sea Tooth)
+- ✅ Added regression cases in `battle_simulator_test` to cover Choice Band, Choice Specs, Life Orb, Expert Belt, and Mystic Water scenarios.
 
 ### 7. Weather Edge Cases
 **Status:** Deferred (Phase 2)
