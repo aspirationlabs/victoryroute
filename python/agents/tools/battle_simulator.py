@@ -423,6 +423,7 @@ class BattleSimulator:
         target_pokemon: PokemonState,
         move: PokemonMove,
         field_state: Optional[FieldState] = None,
+        defender_side_conditions: Optional[List[SideCondition]] = None,
     ) -> MoveResult:
         move_data = self.game_data.get_move(move.name)
 
@@ -441,15 +442,46 @@ class BattleSimulator:
         )
         defender_stats = self.get_pokemon_stats(target_pokemon, target_pokemon.level)
 
-        if move_data.category == "Physical":
+        if move_data.override_offensive_stat:
+            if move_data.override_offensive_stat == "def":
+                attack_stat = Stat.DEF
+                attacker_stat_value = attacker_stats.defense
+            elif move_data.override_offensive_stat == "spd":
+                attack_stat = Stat.SPD
+                attacker_stat_value = attacker_stats.special_defense
+            else:
+                if move_data.category == "Physical":
+                    attack_stat = Stat.ATK
+                    attacker_stat_value = attacker_stats.attack
+                else:
+                    attack_stat = Stat.SPA
+                    attacker_stat_value = attacker_stats.special_attack
+        elif move_data.category == "Physical":
             attack_stat = Stat.ATK
-            defense_stat = Stat.DEF
             attacker_stat_value = attacker_stats.attack
-            defender_stat_value = defender_stats.defense
         else:
             attack_stat = Stat.SPA
-            defense_stat = Stat.SPD
             attacker_stat_value = attacker_stats.special_attack
+
+        if move_data.override_defensive_stat:
+            if move_data.override_defensive_stat == "def":
+                defense_stat = Stat.DEF
+                defender_stat_value = defender_stats.defense
+            elif move_data.override_defensive_stat == "spd":
+                defense_stat = Stat.SPD
+                defender_stat_value = defender_stats.special_defense
+            else:
+                if move_data.category == "Physical":
+                    defense_stat = Stat.DEF
+                    defender_stat_value = defender_stats.defense
+                else:
+                    defense_stat = Stat.SPD
+                    defender_stat_value = defender_stats.special_defense
+        elif move_data.category == "Physical":
+            defense_stat = Stat.DEF
+            defender_stat_value = defender_stats.defense
+        else:
+            defense_stat = Stat.SPD
             defender_stat_value = defender_stats.special_defense
 
         attack_multiplier = attacking_pokemon.get_stat_multiplier(attack_stat)
@@ -482,6 +514,7 @@ class BattleSimulator:
             target_pokemon,
             move_data,
             field_state,
+            defender_side_conditions,
             is_crit=False,
         )
 
@@ -506,6 +539,18 @@ class BattleSimulator:
             additional_effects=additional_effects,
         )
 
+    def _is_grounded(self, pokemon: PokemonState) -> bool:
+        ability = normalize_name(pokemon.ability) if pokemon.ability else ""
+        if ability == "levitate":
+            return False
+
+        pokemon_data = self.game_data.get_pokemon(pokemon.species)
+        types = pokemon_data.types
+        if "Flying" in types:
+            return False
+
+        return True
+
     def _apply_modifiers(
         self,
         base_damage: int,
@@ -513,6 +558,7 @@ class BattleSimulator:
         defender: PokemonState,
         move_data,
         field_state: Optional[FieldState],
+        defender_side_conditions: Optional[List[SideCondition]],
         is_crit: bool,
     ) -> float:
         damage = float(base_damage)
@@ -531,6 +577,17 @@ class BattleSimulator:
 
         if is_crit:
             damage *= 1.5
+
+        terrain = field_state.get_terrain() if field_state else None
+        if terrain and self._is_grounded(attacker):
+            if terrain == Terrain.ELECTRIC and move_data.type == "Electric":
+                damage *= 1.3
+            elif terrain == Terrain.GRASSY and move_data.type == "Grass":
+                damage *= 1.3
+            elif terrain == Terrain.PSYCHIC and move_data.type == "Psychic":
+                damage *= 1.3
+            elif terrain == Terrain.MISTY and move_data.type == "Dragon":
+                damage *= 0.5
 
         attacker_pokemon_data = self.game_data.get_pokemon(attacker.species)
         attacker_types = attacker_pokemon_data.types
@@ -559,5 +616,19 @@ class BattleSimulator:
 
         if attacker.status == Status.BURN and move_data.category == "Physical":
             damage *= 0.5
+
+        if defender_side_conditions:
+            if SideCondition.AURORA_VEIL in defender_side_conditions:
+                damage *= 0.5
+            elif (
+                move_data.category == "Physical"
+                and SideCondition.REFLECT in defender_side_conditions
+            ):
+                damage *= 0.5
+            elif (
+                move_data.category == "Special"
+                and SideCondition.LIGHT_SCREEN in defender_side_conditions
+            ):
+                damage *= 0.5
 
         return damage

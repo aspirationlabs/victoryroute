@@ -15,3 +15,5 @@ class Move(GameDataObject):
     priority: int
     category: str
     description: str = ""
+    override_offensive_stat: Optional[str] = None
+    override_defensive_stat: Optional[str] = None
