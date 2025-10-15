@@ -55,16 +55,15 @@ Add missing damage calculation effects to `estimate_move_result` to match Pokemo
   - Negative defense boost kept on crit
 
 ### 5. Common Abilities
-**Status:** Planned
+**Status:** ✅ COMPLETED
 **Complexity:** High
 **Value:** High (affects many calculations)
 
-Priority abilities to implement:
-- Adaptability (2x STAB instead of 1.5x)
-- Technician (1.5x for moves ≤60 BP)
-- Levitate (Ground immunity + affects terrain grounding)
-- Huge Power/Pure Power (doubles Attack)
-- Thick Fat (halves Fire/Ice damage)
+- ✅ Implemented attacker-side abilities: Adaptability, Technician, Huge Power, Pure Power, Guts, Hustle, Steelworker, Water Bubble, Overgrow/Blaze/Torrent/Swarm, Solar Power, Defeatist, Scrappy
+- ✅ Implemented defender-side abilities: Thick Fat, Heatproof, Water Bubble (fire resistance), Dry Skin (water immunity + fire penalty), Filter, Solid Rock, Prism Armor, Multiscale, Shadow Shield, Ice Scales, Purifying Salt, Fur Coat, Marvel Scale
+- ✅ Added immunity handling for Levitate, Flash Fire, Water Absorb, Storm Drain, Dry Skin, Volt Absorb, Lightning Rod, Motor Drive, Sap Sipper (with Mold Breaker/Teravolt/Turboblaze overrides)
+- ✅ Added burn penalty exceptions for Guts/Water Bubble and type effectiveness adjustment for Tinted Lens
+- ✅ Added regression-style tests covering each implemented ability interaction
 
 ### 6. Common Items
 **Status:** ✅ COMPLETED

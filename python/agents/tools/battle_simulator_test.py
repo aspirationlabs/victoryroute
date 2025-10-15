@@ -265,6 +265,8 @@ class BattleSimulatorTest(parameterized.TestCase):
                 max_damage=535,
                 knockout_probability=1.0,
                 critical_hit_probability=1 / 24,
+                crit_min_damage=682,
+                crit_max_damage=803,
                 status_effects={},
                 additional_effects=[],
             ),
@@ -286,6 +288,8 @@ class BattleSimulatorTest(parameterized.TestCase):
                 max_damage=819,
                 knockout_probability=1.0,
                 critical_hit_probability=1 / 24,
+                crit_min_damage=1044,
+                crit_max_damage=1228,
                 status_effects={},
                 additional_effects=[],
             ),
@@ -307,6 +311,8 @@ class BattleSimulatorTest(parameterized.TestCase):
                 max_damage=464,
                 knockout_probability=1.0,
                 critical_hit_probability=1 / 24,
+                crit_min_damage=591,
+                crit_max_damage=696,
                 status_effects={},
                 additional_effects=[],
             ),
@@ -328,6 +334,8 @@ class BattleSimulatorTest(parameterized.TestCase):
                 max_damage=770,
                 knockout_probability=1.0,
                 critical_hit_probability=1 / 24,
+                crit_min_damage=982,
+                crit_max_damage=1155,
                 status_effects={},
                 additional_effects=[],
             ),
@@ -349,6 +357,8 @@ class BattleSimulatorTest(parameterized.TestCase):
                 max_damage=655,
                 knockout_probability=1.0,
                 critical_hit_probability=1 / 24,
+                crit_min_damage=835,
+                crit_max_damage=982,
                 status_effects={},
                 additional_effects=[],
             ),
@@ -370,6 +380,8 @@ class BattleSimulatorTest(parameterized.TestCase):
                 max_damage=357,
                 knockout_probability=1.0,
                 critical_hit_probability=1 / 24,
+                crit_min_damage=455,
+                crit_max_damage=535,
                 status_effects={},
                 additional_effects=[],
             ),
@@ -391,6 +403,8 @@ class BattleSimulatorTest(parameterized.TestCase):
                 max_damage=546,
                 knockout_probability=1.0,
                 critical_hit_probability=1 / 24,
+                crit_min_damage=696,
+                crit_max_damage=819,
                 status_effects={},
                 additional_effects=[],
             ),
@@ -412,6 +426,8 @@ class BattleSimulatorTest(parameterized.TestCase):
                 max_damage=357,
                 knockout_probability=1.0,
                 critical_hit_probability=1 / 24,
+                crit_min_damage=455,
+                crit_max_damage=535,
                 status_effects={},
                 additional_effects=[],
             ),
@@ -909,6 +925,223 @@ class BattleSimulatorTest(parameterized.TestCase):
         result = self.simulator.estimate_move_result(attacker, defender, move)
 
         self.assertEqual(result, expected_result)
+
+    def test_adaptability_increases_stab_damage(self) -> None:
+        attacker = PokemonState(
+            species="Porygon-Z",
+            level=100,
+            current_hp=300,
+            max_hp=300,
+            ability="Adaptability",
+        )
+        baseline_attacker = PokemonState(
+            species="Porygon-Z", level=100, current_hp=300, max_hp=300
+        )
+        defender = PokemonState(species="Blissey", level=100, current_hp=300, max_hp=300)
+        move = PokemonMove(name="Tri Attack", current_pp=10, max_pp=16)
+
+        boosted = self.simulator.estimate_move_result(attacker, defender, move)
+        baseline = self.simulator.estimate_move_result(
+            baseline_attacker, defender, move
+        )
+
+        self.assertGreater(boosted.max_damage, baseline.max_damage)
+        self.assertAlmostEqual(
+            boosted.max_damage / baseline.max_damage, 4 / 3, delta=0.05
+        )
+
+    def test_technician_boosts_low_base_power_moves(self) -> None:
+        attacker = PokemonState(
+            species="Scizor",
+            level=100,
+            current_hp=300,
+            max_hp=300,
+            ability="Technician",
+        )
+        baseline_attacker = PokemonState(
+            species="Scizor", level=100, current_hp=300, max_hp=300
+        )
+        defender = PokemonState(
+            species="Togekiss", level=100, current_hp=300, max_hp=300
+        )
+        move = PokemonMove(name="Bullet Punch", current_pp=10, max_pp=16)
+
+        boosted = self.simulator.estimate_move_result(attacker, defender, move)
+        baseline = self.simulator.estimate_move_result(
+            baseline_attacker, defender, move
+        )
+
+        self.assertGreater(boosted.max_damage, baseline.max_damage)
+        self.assertAlmostEqual(boosted.max_damage / baseline.max_damage, 1.5, delta=0.05)
+
+    def test_huge_power_doubles_attack_damage(self) -> None:
+        attacker = PokemonState(
+            species="Azumarill",
+            level=100,
+            current_hp=300,
+            max_hp=300,
+            ability="Huge Power",
+        )
+        baseline_attacker = PokemonState(
+            species="Azumarill", level=100, current_hp=300, max_hp=300
+        )
+        defender = PokemonState(
+            species="Garchomp", level=100, current_hp=300, max_hp=300
+        )
+        move = PokemonMove(name="Play Rough", current_pp=10, max_pp=16)
+
+        boosted = self.simulator.estimate_move_result(attacker, defender, move)
+        baseline = self.simulator.estimate_move_result(
+            baseline_attacker, defender, move
+        )
+
+        self.assertGreater(boosted.max_damage, baseline.max_damage)
+        self.assertAlmostEqual(boosted.max_damage / baseline.max_damage, 2.0, delta=0.05)
+
+    def test_guts_ignores_burn_penalty(self) -> None:
+        attacker = PokemonState(
+            species="Conkeldurr",
+            level=100,
+            current_hp=300,
+            max_hp=300,
+            ability="Guts",
+            status=Status.BURN,
+        )
+        baseline_attacker = PokemonState(
+            species="Conkeldurr",
+            level=100,
+            current_hp=300,
+            max_hp=300,
+            status=Status.BURN,
+        )
+        defender = PokemonState(
+            species="Heatran", level=100, current_hp=300, max_hp=300
+        )
+        move = PokemonMove(name="Close Combat", current_pp=5, max_pp=8)
+
+        boosted = self.simulator.estimate_move_result(attacker, defender, move)
+        baseline = self.simulator.estimate_move_result(
+            baseline_attacker, defender, move
+        )
+
+        self.assertGreater(boosted.max_damage, baseline.max_damage)
+        self.assertAlmostEqual(boosted.max_damage / baseline.max_damage, 3.0, delta=0.05)
+
+    def test_thick_fat_halves_fire_damage(self) -> None:
+        attacker = PokemonState(
+            species="Charizard", level=100, current_hp=300, max_hp=300
+        )
+        defender = PokemonState(
+            species="Snorlax",
+            level=100,
+            current_hp=300,
+            max_hp=300,
+            ability="Thick Fat",
+        )
+        baseline_defender = PokemonState(
+            species="Snorlax", level=100, current_hp=300, max_hp=300
+        )
+        move = PokemonMove(name="Flamethrower", current_pp=15, max_pp=24)
+
+        reduced = self.simulator.estimate_move_result(attacker, defender, move)
+        baseline = self.simulator.estimate_move_result(
+            attacker, baseline_defender, move
+        )
+
+        self.assertLess(reduced.max_damage, baseline.max_damage)
+        self.assertAlmostEqual(reduced.max_damage / baseline.max_damage, 0.5, delta=0.05)
+
+    def test_levitate_grants_ground_immunity(self) -> None:
+        attacker = PokemonState(
+            species="Landorus-Therian", level=100, current_hp=300, max_hp=300
+        )
+        defender = PokemonState(
+            species="Gengar",
+            level=100,
+            current_hp=300,
+            max_hp=300,
+            ability="Levitate",
+        )
+        move = PokemonMove(name="Earthquake", current_pp=10, max_pp=16)
+
+        result = self.simulator.estimate_move_result(attacker, defender, move)
+
+        self.assertEqual(result.min_damage, 0)
+        self.assertEqual(result.max_damage, 0)
+
+    def test_tinted_lens_doubles_resisted_damage(self) -> None:
+        attacker = PokemonState(
+            species="Yanmega",
+            level=100,
+            current_hp=300,
+            max_hp=300,
+            ability="Tinted Lens",
+        )
+        baseline_attacker = PokemonState(
+            species="Yanmega", level=100, current_hp=300, max_hp=300
+        )
+        defender = PokemonState(
+            species="Rotom-Heat", level=100, current_hp=300, max_hp=300
+        )
+        move = PokemonMove(name="Air Slash", current_pp=15, max_pp=24)
+
+        boosted = self.simulator.estimate_move_result(attacker, defender, move)
+        baseline = self.simulator.estimate_move_result(
+            baseline_attacker, defender, move
+        )
+
+        self.assertGreater(boosted.max_damage, baseline.max_damage)
+        self.assertAlmostEqual(boosted.max_damage / baseline.max_damage, 2.0, delta=0.05)
+
+    def test_solid_rock_reduces_super_effective_damage(self) -> None:
+        attacker = PokemonState(
+            species="Greninja", level=100, current_hp=300, max_hp=300
+        )
+        defender = PokemonState(
+            species="Rhyperior",
+            level=100,
+            current_hp=300,
+            max_hp=300,
+            ability="Solid Rock",
+        )
+        baseline_defender = PokemonState(
+            species="Rhyperior", level=100, current_hp=300, max_hp=300
+        )
+        move = PokemonMove(name="Surf", current_pp=15, max_pp=24)
+
+        reduced = self.simulator.estimate_move_result(attacker, defender, move)
+        baseline = self.simulator.estimate_move_result(
+            attacker, baseline_defender, move
+        )
+
+        self.assertLess(reduced.max_damage, baseline.max_damage)
+        self.assertAlmostEqual(
+            reduced.max_damage / baseline.max_damage, 0.75, delta=0.05
+        )
+
+    def test_multiscale_halves_damage_at_full_hp(self) -> None:
+        attacker = PokemonState(
+            species="Lapras", level=100, current_hp=300, max_hp=300
+        )
+        defender = PokemonState(
+            species="Dragonite",
+            level=100,
+            current_hp=300,
+            max_hp=300,
+            ability="Multiscale",
+        )
+        baseline_defender = PokemonState(
+            species="Dragonite", level=100, current_hp=300, max_hp=300
+        )
+        move = PokemonMove(name="Ice Beam", current_pp=10, max_pp=16)
+
+        reduced = self.simulator.estimate_move_result(attacker, defender, move)
+        baseline = self.simulator.estimate_move_result(
+            attacker, baseline_defender, move
+        )
+
+        self.assertLess(reduced.max_damage, baseline.max_damage)
+        self.assertAlmostEqual(reduced.max_damage / baseline.max_damage, 0.5, delta=0.05)
 
 
 if __name__ == "__main__":
