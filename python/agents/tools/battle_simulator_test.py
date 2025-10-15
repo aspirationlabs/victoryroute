@@ -8,9 +8,12 @@ from python.agents.tools.battle_simulator import (
     BattleSimulator,
     EffortValues,
     IndividualValues,
+    MoveResult,
 )
 from python.game.data.game_data import GameData
-from python.game.schema.pokemon_state import PokemonState
+from python.game.schema.enums import Stat, Status, Weather
+from python.game.schema.field_state import FieldState
+from python.game.schema.pokemon_state import PokemonMove, PokemonState
 
 
 class BattleSimulatorTest(parameterized.TestCase):
@@ -152,6 +155,248 @@ class BattleSimulatorTest(parameterized.TestCase):
         self.assertEqual(stats.special_attack, expected_stats["special_attack"])
         self.assertEqual(stats.special_defense, expected_stats["special_defense"])
         self.assertEqual(stats.speed, expected_stats["speed"])
+
+    @parameterized.named_parameters(
+        (
+            "basic_physical",
+            PokemonState(
+                species="Landorus-Therian", level=100, current_hp=300, max_hp=300
+            ),
+            PokemonState(species="Incineroar", level=100, current_hp=300, max_hp=300),
+            PokemonMove(name="Earthquake", current_pp=10, max_pp=16),
+            None,
+            MoveResult(
+                min_damage=303,
+                max_damage=357,
+                knockout_probability=1.0,
+                critical_hit_probability=1 / 24,
+                status_effects={},
+                additional_effects=[],
+            ),
+        ),
+        (
+            "basic_special",
+            PokemonState(species="Kyogre", level=100, current_hp=300, max_hp=300),
+            PokemonState(species="Groudon", level=100, current_hp=300, max_hp=300),
+            PokemonMove(name="Water Spout", current_pp=5, max_pp=8),
+            None,
+            MoveResult(
+                min_damage=464,
+                max_damage=546,
+                knockout_probability=1.0,
+                critical_hit_probability=1 / 24,
+                status_effects={},
+                additional_effects=[],
+            ),
+        ),
+        (
+            "stab_bonus",
+            PokemonState(species="Garchomp", level=100, current_hp=300, max_hp=300),
+            PokemonState(species="Incineroar", level=100, current_hp=300, max_hp=300),
+            PokemonMove(name="Earthquake", current_pp=10, max_pp=16),
+            None,
+            MoveResult(
+                min_damage=280,
+                max_damage=330,
+                knockout_probability=0.5,
+                critical_hit_probability=1 / 24,
+                status_effects={},
+                additional_effects=[],
+            ),
+        ),
+        (
+            "super_effective",
+            PokemonState(
+                species="Landorus-Therian", level=100, current_hp=300, max_hp=300
+            ),
+            PokemonState(species="Heatran", level=100, current_hp=300, max_hp=300),
+            PokemonMove(name="Earthquake", current_pp=10, max_pp=16),
+            None,
+            MoveResult(
+                min_damage=545,
+                max_damage=642,
+                knockout_probability=1.0,
+                critical_hit_probability=1 / 24,
+                status_effects={},
+                additional_effects=[],
+            ),
+        ),
+        (
+            "not_very_effective",
+            PokemonState(
+                species="Landorus-Therian", level=100, current_hp=300, max_hp=300
+            ),
+            PokemonState(species="Tornadus", level=100, current_hp=300, max_hp=300),
+            PokemonMove(name="Earthquake", current_pp=10, max_pp=16),
+            None,
+            MoveResult(
+                min_damage=0,
+                max_damage=0,
+                knockout_probability=0.0,
+                critical_hit_probability=1.0 / 24.0,
+                status_effects={},
+                additional_effects=[],
+            ),
+        ),
+        (
+            "stat_boost_attack",
+            PokemonState(
+                species="Landorus-Therian",
+                level=100,
+                current_hp=300,
+                max_hp=300,
+                stat_boosts={Stat.ATK: 2},
+            ),
+            PokemonState(species="Incineroar", level=100, current_hp=300, max_hp=300),
+            PokemonMove(name="Earthquake", current_pp=10, max_pp=16),
+            None,
+            MoveResult(
+                min_damage=601,
+                max_damage=708,
+                knockout_probability=1.0,
+                critical_hit_probability=1.0 / 24.0,
+                status_effects={},
+                additional_effects=[],
+            ),
+        ),
+        (
+            "stat_boost_defense",
+            PokemonState(
+                species="Landorus-Therian", level=100, current_hp=300, max_hp=300
+            ),
+            PokemonState(
+                species="Incineroar",
+                level=100,
+                current_hp=300,
+                max_hp=300,
+                stat_boosts={Stat.DEF: 2},
+            ),
+            PokemonMove(name="Earthquake", current_pp=10, max_pp=16),
+            None,
+            MoveResult(
+                min_damage=153,
+                max_damage=180,
+                knockout_probability=0.0,
+                critical_hit_probability=1.0 / 24.0,
+                status_effects={},
+                additional_effects=[],
+            ),
+        ),
+        (
+            "burn_reduces_physical",
+            PokemonState(
+                species="Landorus-Therian",
+                level=100,
+                current_hp=300,
+                max_hp=300,
+                status=Status.BURN,
+            ),
+            PokemonState(species="Incineroar", level=100, current_hp=300, max_hp=300),
+            PokemonMove(name="Earthquake", current_pp=10, max_pp=16),
+            None,
+            MoveResult(
+                min_damage=151,
+                max_damage=178,
+                knockout_probability=0.0,
+                critical_hit_probability=1.0 / 24.0,
+                status_effects={},
+                additional_effects=[],
+            ),
+        ),
+        (
+            "rain_boosts_water",
+            PokemonState(species="Kyogre", level=100, current_hp=300, max_hp=300),
+            PokemonState(species="Groudon", level=100, current_hp=300, max_hp=300),
+            PokemonMove(name="Water Spout", current_pp=5, max_pp=8),
+            FieldState(weather=Weather.RAIN, weather_turns_remaining=5),
+            MoveResult(
+                min_damage=696,
+                max_damage=819,
+                knockout_probability=1.0,
+                critical_hit_probability=1.0 / 24.0,
+                status_effects={},
+                additional_effects=[],
+            ),
+        ),
+        (
+            "sun_reduces_water",
+            PokemonState(species="Kyogre", level=100, current_hp=300, max_hp=300),
+            PokemonState(species="Groudon", level=100, current_hp=300, max_hp=300),
+            PokemonMove(name="Water Spout", current_pp=5, max_pp=8),
+            FieldState(weather=Weather.SUN, weather_turns_remaining=5),
+            MoveResult(
+                min_damage=232,
+                max_damage=273,
+                knockout_probability=0.0,
+                critical_hit_probability=1.0 / 24.0,
+                status_effects={},
+                additional_effects=[],
+            ),
+        ),
+        (
+            "tera_stab_boost",
+            PokemonState(
+                species="Landorus-Therian",
+                level=100,
+                current_hp=300,
+                max_hp=300,
+                has_terastallized=True,
+                tera_type="Ground",
+            ),
+            PokemonState(species="Incineroar", level=100, current_hp=300, max_hp=300),
+            PokemonMove(name="Earthquake", current_pp=10, max_pp=16),
+            None,
+            MoveResult(
+                min_damage=404,
+                max_damage=476,
+                knockout_probability=1.0,
+                critical_hit_probability=1 / 24,
+                status_effects={},
+                additional_effects=[],
+            ),
+        ),
+    )
+    def test_estimate_move_result(
+        self,
+        attacker: PokemonState,
+        defender: PokemonState,
+        move: PokemonMove,
+        field_state: FieldState,
+        expected_result: MoveResult,
+    ) -> None:
+        result = self.simulator.estimate_move_result(
+            attacker, defender, move, field_state
+        )
+
+        self.assertEqual(result, expected_result)
+
+    def test_estimate_move_result_status_move(self) -> None:
+        attacker = PokemonState(
+            species="Amoonguss", level=100, current_hp=300, max_hp=300
+        )
+        defender = PokemonState(
+            species="Landorus-Therian", level=100, current_hp=300, max_hp=300
+        )
+        move = PokemonMove(name="Spore", current_pp=15, max_pp=24)
+
+        result = self.simulator.estimate_move_result(attacker, defender, move)
+
+        self.assertEqual(result.min_damage, 0)
+        self.assertEqual(result.max_damage, 0)
+        self.assertEqual(result.knockout_probability, 0.0)
+
+    def test_estimate_move_result_knockout_probability(self) -> None:
+        attacker = PokemonState(
+            species="Landorus-Therian", level=100, current_hp=300, max_hp=300
+        )
+        defender = PokemonState(
+            species="Incineroar", level=100, current_hp=50, max_hp=300
+        )
+        move = PokemonMove(name="Earthquake", current_pp=10, max_pp=16)
+
+        result = self.simulator.estimate_move_result(attacker, defender, move)
+
+        self.assertEqual(result.knockout_probability, 1.0)
 
 
 if __name__ == "__main__":
