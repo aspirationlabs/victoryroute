@@ -39,15 +39,20 @@ Add missing damage calculation effects to `estimate_move_result` to match Pokemo
 - ✅ Parameterized test `test_screen_effects` with 4 test cases (reflect_physical, light_screen_special, aurora_veil_physical, aurora_veil_special)
 
 ### 4. Critical Hit Stat Boost Handling
-**Status:** Planned
+**Status:** ✅ COMPLETED
 **Complexity:** Moderate
 **Value:** Medium (improves accuracy)
 
-- When is_crit=True, ignore negative attack boosts
-- When is_crit=True, ignore positive defense boosts
-- Calculate both crit and non-crit damage ranges
-- Update MoveResult to include crit damage range
-- Test with boosted/dropped stats + crit
+- ✅ Added `crit_min_damage` and `crit_max_damage` fields to MoveResult dataclass
+- ✅ `_get_crit_stat_multiplier()` helper method ignores bad boosts:
+  - For attackers: `max(boost, 0)` to ignore negative attack boosts
+  - For defenders: `min(boost, 0)` to ignore positive defense boosts
+- ✅ `estimate_move_result()` calculates both regular and crit damage ranges
+- ✅ Parameterized test `test_critical_hit_stat_boosts` with 4 test cases:
+  - Negative attack boost ignored on crit
+  - Positive defense boost ignored on crit
+  - Positive attack boost kept on crit
+  - Negative defense boost kept on crit
 
 ### 5. Common Abilities
 **Status:** Planned

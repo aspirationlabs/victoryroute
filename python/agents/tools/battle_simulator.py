@@ -100,6 +100,8 @@ class MoveResult:
     max_damage: int
     knockout_probability: float
     critical_hit_probability: float
+    crit_min_damage: int
+    crit_max_damage: int
     status_effects: Dict[str, float]
     additional_effects: List[str]
 
@@ -433,6 +435,8 @@ class BattleSimulator:
                 max_damage=0,
                 knockout_probability=0.0,
                 critical_hit_probability=0.0,
+                crit_min_damage=0,
+                crit_max_damage=0,
                 status_effects={},
                 additional_effects=[],
             )
@@ -521,6 +525,40 @@ class BattleSimulator:
         min_damage = int(damage * 0.85)
         max_damage = int(damage * 1.0)
 
+        crit_attack_multiplier = self._get_crit_stat_multiplier(
+            attacking_pokemon, attack_stat, is_attacker=True
+        )
+        crit_defense_multiplier = self._get_crit_stat_multiplier(
+            target_pokemon, defense_stat, is_attacker=False
+        )
+
+        crit_attack = int(attacker_stat_value * crit_attack_multiplier)
+        crit_defense = int(defender_stat_value * crit_defense_multiplier)
+
+        crit_base_damage = (
+            int(
+                int(
+                    int(int(2 * level / 5 + 2) * base_power * crit_attack)
+                    / crit_defense
+                )
+                / 50
+            )
+            + 2
+        )
+
+        crit_damage = self._apply_modifiers(
+            crit_base_damage,
+            attacking_pokemon,
+            target_pokemon,
+            move_data,
+            field_state,
+            defender_side_conditions,
+            is_crit=True,
+        )
+
+        crit_min_damage = int(crit_damage * 0.85)
+        crit_max_damage = int(crit_damage * 1.0)
+
         ko_prob = 0.0
         if min_damage >= target_pokemon.current_hp:
             ko_prob = 1.0
@@ -535,9 +573,21 @@ class BattleSimulator:
             max_damage=max_damage,
             knockout_probability=ko_prob,
             critical_hit_probability=crit_chance,
+            crit_min_damage=crit_min_damage,
+            crit_max_damage=crit_max_damage,
             status_effects=status_effects,
             additional_effects=additional_effects,
         )
+
+    def _get_crit_stat_multiplier(
+        self, pokemon: PokemonState, stat: Stat, is_attacker: bool
+    ) -> float:
+        boost = pokemon.get_stat_boost(stat)
+        if is_attacker:
+            boost = max(boost, 0)
+        else:
+            boost = min(boost, 0)
+        return STAT_STAGE_MULTIPLIERS[boost]
 
     def _is_grounded(self, pokemon: PokemonState) -> bool:
         ability = normalize_name(pokemon.ability) if pokemon.ability else ""
