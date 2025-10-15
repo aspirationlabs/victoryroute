@@ -22,9 +22,16 @@ class PokemonStatePriors:
     spreads: List[Dict[str, Any]]
     tera: List[Dict[str, Any]]
     teammates: List[Dict[str, Any]]
-    
+
     def __eq__(self, other: "PokemonStatePriors") -> bool:
-        return self.abilities == other.abilities and self.items == other.items and self.moves == other.moves and self.spreads == other.spreads and self.tera == other.tera and self.teammates == other.teammates
+        return (
+            self.abilities == other.abilities
+            and self.items == other.items
+            and self.moves == other.moves
+            and self.spreads == other.spreads
+            and self.tera == other.tera
+            and self.teammates == other.teammates
+        )
 
 
 class PokemonStatePriorsReader:
@@ -47,7 +54,7 @@ class PokemonStatePriorsReader:
     _init_lock: threading.Lock = threading.Lock()
 
     def __new__(
-        cls, data_file: str = "data/stats/gen9ou/1500.json"
+        cls, mode: str = "gen9ou", file_name: str = "1500.json"
     ) -> "PokemonStatePriorsReader":
         if cls._instance is None:
             with cls._instance_lock:
@@ -56,18 +63,20 @@ class PokemonStatePriorsReader:
                     cls._instance._initialized = False
         return cls._instance
 
-    def __init__(self, data_file: str = "data/stats/gen9ou/1500.json") -> None:
-        if hasattr(self, "_initialized") and self._initialized:  # type: ignore
+    def __init__(self, mode: str = "gen9ou", file_name: str = "1500.json") -> None:
+        if self._initialized:
             return
 
         with self._init_lock:
-            if hasattr(self, "_initialized") and self._initialized:  # type: ignore
+            if self._initialized:
                 return
 
-            self.data_file = Path(data_file)
+            module_dir = Path(__file__).resolve().parent
+            repo_root = module_dir.parent.parent.parent
+            self.data_file = str(repo_root / "data" / "stats" / mode / file_name)
             self._stats_lookup: Dict[str, PokemonStatePriors] = {}
             self._load_stats()
-            self._initialized = True  # type: ignore
+            self._initialized = True
 
     def _load_stats(self) -> None:
         if not self.data_file.exists():
