@@ -94,7 +94,7 @@ class PokemonStatePriorsReader:
             raise IOError(f"Failed to read stats file {self.data_file}: {e}") from e
 
         for key, stats in data.items():
-            self._stats_lookup[key] = PokemonStatePriors(
+            self._stats_lookup[normalize_name(key)] = PokemonStatePriors(
                 abilities=stats.get("abilities", []),
                 items=stats.get("items", []),
                 moves=stats.get("moves", []),
