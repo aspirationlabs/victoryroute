@@ -1194,6 +1194,90 @@ class BattleSimulatorTest(parameterized.TestCase):
             self.assertEqual(ability_result.min_damage, 0)
             self.assertEqual(ability_result.max_damage, 0)
 
+    @parameterized.named_parameters(
+        (
+            "sandstorm_rock_spdef_boost",
+            PokemonState(species="Alakazam", level=100, current_hp=300, max_hp=300),
+            PokemonState(species="Golem", level=100, current_hp=300, max_hp=300),
+            PokemonMove(name="Psychic", current_pp=10, max_pp=16),
+            FieldState(weather=Weather.SANDSTORM, weather_turns_remaining=5),
+            MoveResult(
+                min_damage=105,
+                max_damage=124,
+                knockout_probability=0.0,
+                critical_hit_probability=1 / 24,
+                crit_min_damage=158,
+                crit_max_damage=186,
+                status_effects={},
+                additional_effects=[],
+            ),
+        ),
+        (
+            "sandstorm_no_boost_physical",
+            PokemonState(species="Machamp", level=100, current_hp=300, max_hp=300),
+            PokemonState(species="Tyranitar", level=100, current_hp=300, max_hp=300),
+            PokemonMove(name="Cross Chop", current_pp=5, max_pp=8),
+            FieldState(weather=Weather.SANDSTORM, weather_turns_remaining=5),
+            MoveResult(
+                min_damage=489,
+                max_damage=576,
+                knockout_probability=1.0,
+                critical_hit_probability=1 / 24,
+                crit_min_damage=734,
+                crit_max_damage=864,
+                status_effects={},
+                additional_effects=[],
+            ),
+        ),
+        (
+            "snow_ice_def_boost",
+            PokemonState(species="Machamp", level=100, current_hp=300, max_hp=300),
+            PokemonState(species="Glaceon", level=100, current_hp=300, max_hp=300),
+            PokemonMove(name="Cross Chop", current_pp=5, max_pp=8),
+            FieldState(weather=Weather.SNOW, weather_turns_remaining=5),
+            MoveResult(
+                min_damage=165,
+                max_damage=195,
+                knockout_probability=0.0,
+                critical_hit_probability=1 / 24,
+                crit_min_damage=248,
+                crit_max_damage=292,
+                status_effects={},
+                additional_effects=[],
+            ),
+        ),
+        (
+            "snow_no_boost_special",
+            PokemonState(species="Alakazam", level=100, current_hp=300, max_hp=300),
+            PokemonState(species="Glaceon", level=100, current_hp=300, max_hp=300),
+            PokemonMove(name="Psychic", current_pp=10, max_pp=16),
+            FieldState(weather=Weather.SNOW, weather_turns_remaining=5),
+            MoveResult(
+                min_damage=124,
+                max_damage=147,
+                knockout_probability=0.0,
+                critical_hit_probability=1 / 24,
+                crit_min_damage=187,
+                crit_max_damage=220,
+                status_effects={},
+                additional_effects=[],
+            ),
+        ),
+    )
+    def test_weather_stat_boosts(
+        self,
+        attacker: PokemonState,
+        defender: PokemonState,
+        move: PokemonMove,
+        field_state: FieldState,
+        expected_result: MoveResult,
+    ) -> None:
+        result = self.simulator.estimate_move_result(
+            attacker, defender, move, field_state
+        )
+
+        self.assertEqual(result, expected_result)
+
 
 if __name__ == "__main__":
     absltest.main()

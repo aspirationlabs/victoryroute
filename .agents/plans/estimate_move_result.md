@@ -82,13 +82,20 @@ Add missing damage calculation effects to `estimate_move_result` to match Pokemo
 - ✅ Added regression cases in `battle_simulator_test` to cover Choice Band, Choice Specs, Life Orb, Expert Belt, Mystic Water, and item mismatch scenarios that should have no effect.
 
 ### 7. Weather Edge Cases
-**Status:** Planned
+**Status:** ✅ COMPLETED
 **Complexity:** Low
 **Value:** Low (less common)
 
-- Sandstorm: 1.5x Rock-type Sp.Def
-- Snow: 1.5x Ice-type Defense
-- Harsh Sun/Heavy Rain: 2.0x boost, complete immunity reduction
+- ✅ `_get_weather_stat_modifier()` helper checks Pokemon type and weather
+- ✅ Sandstorm: 1.5x Rock-type Special Defense (applied to effective stat)
+- ✅ Snow: 1.5x Ice-type Defense (applied to effective stat)
+- ✅ Weather stat modifiers integrated into both regular and crit damage calculations (lines 611-617, 658-660)
+- ✅ Parameterized test `test_weather_stat_boosts` with 4 test cases:
+  - Sandstorm boosting Special Defense for Rock-type (Alakazam vs Golem)
+  - Sandstorm NOT boosting Defense for physical moves (Machamp vs Tyranitar)
+  - Snow boosting Defense for Ice-type (Machamp vs Glaceon)
+  - Snow NOT boosting Special Defense for special moves (Alakazam vs Glaceon)
+- Note: Harsh Sun/Heavy Rain extreme weather effects deferred for future implementation
 
 ## Testing Strategy
 - TDD approach: write tests first for each feature
