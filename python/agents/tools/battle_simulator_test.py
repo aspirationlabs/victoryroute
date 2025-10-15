@@ -1278,6 +1278,93 @@ class BattleSimulatorTest(parameterized.TestCase):
 
         self.assertEqual(result, expected_result)
 
+    @parameterized.named_parameters(
+        (
+            "double_kick_fixed_2_hits",
+            PokemonState(species="Hitmonlee", level=100, current_hp=300, max_hp=300),
+            PokemonState(species="Blissey", level=100, current_hp=300, max_hp=300),
+            PokemonMove(name="Double Kick", current_pp=30, max_pp=48),
+            MoveResult(
+                min_damage=372,
+                max_damage=438,
+                knockout_probability=1.0,
+                critical_hit_probability=1 / 24,
+                crit_min_damage=558,
+                crit_max_damage=656,
+                hit_count=2,
+                status_effects={},
+                additional_effects=[],
+            ),
+        ),
+        (
+            "bullet_seed_variable_hits",
+            PokemonState(species="Breloom", level=100, current_hp=300, max_hp=300),
+            PokemonState(species="Blastoise", level=100, current_hp=300, max_hp=300),
+            PokemonMove(name="Bullet Seed", current_pp=30, max_pp=48),
+            MoveResult(
+                min_damage=210,
+                max_damage=251,
+                knockout_probability=0.0,
+                critical_hit_probability=1 / 24,
+                crit_min_damage=319,
+                crit_max_damage=375,
+                hit_count="2-5",
+                status_effects={},
+                additional_effects=[],
+            ),
+        ),
+        (
+            "bullet_seed_with_technician",
+            PokemonState(
+                species="Breloom",
+                level=100,
+                current_hp=300,
+                max_hp=300,
+                ability="Technician",
+            ),
+            PokemonState(species="Blastoise", level=100, current_hp=300, max_hp=300),
+            PokemonMove(name="Bullet Seed", current_pp=30, max_pp=48),
+            MoveResult(
+                min_damage=306,
+                max_damage=362,
+                knockout_probability=1.0,
+                critical_hit_probability=1 / 24,
+                crit_min_damage=461,
+                crit_max_damage=542,
+                hit_count="2-5",
+                status_effects={},
+                additional_effects=[],
+            ),
+        ),
+        (
+            "rock_blast_variable_hits",
+            PokemonState(species="Rhyperior", level=100, current_hp=300, max_hp=300),
+            PokemonState(species="Charizard", level=100, current_hp=300, max_hp=300),
+            PokemonMove(name="Rock Blast", current_pp=10, max_pp=16),
+            MoveResult(
+                min_damage=520,
+                max_damage=613,
+                knockout_probability=1.0,
+                critical_hit_probability=1 / 24,
+                crit_min_damage=781,
+                crit_max_damage=920,
+                hit_count="2-5",
+                status_effects={},
+                additional_effects=[],
+            ),
+        ),
+    )
+    def test_multihit_moves(
+        self,
+        attacker: PokemonState,
+        defender: PokemonState,
+        move: PokemonMove,
+        expected_result: MoveResult,
+    ) -> None:
+        result = self.simulator.estimate_move_result(attacker, defender, move)
+
+        self.assertEqual(result, expected_result)
+
 
 if __name__ == "__main__":
     absltest.main()

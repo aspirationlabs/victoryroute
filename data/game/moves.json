@@ -1076,7 +1076,11 @@
         "pp": 30,
         "priority": 0,
         "category": "Physical",
-        "description": "Hits two to five times. Has a 35% chance to hit two or three times and a 15% chance to hit four or five times. If one of the hits breaks the target's substitute, it will take damage for the remaining hits. If the user has the Skill Link Ability, this move will always hit five times. If the user is holding Loaded Dice, this move will hit 4-5 times."
+        "description": "Hits two to five times. Has a 35% chance to hit two or three times and a 15% chance to hit four or five times. If one of the hits breaks the target's substitute, it will take damage for the remaining hits. If the user has the Skill Link Ability, this move will always hit five times. If the user is holding Loaded Dice, this move will hit 4-5 times.",
+        "multihit": [
+            2,
+            5
+        ]
     },
     {
         "name": "Burning Bulwark",
@@ -1978,7 +1982,8 @@
         "pp": 30,
         "priority": 0,
         "category": "Physical",
-        "description": "Hits twice. If the first hit breaks the target's substitute, it will take damage for the second hit."
+        "description": "Hits twice. If the first hit breaks the target's substitute, it will take damage for the second hit.",
+        "multihit": 2
     },
     {
         "name": "Double Shock",
@@ -7501,7 +7506,11 @@
         "pp": 10,
         "priority": 0,
         "category": "Physical",
-        "description": "Hits two to five times. Has a 35% chance to hit two or three times and a 15% chance to hit four or five times. If one of the hits breaks the target's substitute, it will take damage for the remaining hits. If the user has the Skill Link Ability, this move will always hit five times. If the user is holding Loaded Dice, this move will hit 4-5 times."
+        "description": "Hits two to five times. Has a 35% chance to hit two or three times and a 15% chance to hit four or five times. If one of the hits breaks the target's substitute, it will take damage for the remaining hits. If the user has the Skill Link Ability, this move will always hit five times. If the user is holding Loaded Dice, this move will hit 4-5 times.",
+        "multihit": [
+            2,
+            5
+        ]
     },
     {
         "name": "Rock Climb",

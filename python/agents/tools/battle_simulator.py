@@ -2,7 +2,7 @@
 
 import random
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from python.game.data.game_data import GameData
 from python.game.schema.enums import SideCondition, Stat, Status, Terrain, Weather
@@ -104,6 +104,7 @@ class MoveResult:
     crit_max_damage: int
     status_effects: Dict[str, float]
     additional_effects: List[str]
+    hit_count: Union[int, str] = 1
 
 
 class BattleSimulator:
@@ -735,6 +736,27 @@ class BattleSimulator:
         crit_min_damage = int(crit_damage * 0.85)
         crit_max_damage = int(crit_damage * 1.0)
 
+        hit_count: Union[int, str] = 1
+        hit_multiplier = 1.0
+
+        if move_data.multihit:
+            if isinstance(move_data.multihit, int):
+                hit_count = move_data.multihit
+                hit_multiplier = float(move_data.multihit)
+            elif isinstance(move_data.multihit, (tuple, list)):
+                min_hits, max_hits = move_data.multihit
+                if min_hits == 2 and max_hits == 5:
+                    hit_multiplier = 0.35 * 2 + 0.35 * 3 + 0.15 * 4 + 0.15 * 5
+                    hit_count = f"{min_hits}-{max_hits}"
+                else:
+                    hit_multiplier = (min_hits + max_hits) / 2.0
+                    hit_count = f"{min_hits}-{max_hits}"
+
+        min_damage = int(min_damage * hit_multiplier)
+        max_damage = int(max_damage * hit_multiplier)
+        crit_min_damage = int(crit_min_damage * hit_multiplier)
+        crit_max_damage = int(crit_max_damage * hit_multiplier)
+
         ko_prob = 0.0
         if min_damage >= target_pokemon.current_hp:
             ko_prob = 1.0
@@ -753,6 +775,7 @@ class BattleSimulator:
             crit_max_damage=crit_max_damage,
             status_effects=status_effects,
             additional_effects=additional_effects,
+            hit_count=hit_count,
         )
 
     def _modify_attack_for_ability(
@@ -823,10 +846,7 @@ class BattleSimulator:
         if defense_stat == Stat.DEF:
             if defender_ability == "furcoat":
                 modified_defense = int(modified_defense * 2.0)
-            if (
-                defender_ability == "marvelscale"
-                and defender.status != Status.NONE
-            ):
+            if defender_ability == "marvelscale" and defender.status != Status.NONE:
                 modified_defense = int(modified_defense * 1.5)
         return modified_defense
 
@@ -984,7 +1004,10 @@ class BattleSimulator:
         ):
             damage *= 0.5
 
-        if effective_defender_ability == "thickfat" and move_data.type in {"Fire", "Ice"}:
+        if effective_defender_ability == "thickfat" and move_data.type in {
+            "Fire",
+            "Ice",
+        }:
             damage *= 0.5
         if effective_defender_ability == "waterbubble" and move_data.type == "Fire":
             damage *= 0.5
@@ -992,10 +1015,11 @@ class BattleSimulator:
             damage *= 0.5
         if effective_defender_ability == "dryskin" and move_data.type == "Fire":
             damage *= 1.25
-        if (
-            type_effectiveness > 1.0
-            and effective_defender_ability in {"filter", "solidrock", "prismarmor"}
-        ):
+        if type_effectiveness > 1.0 and effective_defender_ability in {
+            "filter",
+            "solidrock",
+            "prismarmor",
+        }:
             damage *= 0.75
         if (
             effective_defender_ability in {"multiscale", "shadowshield"}
