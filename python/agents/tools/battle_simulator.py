@@ -2,7 +2,7 @@
 
 import random
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from python.game.data.game_data import GameData
 from python.game.schema.enums import SideCondition, Stat, Status, Terrain, Weather
@@ -108,6 +108,123 @@ class MoveResult:
 
 class BattleSimulator:
     """Simulator for calculating Pokemon stats and battle scenarios."""
+
+    TYPE_BOOST_ITEMS: Dict[str, str] = {
+        "blackbelt": "Fighting",
+        "fistplate": "Fighting",
+        "charcoal": "Fire",
+        "flameplate": "Fire",
+        "mysticwater": "Water",
+        "splashplate": "Water",
+        "seaincense": "Water",
+        "waveincense": "Water",
+        "magnet": "Electric",
+        "zapplate": "Electric",
+        "miracleseed": "Grass",
+        "meadowplate": "Grass",
+        "roseincense": "Grass",
+        "nevermeltice": "Ice",
+        "icicleplate": "Ice",
+        "blackglasses": "Dark",
+        "dreadplate": "Dark",
+        "poisonbarb": "Poison",
+        "toxicplate": "Poison",
+        "softsand": "Ground",
+        "earthplate": "Ground",
+        "sharpebeak": "Flying",
+        "skyplate": "Flying",
+        "twistedspoon": "Psychic",
+        "oddincense": "Psychic",
+        "mindplate": "Psychic",
+        "silverpowder": "Bug",
+        "insectplate": "Bug",
+        "hardstone": "Rock",
+        "stoneplate": "Rock",
+        "rockincense": "Rock",
+        "spelltag": "Ghost",
+        "spookyplate": "Ghost",
+        "dragonfang": "Dragon",
+        "dracoplate": "Dragon",
+        "metalcoat": "Steel",
+        "ironplate": "Steel",
+        "silkscarf": "Normal",
+        "pinkbow": "Normal",
+        "polkadotbow": "Normal",
+        "pixieplate": "Fairy",
+        "fairyfeather": "Fairy",
+    }
+
+    SPECIES_TYPE_BOOST_ITEMS: Dict[str, Dict[str, Any]] = {
+        "adamantorb": {
+            "species": {"dialga", "dialgaorigin"},
+            "types": {"Steel", "Dragon"},
+            "multiplier": 1.2,
+        },
+        "adamantcrystal": {
+            "species": {"dialga", "dialgaorigin"},
+            "types": {"Steel", "Dragon"},
+            "multiplier": 1.2,
+        },
+        "lustrousorb": {
+            "species": {"palkia", "palkiaorigin"},
+            "types": {"Water", "Dragon"},
+            "multiplier": 1.2,
+        },
+        "lustrousglobe": {
+            "species": {"palkia", "palkiaorigin"},
+            "types": {"Water", "Dragon"},
+            "multiplier": 1.2,
+        },
+        "griseousorb": {
+            "species": {"giratina", "giratinaorigin"},
+            "types": {"Ghost", "Dragon"},
+            "multiplier": 1.2,
+        },
+        "griseouscore": {
+            "species": {"giratina", "giratinaorigin"},
+            "types": {"Ghost", "Dragon"},
+            "multiplier": 1.2,
+        },
+        "souldew": {
+            "species": {
+                "latias",
+                "latiasmega",
+                "latios",
+                "latiosmega",
+            },
+            "types": {"Dragon", "Psychic"},
+            "multiplier": 1.2,
+        },
+        "vilevial": {
+            "species": {"venomicon", "venomiconepilogue"},
+            "types": {"Poison", "Flying"},
+            "multiplier": 1.2,
+        },
+        "cornerstonemask": {
+            "species": {
+                "ogerponcornerstone",
+                "ogerponcornerstonetera",
+            },
+            "types": None,
+            "multiplier": 1.2,
+        },
+        "wellspringmask": {
+            "species": {
+                "ogerponwellspring",
+                "ogerponwellspringtera",
+            },
+            "types": None,
+            "multiplier": 1.2,
+        },
+        "hearthflamemask": {
+            "species": {
+                "ogerponhearthflame",
+                "ogerponhearthflametera",
+            },
+            "types": None,
+            "multiplier": 1.2,
+        },
+    }
 
     def __init__(self, game_data: GameData) -> None:
         """Initialize the battle simulator.
@@ -661,8 +778,11 @@ class BattleSimulator:
         for defender_type in defender_types:
             effectiveness = type_chart.get_effectiveness(move_data.type, defender_type)
             type_effectiveness *= effectiveness
-
         damage *= type_effectiveness
+
+        damage *= self._get_item_damage_multiplier(
+            attacker, move_data, type_effectiveness
+        )
 
         if attacker.status == Status.BURN and move_data.category == "Physical":
             damage *= 0.5
@@ -682,3 +802,64 @@ class BattleSimulator:
                 damage *= 0.5
 
         return damage
+
+    def _get_item_damage_multiplier(
+        self, attacker: PokemonState, move_data, type_effectiveness: float
+    ) -> float:
+        if not attacker.item:
+            return 1.0
+
+        item = normalize_name(attacker.item)
+        if not item:
+            return 1.0
+
+        multiplier = 1.0
+        move_category = move_data.category
+        move_type = move_data.type
+
+        if item == "lifeorb":
+            multiplier *= 1.3
+        if item == "choiceband" and move_category == "Physical":
+            multiplier *= 1.5
+        if item == "choicespecs" and move_category == "Special":
+            multiplier *= 1.5
+
+        if item == "expertbelt" and type_effectiveness > 1.0:
+            multiplier *= 1.2
+        if item == "muscleband" and move_category == "Physical":
+            multiplier *= 1.1
+        if item == "wiseglasses" and move_category == "Special":
+            multiplier *= 1.1
+
+        boosted_type = self.TYPE_BOOST_ITEMS.get(item)
+        if boosted_type and move_type == boosted_type:
+            multiplier *= 1.2
+
+        species = normalize_name(attacker.species) if attacker.species else ""
+        species_boost = self.SPECIES_TYPE_BOOST_ITEMS.get(item)
+        if species_boost and species in species_boost["species"]:
+            allowed_types = species_boost["types"]
+            if allowed_types is None or move_type in allowed_types:
+                multiplier *= float(species_boost["multiplier"])
+
+        if item == "lightball" and species.startswith("pikachu"):
+            if move_category in {"Physical", "Special"}:
+                multiplier *= 2.0
+
+        if (
+            item == "thickclub"
+            and species
+            in {
+                "cubone",
+                "marowak",
+                "marowakalola",
+                "marowakalolatotem",
+            }
+            and move_category == "Physical"
+        ):
+            multiplier *= 2.0
+
+        if item == "deepseatooth" and species == "clamperl" and move_category == "Special":
+            multiplier *= 2.0
+
+        return multiplier
