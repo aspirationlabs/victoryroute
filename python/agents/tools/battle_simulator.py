@@ -6,6 +6,7 @@ from typing import Dict, List, Optional, Tuple
 
 from python.game.data.game_data import GameData
 from python.game.schema.enums import SideCondition, Stat, Status, Terrain, Weather
+from python.game.schema.field_state import FieldState
 from python.game.schema.object_name_normalizer import normalize_name
 from python.game.schema.pokemon_state import (
     STAT_STAGE_MULTIPLIERS,
@@ -89,6 +90,18 @@ class MoveAction:
     priority: int
     fractional_priority: float
     speed: int
+
+
+@dataclass(frozen=True)
+class MoveResult:
+    """Result of estimating a move's damage and effects."""
+
+    min_damage: int
+    max_damage: int
+    knockout_probability: float
+    critical_hit_probability: float
+    status_effects: Dict[str, float]
+    additional_effects: List[str]
 
 
 class BattleSimulator:
@@ -403,3 +416,148 @@ class BattleSimulator:
             return [action_1, action_2] if speed_1 > speed_2 else [action_2, action_1]
 
         return [action_1, action_2] if random.random() < 0.5 else [action_2, action_1]
+
+    def estimate_move_result(
+        self,
+        attacking_pokemon: PokemonState,
+        target_pokemon: PokemonState,
+        move: PokemonMove,
+        field_state: Optional[FieldState] = None,
+    ) -> MoveResult:
+        move_data = self.game_data.get_move(move.name)
+
+        if move_data.category == "Status":
+            return MoveResult(
+                min_damage=0,
+                max_damage=0,
+                knockout_probability=0.0,
+                critical_hit_probability=0.0,
+                status_effects={},
+                additional_effects=[],
+            )
+
+        attacker_stats = self.get_pokemon_stats(
+            attacking_pokemon, attacking_pokemon.level
+        )
+        defender_stats = self.get_pokemon_stats(target_pokemon, target_pokemon.level)
+
+        if move_data.category == "Physical":
+            attack_stat = Stat.ATK
+            defense_stat = Stat.DEF
+            attacker_stat_value = attacker_stats.attack
+            defender_stat_value = defender_stats.defense
+        else:
+            attack_stat = Stat.SPA
+            defense_stat = Stat.SPD
+            attacker_stat_value = attacker_stats.special_attack
+            defender_stat_value = defender_stats.special_defense
+
+        attack_multiplier = attacking_pokemon.get_stat_multiplier(attack_stat)
+        defense_multiplier = target_pokemon.get_stat_multiplier(defense_stat)
+
+        attack = int(attacker_stat_value * attack_multiplier)
+        defense = int(defender_stat_value * defense_multiplier)
+
+        level = attacking_pokemon.level
+        base_power = move_data.base_power
+
+        base_damage = (
+            int(int(int(int(2 * level / 5 + 2) * base_power * attack) / defense) / 50)
+            + 2
+        )
+
+        crit_ratio = 0
+        if crit_ratio == 0:
+            crit_chance = 1 / 24
+        elif crit_ratio == 1:
+            crit_chance = 1 / 8
+        elif crit_ratio == 2:
+            crit_chance = 1 / 2
+        else:
+            crit_chance = 1.0
+
+        damage = self._apply_modifiers(
+            base_damage,
+            attacking_pokemon,
+            target_pokemon,
+            move_data,
+            field_state,
+            is_crit=False,
+        )
+
+        min_damage = int(damage * 0.85)
+        max_damage = int(damage * 1.0)
+
+        ko_prob = 0.0
+        if min_damage >= target_pokemon.current_hp:
+            ko_prob = 1.0
+        elif max_damage >= target_pokemon.current_hp:
+            ko_prob = 0.5
+
+        status_effects: Dict[str, float] = {}
+        additional_effects: List[str] = []
+
+        return MoveResult(
+            min_damage=min_damage,
+            max_damage=max_damage,
+            knockout_probability=ko_prob,
+            critical_hit_probability=crit_chance,
+            status_effects=status_effects,
+            additional_effects=additional_effects,
+        )
+
+    def _apply_modifiers(
+        self,
+        base_damage: int,
+        attacker: PokemonState,
+        defender: PokemonState,
+        move_data,
+        field_state: Optional[FieldState],
+        is_crit: bool,
+    ) -> float:
+        damage = float(base_damage)
+
+        weather = field_state.get_weather() if field_state else None
+        if weather == Weather.RAIN:
+            if move_data.type == "Water":
+                damage *= 1.5
+            elif move_data.type == "Fire":
+                damage *= 0.5
+        elif weather == Weather.SUN:
+            if move_data.type == "Fire":
+                damage *= 1.5
+            elif move_data.type == "Water":
+                damage *= 0.5
+
+        if is_crit:
+            damage *= 1.5
+
+        attacker_pokemon_data = self.game_data.get_pokemon(attacker.species)
+        attacker_types = attacker_pokemon_data.types
+        if attacker.has_terastallized and attacker.tera_type:
+            attacker_types = [attacker.tera_type]
+
+        is_stab = move_data.type in attacker_types
+        if is_stab:
+            if attacker.has_terastallized:
+                damage *= 2.0
+            else:
+                damage *= 1.5
+
+        defender_pokemon_data = self.game_data.get_pokemon(defender.species)
+        defender_types = defender_pokemon_data.types
+        if defender.has_terastallized and defender.tera_type:
+            defender_types = [defender.tera_type]
+
+        type_effectiveness = 1.0
+        type_chart = self.game_data.get_type_chart()
+        for defender_type in defender_types:
+            effectiveness = type_chart.get_effectiveness(move_data.type, defender_type)
+            type_effectiveness *= effectiveness
+
+        damage *= type_effectiveness
+
+        if attacker.status == Status.BURN and move_data.category == "Physical":
+            damage *= 0.5
+
+        return damage
