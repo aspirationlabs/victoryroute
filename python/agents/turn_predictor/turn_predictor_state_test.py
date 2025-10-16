@@ -111,6 +111,21 @@ class TurnPredictorStateTest(unittest.TestCase):
         self.assertEqual(payload["our_player_id"], "p1")
         self.assertEqual(payload["turn_number"], 5)
 
+    def test_from_state_missing_optional_field(self) -> None:
+        """from_state handles missing opponent_predicted_active_pokemon."""
+        input_state = dict(self.base_kwargs)
+        del input_state["opponent_predicted_active_pokemon"]
+        result = TurnPredictorState.from_state(input_state)
+        self.assertIsNone(result.opponent_predicted_active_pokemon)
+
+    def test_from_session_missing_optional_field(self) -> None:
+        """from_session handles missing opponent_predicted_active_pokemon."""
+        state_dict = dict(self.base_kwargs)
+        del state_dict["opponent_predicted_active_pokemon"]
+        session = SimpleNamespace(state=state_dict)
+        result = TurnPredictorState.from_session(session)
+        self.assertIsNone(result.opponent_predicted_active_pokemon)
+
 
 if __name__ == "__main__":
     unittest.main()
