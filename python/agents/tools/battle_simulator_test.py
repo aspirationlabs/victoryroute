@@ -1464,7 +1464,9 @@ class BattleSimulatorTest(parameterized.TestCase):
             gyro_attacker, gyro_defender, gyro_move
         )
 
+        self.assertEqual(electro_result.min_damage, 87)
         self.assertEqual(electro_result.max_damage, 103)
+        self.assertEqual(gyro_result.min_damage, 38)
         self.assertEqual(gyro_result.max_damage, 45)
 
     def test_weight_based_moves(self) -> None:
@@ -1483,7 +1485,9 @@ class BattleSimulatorTest(parameterized.TestCase):
             lowkick_attacker, heavy_defender, lowkick_move
         )
 
+        self.assertEqual(heavy_result.min_damage, 109)
         self.assertEqual(heavy_result.max_damage, 128)
+        self.assertEqual(lowkick_result.min_damage, 362)
         self.assertEqual(lowkick_result.max_damage, 426)
 
     def test_stored_power_positive_boosts(self) -> None:
@@ -1587,7 +1591,9 @@ class BattleSimulatorTest(parameterized.TestCase):
             iron_fist_attacker, ferrothorn, mach_punch
         )
         guts_result = self.simulator.estimate_move_result(guts_attacker, ferrothorn, mach_punch)
+        self.assertEqual(iron_fist_result.min_damage, 112)
         self.assertEqual(iron_fist_result.max_damage, 132)
+        self.assertEqual(guts_result.min_damage, 94)
         self.assertEqual(guts_result.max_damage, 111)
 
         strong_jaw_attacker = PokemonState(
@@ -1601,7 +1607,9 @@ class BattleSimulatorTest(parameterized.TestCase):
             strong_jaw_attacker, swampert, crunch
         )
         static_result = self.simulator.estimate_move_result(static_attacker, swampert, crunch)
+        self.assertEqual(strong_jaw_result.min_damage, 77)
         self.assertEqual(strong_jaw_result.max_damage, 91)
+        self.assertEqual(static_result.min_damage, 51)
         self.assertEqual(static_result.max_damage, 61)
 
         mega_launcher_attacker = PokemonState(
@@ -1617,7 +1625,9 @@ class BattleSimulatorTest(parameterized.TestCase):
         torrent_result = self.simulator.estimate_move_result(
             torrent_attacker, swampert, aura_sphere
         )
+        self.assertEqual(mega_launcher_result.min_damage, 105)
         self.assertEqual(mega_launcher_result.max_damage, 124)
+        self.assertEqual(torrent_result.min_damage, 70)
         self.assertEqual(torrent_result.max_damage, 83)
 
         sharpness_attacker = PokemonState(
@@ -1633,7 +1643,9 @@ class BattleSimulatorTest(parameterized.TestCase):
         steadfast_result = self.simulator.estimate_move_result(
             steadfast_attacker, rapidash, aqua_cutter
         )
+        self.assertEqual(sharpness_result.min_damage, 221)
         self.assertEqual(sharpness_result.max_damage, 260)
+        self.assertEqual(steadfast_result.min_damage, 147)
         self.assertEqual(steadfast_result.max_damage, 174)
 
 
