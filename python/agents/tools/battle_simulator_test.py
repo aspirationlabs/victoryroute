@@ -1,6 +1,6 @@
 """Unit tests for battle simulator."""
 
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional, Never
 
 from absl.testing import absltest, parameterized
 
@@ -16,10 +16,16 @@ from python.game.schema.field_state import FieldState
 from python.game.schema.pokemon_state import PokemonMove, PokemonState
 
 
+def _case(**kwargs: Any) -> dict[str, Any]:
+    """Return kwargs as a dictionary with consistent typing."""
+    return kwargs
+
+
 class BattleSimulatorTest(parameterized.TestCase):
-    def setUp(self) -> None:
+    def setUp(self) -> Never:
         game_data = GameData()
         self.simulator = BattleSimulator(game_data)
+        return
 
     @parameterized.named_parameters(
         (
@@ -928,7 +934,7 @@ class BattleSimulatorTest(parameterized.TestCase):
         self.assertEqual(result, expected_result)
 
     @parameterized.named_parameters(
-        dict(
+        _case(
             testcase_name="adaptability_stab",
             attacker=PokemonState(
                 species="Porygon-Z",
@@ -949,7 +955,7 @@ class BattleSimulatorTest(parameterized.TestCase):
             defender_side_conditions=None,
             expected_ratio=4 / 3,
         ),
-        dict(
+        _case(
             testcase_name="technician_low_base_power_boost",
             attacker=PokemonState(
                 species="Scizor",
@@ -970,7 +976,7 @@ class BattleSimulatorTest(parameterized.TestCase):
             defender_side_conditions=None,
             expected_ratio=1.5,
         ),
-        dict(
+        _case(
             testcase_name="huge_power_attack_doubling",
             attacker=PokemonState(
                 species="Azumarill",
@@ -991,7 +997,7 @@ class BattleSimulatorTest(parameterized.TestCase):
             defender_side_conditions=None,
             expected_ratio=2.0,
         ),
-        dict(
+        _case(
             testcase_name="guts_ignores_burn_penalty",
             attacker=PokemonState(
                 species="Conkeldurr",
@@ -1017,7 +1023,7 @@ class BattleSimulatorTest(parameterized.TestCase):
             defender_side_conditions=None,
             expected_ratio=3.0,
         ),
-        dict(
+        _case(
             testcase_name="thick_fat_halves_fire_damage",
             attacker=PokemonState(
                 species="Charizard", level=100, current_hp=300, max_hp=300
@@ -1038,7 +1044,7 @@ class BattleSimulatorTest(parameterized.TestCase):
             defender_side_conditions=None,
             expected_ratio=0.5,
         ),
-        dict(
+        _case(
             testcase_name="mold_breaker_ignores_fur_coat",
             attacker=PokemonState(
                 species="Haxorus",
@@ -1065,7 +1071,7 @@ class BattleSimulatorTest(parameterized.TestCase):
             defender_side_conditions=None,
             expected_ratio=1.0,
         ),
-        dict(
+        _case(
             testcase_name="levitate_grants_ground_immunity",
             attacker=PokemonState(
                 species="Landorus-Therian", level=100, current_hp=300, max_hp=300
@@ -1086,7 +1092,7 @@ class BattleSimulatorTest(parameterized.TestCase):
             defender_side_conditions=None,
             expected_ratio=0.0,
         ),
-        dict(
+        _case(
             testcase_name="tinted_lens_doubles_resisted_damage",
             attacker=PokemonState(
                 species="Yanmega",
@@ -1107,7 +1113,7 @@ class BattleSimulatorTest(parameterized.TestCase):
             defender_side_conditions=None,
             expected_ratio=2.0,
         ),
-        dict(
+        _case(
             testcase_name="solid_rock_reduces_super_effective_damage",
             attacker=PokemonState(
                 species="Greninja", level=100, current_hp=300, max_hp=300
@@ -1128,7 +1134,7 @@ class BattleSimulatorTest(parameterized.TestCase):
             defender_side_conditions=None,
             expected_ratio=0.75,
         ),
-        dict(
+        _case(
             testcase_name="multiscale_halves_when_healthy",
             attacker=PokemonState(
                 species="Lapras", level=100, current_hp=300, max_hp=300
@@ -1433,7 +1439,9 @@ class BattleSimulatorTest(parameterized.TestCase):
         self.assertEqual(half_result.max_damage, 270)
 
     def test_crush_grip_scales_with_target_hp(self) -> None:
-        attacker = PokemonState(species="Regigigas", level=100, current_hp=400, max_hp=400)
+        attacker = PokemonState(
+            species="Regigigas", level=100, current_hp=400, max_hp=400
+        )
         full_defender = PokemonState(
             species="Blissey", level=100, current_hp=714, max_hp=714
         )
@@ -1449,12 +1457,20 @@ class BattleSimulatorTest(parameterized.TestCase):
         self.assertEqual(low_result.max_damage, 51)
 
     def test_speed_based_moves(self) -> None:
-        electro_attacker = PokemonState(species="Jolteon", level=100, current_hp=300, max_hp=300)
-        electro_defender = PokemonState(species="Snorlax", level=100, current_hp=460, max_hp=460)
+        electro_attacker = PokemonState(
+            species="Jolteon", level=100, current_hp=300, max_hp=300
+        )
+        electro_defender = PokemonState(
+            species="Snorlax", level=100, current_hp=460, max_hp=460
+        )
         electro_move = PokemonMove(name="Electro Ball", current_pp=10, max_pp=10)
 
-        gyro_attacker = PokemonState(species="Bronzong", level=100, current_hp=300, max_hp=300)
-        gyro_defender = PokemonState(species="Jolteon", level=100, current_hp=300, max_hp=300)
+        gyro_attacker = PokemonState(
+            species="Bronzong", level=100, current_hp=300, max_hp=300
+        )
+        gyro_defender = PokemonState(
+            species="Jolteon", level=100, current_hp=300, max_hp=300
+        )
         gyro_move = PokemonMove(name="Gyro Ball", current_pp=5, max_pp=5)
 
         electro_result = self.simulator.estimate_move_result(
@@ -1470,12 +1486,20 @@ class BattleSimulatorTest(parameterized.TestCase):
         self.assertEqual(gyro_result.max_damage, 45)
 
     def test_weight_based_moves(self) -> None:
-        heavy_attacker = PokemonState(species="Celesteela", level=100, current_hp=300, max_hp=300)
-        light_defender = PokemonState(species="Pikachu", level=100, current_hp=200, max_hp=200)
+        heavy_attacker = PokemonState(
+            species="Celesteela", level=100, current_hp=300, max_hp=300
+        )
+        light_defender = PokemonState(
+            species="Pikachu", level=100, current_hp=200, max_hp=200
+        )
         heavy_move = PokemonMove(name="Heavy Slam", current_pp=10, max_pp=10)
 
-        lowkick_attacker = PokemonState(species="Lucario", level=100, current_hp=300, max_hp=300)
-        heavy_defender = PokemonState(species="Snorlax", level=100, current_hp=460, max_hp=460)
+        lowkick_attacker = PokemonState(
+            species="Lucario", level=100, current_hp=300, max_hp=300
+        )
+        heavy_defender = PokemonState(
+            species="Snorlax", level=100, current_hp=460, max_hp=460
+        )
         lowkick_move = PokemonMove(name="Low Kick", current_pp=20, max_pp=20)
 
         heavy_result = self.simulator.estimate_move_result(
@@ -1498,7 +1522,9 @@ class BattleSimulatorTest(parameterized.TestCase):
             max_hp=300,
             stat_boosts={Stat.SPA: 2, Stat.SPD: 1, Stat.SPE: 1},
         )
-        defender = PokemonState(species="Machamp", level=100, current_hp=300, max_hp=300)
+        defender = PokemonState(
+            species="Machamp", level=100, current_hp=300, max_hp=300
+        )
         move = PokemonMove(name="Stored Power", current_pp=10, max_pp=10)
 
         result = self.simulator.estimate_move_result(attacker, defender, move)
@@ -1506,29 +1532,45 @@ class BattleSimulatorTest(parameterized.TestCase):
         self.assertEqual(result.max_damage, 678)
 
     def test_recoil_and_rock_head(self) -> None:
-        recoil_attacker = PokemonState(species="Staraptor", level=100, current_hp=320, max_hp=320)
-        defender = PokemonState(species="Ferrothorn", level=100, current_hp=300, max_hp=300)
+        recoil_attacker = PokemonState(
+            species="Staraptor", level=100, current_hp=320, max_hp=320
+        )
+        defender = PokemonState(
+            species="Ferrothorn", level=100, current_hp=300, max_hp=300
+        )
         brave_bird = PokemonMove(name="Brave Bird", current_pp=15, max_pp=15)
-        brave_result = self.simulator.estimate_move_result(recoil_attacker, defender, brave_bird)
+        brave_result = self.simulator.estimate_move_result(
+            recoil_attacker, defender, brave_bird
+        )
 
         rock_head_attacker = PokemonState(
             species="Aggron", level=100, current_hp=330, max_hp=330, ability="Rock Head"
         )
         head_smash = PokemonMove(name="Head Smash", current_pp=5, max_pp=5)
-        head_result = self.simulator.estimate_move_result(rock_head_attacker, defender, head_smash)
+        head_result = self.simulator.estimate_move_result(
+            rock_head_attacker, defender, head_smash
+        )
 
         self.assertEqual(brave_result.recoil_damage, 48)
         self.assertEqual(head_result.recoil_damage, 0)
 
     def test_drain_moves_and_liquid_ooze(self) -> None:
-        attacker = PokemonState(species="Venusaur", level=100, current_hp=320, max_hp=320)
-        defender = PokemonState(species="Swampert", level=100, current_hp=320, max_hp=320)
+        attacker = PokemonState(
+            species="Venusaur", level=100, current_hp=320, max_hp=320
+        )
+        defender = PokemonState(
+            species="Swampert", level=100, current_hp=320, max_hp=320
+        )
         move = PokemonMove(name="Giga Drain", current_pp=10, max_pp=10)
 
         normal_result = self.simulator.estimate_move_result(attacker, defender, move)
 
         ooze_defender = PokemonState(
-            species="Tentacruel", level=100, current_hp=300, max_hp=300, ability="Liquid Ooze"
+            species="Tentacruel",
+            level=100,
+            current_hp=300,
+            max_hp=300,
+            ability="Liquid Ooze",
         )
         ooze_result = self.simulator.estimate_move_result(attacker, ooze_defender, move)
 
@@ -1536,26 +1578,48 @@ class BattleSimulatorTest(parameterized.TestCase):
         self.assertEqual(ooze_result.drain_heal, -43)
 
     def test_secondary_status_chances(self) -> None:
-        base_attacker = PokemonState(species="Raichu", level=100, current_hp=300, max_hp=300)
-        defender = PokemonState(species="Milotic", level=100, current_hp=340, max_hp=340)
+        base_attacker = PokemonState(
+            species="Raichu", level=100, current_hp=300, max_hp=300
+        )
+        defender = PokemonState(
+            species="Milotic", level=100, current_hp=340, max_hp=340
+        )
         move = PokemonMove(name="Thunderbolt", current_pp=15, max_pp=15)
 
         base_result = self.simulator.estimate_move_result(base_attacker, defender, move)
 
         serene_attacker = PokemonState(
-            species="Togekiss", level=100, current_hp=300, max_hp=300, ability="Serene Grace"
+            species="Togekiss",
+            level=100,
+            current_hp=300,
+            max_hp=300,
+            ability="Serene Grace",
         )
-        serene_result = self.simulator.estimate_move_result(serene_attacker, defender, move)
+        serene_result = self.simulator.estimate_move_result(
+            serene_attacker, defender, move
+        )
 
         sheer_attacker = PokemonState(
-            species="Nidoking", level=100, current_hp=300, max_hp=300, ability="Sheer Force"
+            species="Nidoking",
+            level=100,
+            current_hp=300,
+            max_hp=300,
+            ability="Sheer Force",
         )
-        sheer_result = self.simulator.estimate_move_result(sheer_attacker, defender, move)
+        sheer_result = self.simulator.estimate_move_result(
+            sheer_attacker, defender, move
+        )
 
         shield_defender = PokemonState(
-            species="Venomoth", level=100, current_hp=300, max_hp=300, ability="Shield Dust"
+            species="Venomoth",
+            level=100,
+            current_hp=300,
+            max_hp=300,
+            ability="Shield Dust",
         )
-        shield_result = self.simulator.estimate_move_result(base_attacker, shield_defender, move)
+        shield_result = self.simulator.estimate_move_result(
+            base_attacker, shield_defender, move
+        )
 
         self.assertEqual(base_result.status_infliction_chances["par"], 0.1)
         self.assertEqual(serene_result.status_infliction_chances["par"], 0.2)
@@ -1564,7 +1628,9 @@ class BattleSimulatorTest(parameterized.TestCase):
 
     def test_secondary_stat_drop(self) -> None:
         attacker = PokemonState(species="Raichu", level=100, current_hp=300, max_hp=300)
-        defender = PokemonState(species="Milotic", level=100, current_hp=340, max_hp=340)
+        defender = PokemonState(
+            species="Milotic", level=100, current_hp=340, max_hp=340
+        )
         move = PokemonMove(name="Shadow Ball", current_pp=15, max_pp=15)
 
         result = self.simulator.estimate_move_result(attacker, defender, move)
@@ -1576,12 +1642,22 @@ class BattleSimulatorTest(parameterized.TestCase):
         self.assertEqual(chance, 0.2)
 
     def test_flag_based_ability_damage_modifiers(self) -> None:
-        ferrothorn = PokemonState(species="Ferrothorn", level=100, current_hp=300, max_hp=300)
-        swampert = PokemonState(species="Swampert", level=100, current_hp=320, max_hp=320)
-        rapidash = PokemonState(species="Rapidash", level=100, current_hp=300, max_hp=300)
+        ferrothorn = PokemonState(
+            species="Ferrothorn", level=100, current_hp=300, max_hp=300
+        )
+        swampert = PokemonState(
+            species="Swampert", level=100, current_hp=320, max_hp=320
+        )
+        rapidash = PokemonState(
+            species="Rapidash", level=100, current_hp=300, max_hp=300
+        )
 
         iron_fist_attacker = PokemonState(
-            species="Conkeldurr", level=100, current_hp=360, max_hp=360, ability="Iron Fist"
+            species="Conkeldurr",
+            level=100,
+            current_hp=360,
+            max_hp=360,
+            ability="Iron Fist",
         )
         guts_attacker = PokemonState(
             species="Conkeldurr", level=100, current_hp=360, max_hp=360, ability="Guts"
@@ -1590,14 +1666,20 @@ class BattleSimulatorTest(parameterized.TestCase):
         iron_fist_result = self.simulator.estimate_move_result(
             iron_fist_attacker, ferrothorn, mach_punch
         )
-        guts_result = self.simulator.estimate_move_result(guts_attacker, ferrothorn, mach_punch)
+        guts_result = self.simulator.estimate_move_result(
+            guts_attacker, ferrothorn, mach_punch
+        )
         self.assertEqual(iron_fist_result.min_damage, 112)
         self.assertEqual(iron_fist_result.max_damage, 132)
         self.assertEqual(guts_result.min_damage, 94)
         self.assertEqual(guts_result.max_damage, 111)
 
         strong_jaw_attacker = PokemonState(
-            species="Manectric", level=100, current_hp=300, max_hp=300, ability="Strong Jaw"
+            species="Manectric",
+            level=100,
+            current_hp=300,
+            max_hp=300,
+            ability="Strong Jaw",
         )
         static_attacker = PokemonState(
             species="Manectric", level=100, current_hp=300, max_hp=300, ability="Static"
@@ -1606,17 +1688,27 @@ class BattleSimulatorTest(parameterized.TestCase):
         strong_jaw_result = self.simulator.estimate_move_result(
             strong_jaw_attacker, swampert, crunch
         )
-        static_result = self.simulator.estimate_move_result(static_attacker, swampert, crunch)
+        static_result = self.simulator.estimate_move_result(
+            static_attacker, swampert, crunch
+        )
         self.assertEqual(strong_jaw_result.min_damage, 77)
         self.assertEqual(strong_jaw_result.max_damage, 91)
         self.assertEqual(static_result.min_damage, 51)
         self.assertEqual(static_result.max_damage, 61)
 
         mega_launcher_attacker = PokemonState(
-            species="Clawitzer", level=100, current_hp=300, max_hp=300, ability="Mega Launcher"
+            species="Clawitzer",
+            level=100,
+            current_hp=300,
+            max_hp=300,
+            ability="Mega Launcher",
         )
         torrent_attacker = PokemonState(
-            species="Clawitzer", level=100, current_hp=300, max_hp=300, ability="Torrent"
+            species="Clawitzer",
+            level=100,
+            current_hp=300,
+            max_hp=300,
+            ability="Torrent",
         )
         aura_sphere = PokemonMove(name="Aura Sphere", current_pp=20, max_pp=20)
         mega_launcher_result = self.simulator.estimate_move_result(
@@ -1631,10 +1723,18 @@ class BattleSimulatorTest(parameterized.TestCase):
         self.assertEqual(torrent_result.max_damage, 83)
 
         sharpness_attacker = PokemonState(
-            species="Gallade", level=100, current_hp=300, max_hp=300, ability="Sharpness"
+            species="Gallade",
+            level=100,
+            current_hp=300,
+            max_hp=300,
+            ability="Sharpness",
         )
         steadfast_attacker = PokemonState(
-            species="Gallade", level=100, current_hp=300, max_hp=300, ability="Steadfast"
+            species="Gallade",
+            level=100,
+            current_hp=300,
+            max_hp=300,
+            ability="Steadfast",
         )
         aqua_cutter = PokemonMove(name="Aqua Cutter", current_pp=20, max_pp=20)
         sharpness_result = self.simulator.estimate_move_result(

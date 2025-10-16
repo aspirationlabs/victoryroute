@@ -792,9 +792,7 @@ class BattleSimulator:
             return -heal_amount
         return heal_amount
 
-    def _get_secondary_effects(
-        self, move_data, move_name: str
-    ) -> List[Dict[str, Any]]:
+    def _get_secondary_effects(self, move_data, move_name: str) -> List[Dict[str, Any]]:
         effects: List[Dict[str, Any]] = []
         if move_data.secondary_effects:
             effects.extend(dict(effect) for effect in move_data.secondary_effects)
@@ -808,8 +806,10 @@ class BattleSimulator:
         self, secondary_effects: List[Dict[str, Any]]
     ) -> bool:
         for effect in secondary_effects:
-            if effect.get("status") or effect.get("boosts") or effect.get(
-                "volatile_status"
+            if (
+                effect.get("status")
+                or effect.get("boosts")
+                or effect.get("volatile_status")
             ):
                 return True
         return False
@@ -872,13 +872,15 @@ class BattleSimulator:
                     stat_enum = self._stat_from_key(stat_key)
                     if not stat_enum:
                         continue
-                    stat_chances[stat_enum.value] = (stat_enum, int(change), probability)
+                    stat_chances[stat_enum.value] = (
+                        stat_enum,
+                        int(change),
+                        probability,
+                    )
 
             volatile_status = effect.get("volatile_status")
             if volatile_status:
-                additional_effects.append(
-                    f"{volatile_status}:{probability:.2f}"
-                )
+                additional_effects.append(f"{volatile_status}:{probability:.2f}")
 
         return status_chances, stat_chances, additional_effects
 
