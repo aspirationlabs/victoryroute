@@ -50,9 +50,9 @@ class TurnPredictorState(BaseModel):
             past_battle_event_logs=session.state["past_battle_event_logs"],
             past_player_actions=session.state["past_player_actions"],
             battle_state=session.state["battle_state"],
-            opponent_predicted_active_pokemon=session.state[
-                "opponent_predicted_active_pokemon"
-            ],
+            opponent_predicted_active_pokemon=session.state.get(
+                "opponent_predicted_active_pokemon", None
+            ),
         )
 
     @classmethod
@@ -64,9 +64,9 @@ class TurnPredictorState(BaseModel):
             past_battle_event_logs=state["past_battle_event_logs"],
             past_player_actions=state["past_player_actions"],
             battle_state=state["battle_state"],
-            opponent_predicted_active_pokemon=state[
-                "opponent_predicted_active_pokemon"
-            ],
+            opponent_predicted_active_pokemon=state.get(
+                "opponent_predicted_active_pokemon", None
+            ),
         )
 
     def validate_input_state(self) -> None:
@@ -76,9 +76,9 @@ class TurnPredictorState(BaseModel):
             raise ValueError("turn_number is required")
         if not self.opponent_active_pokemon:
             raise ValueError("opponent_active_pokemon is required")
-        if not self.past_battle_event_logs:
+        if self.past_battle_event_logs is None:
             raise ValueError("past_battle_event_logs is required")
-        if not self.past_player_actions:
+        if self.past_player_actions is None:
             raise ValueError("past_player_actions is required")
         if not self.battle_state:
             raise ValueError("battle_state is required")
