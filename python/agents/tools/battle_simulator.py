@@ -95,7 +95,30 @@ class MoveAction:
 
 @dataclass(frozen=True)
 class MoveResult:
-    """Result of estimating a move's damage and effects."""
+    """Result of estimating a move's damage and effects.
+
+    Attributes:
+        min_damage: Minimum damage from the move (accounting for multi-hit).
+        max_damage: Maximum damage from the move (accounting for multi-hit).
+        knockout_probability: Probability of knocking out the target.
+        critical_hit_probability: Probability of at least one critical hit occurring.
+            For single-hit moves, this is the standard 1/24 (4.17%).
+            For multi-hit moves, this represents the probability that at least one
+            hit in the sequence will be a critical hit (e.g., 8.16% for 2 hits).
+        crit_min_damage: Minimum critical hit damage.
+            For single-hit moves, this is the minimum damage with a critical hit.
+            For multi-hit moves, this represents a realistic "at least one crit"
+            scenario: one hit crits with minimum roll, rest are normal with minimum
+            roll, weighted by hit distribution.
+        crit_max_damage: Maximum critical hit damage.
+            For single-hit moves, this is the maximum damage with a critical hit.
+            For multi-hit moves, this represents the best-case scenario where all
+            hits are critical with maximum rolls, weighted by hit distribution.
+        status_effects: Probability of inflicting various status conditions.
+        additional_effects: List of additional effects the move may have.
+        hit_count: Number of times the move hits (int for fixed, str for variable).
+            Examples: 2 for Double Kick, "2-5" for Bullet Seed, "4-5" for Loaded Dice.
+    """
 
     min_damage: int
     max_damage: int
@@ -1069,8 +1092,10 @@ class BattleSimulator:
             has_target_secondary_effect=has_target_secondary_effect,
         )
 
-        crit_min_damage = int(crit_damage * 0.85)
-        crit_max_damage = int(crit_damage * 1.0)
+        per_hit_normal_min = int(damage * 0.85)
+        per_hit_normal_max = int(damage * 1.0)
+        per_hit_crit_min = int(crit_damage * 0.85)
+        per_hit_crit_max = int(crit_damage * 1.0)
 
         attacker_item = (
             normalize_name(attacking_pokemon.item) if attacking_pokemon.item else ""
@@ -1079,13 +1104,32 @@ class BattleSimulator:
             move_data, attacker_ability, attacker_item
         )
 
+        if move_data.multihit:
+            effective_crit_prob = 0.0
+            for hits, hit_prob in hit_distribution:
+                at_least_one_crit = 1 - (1 - crit_chance) ** hits
+                effective_crit_prob += hit_prob * at_least_one_crit
+            crit_chance = effective_crit_prob
+
         min_hits = min(hits for hits, _ in hit_distribution)
         max_hits = max(hits for hits, _ in hit_distribution)
 
-        min_damage = int(min_damage * min_hits)
-        max_damage = int(max_damage * max_hits)
-        crit_min_damage = int(crit_min_damage * min_hits)
-        crit_max_damage = int(crit_max_damage * max_hits)
+        min_damage = int(per_hit_normal_min * min_hits)
+        max_damage = int(per_hit_normal_max * max_hits)
+
+        if move_data.multihit:
+            crit_min_total = 0.0
+            crit_max_total = 0.0
+            for hits, hit_prob in hit_distribution:
+                mixed_min = per_hit_crit_min + per_hit_normal_min * (hits - 1)
+                all_crit_max = per_hit_crit_max * hits
+                crit_min_total += hit_prob * mixed_min
+                crit_max_total += hit_prob * all_crit_max
+            crit_min_damage = int(crit_min_total)
+            crit_max_damage = int(crit_max_total)
+        else:
+            crit_min_damage = per_hit_crit_min
+            crit_max_damage = per_hit_crit_max
 
         ko_prob = 0.0
         if min_damage >= target_pokemon.current_hp:
@@ -1104,8 +1148,6 @@ class BattleSimulator:
                             max_damage_for_hits - target_pokemon.current_hp
                         ) / damage_range
                         ko_prob += hit_prob * ko_roll_prob
-                    else:
-                        ko_prob += hit_prob * 0.5
 
         status_chances, stat_chances, additional_effects = (
             self._calculate_secondary_effects(
