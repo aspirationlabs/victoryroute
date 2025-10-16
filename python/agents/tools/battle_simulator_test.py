@@ -202,7 +202,7 @@ class BattleSimulatorTest(parameterized.TestCase):
             MoveResult(
                 min_damage=280,
                 max_damage=330,
-                knockout_probability=0.5,
+                knockout_probability=0.6,
                 critical_hit_probability=1 / 24,
                 crit_min_damage=420,
                 crit_max_damage=495,
@@ -613,7 +613,7 @@ class BattleSimulatorTest(parameterized.TestCase):
             MoveResult(
                 min_damage=299,
                 max_damage=352,
-                knockout_probability=0.5,
+                knockout_probability=0.9811320754716981,
                 critical_hit_probability=1 / 24,
                 crit_min_damage=448,
                 crit_max_damage=528,
@@ -629,7 +629,7 @@ class BattleSimulatorTest(parameterized.TestCase):
             MoveResult(
                 min_damage=267,
                 max_damage=315,
-                knockout_probability=0.5,
+                knockout_probability=0.3125,
                 critical_hit_probability=1 / 24,
                 crit_min_damage=401,
                 crit_max_damage=472,
@@ -1275,6 +1275,139 @@ class BattleSimulatorTest(parameterized.TestCase):
         result = self.simulator.estimate_move_result(
             attacker, defender, move, field_state
         )
+
+        self.assertEqual(result, expected_result)
+
+    @parameterized.named_parameters(
+        (
+            "double_kick_fixed_2_hits",
+            PokemonState(species="Hitmonlee", level=100, current_hp=300, max_hp=300),
+            PokemonState(species="Blissey", level=100, current_hp=300, max_hp=300),
+            PokemonMove(name="Double Kick", current_pp=30, max_pp=48),
+            MoveResult(
+                min_damage=372,
+                max_damage=438,
+                knockout_probability=1.0,
+                critical_hit_probability=1 / 24,
+                crit_min_damage=558,
+                crit_max_damage=656,
+                hit_count=2,
+                status_effects={},
+                additional_effects=[],
+            ),
+        ),
+        (
+            "bullet_seed_variable_hits",
+            PokemonState(species="Breloom", level=100, current_hp=300, max_hp=300),
+            PokemonState(species="Blastoise", level=100, current_hp=300, max_hp=300),
+            PokemonMove(name="Bullet Seed", current_pp=30, max_pp=48),
+            MoveResult(
+                min_damage=136,
+                max_damage=405,
+                knockout_probability=0.22346938775510203,
+                critical_hit_probability=1 / 24,
+                crit_min_damage=206,
+                crit_max_damage=605,
+                hit_count="2-5",
+                status_effects={},
+                additional_effects=[],
+            ),
+        ),
+        (
+            "bullet_seed_with_technician",
+            PokemonState(
+                species="Breloom",
+                level=100,
+                current_hp=300,
+                max_hp=300,
+                ability="Technician",
+            ),
+            PokemonState(species="Blastoise", level=100, current_hp=300, max_hp=300),
+            PokemonMove(name="Bullet Seed", current_pp=30, max_pp=48),
+            MoveResult(
+                min_damage=198,
+                max_damage=585,
+                knockout_probability=0.6367924528301887,
+                critical_hit_probability=1 / 24,
+                crit_min_damage=298,
+                crit_max_damage=875,
+                hit_count="2-5",
+                status_effects={},
+                additional_effects=[],
+            ),
+        ),
+        (
+            "rock_blast_variable_hits",
+            PokemonState(species="Rhyperior", level=100, current_hp=300, max_hp=300),
+            PokemonState(species="Charizard", level=100, current_hp=300, max_hp=300),
+            PokemonMove(name="Rock Blast", current_pp=10, max_pp=16),
+            MoveResult(
+                min_damage=336,
+                max_damage=990,
+                knockout_probability=1.0,
+                critical_hit_probability=1 / 24,
+                crit_min_damage=504,
+                crit_max_damage=1485,
+                hit_count="2-5",
+                status_effects={},
+                additional_effects=[],
+            ),
+        ),
+        (
+            "bullet_seed_with_skill_link",
+            PokemonState(
+                species="Breloom",
+                level=100,
+                current_hp=300,
+                max_hp=300,
+                ability="Skill Link",
+            ),
+            PokemonState(species="Blastoise", level=100, current_hp=300, max_hp=300),
+            PokemonMove(name="Bullet Seed", current_pp=30, max_pp=48),
+            MoveResult(
+                min_damage=340,
+                max_damage=405,
+                knockout_probability=1.0,
+                critical_hit_probability=1 / 24,
+                crit_min_damage=515,
+                crit_max_damage=605,
+                hit_count=5,
+                status_effects={},
+                additional_effects=[],
+            ),
+        ),
+        (
+            "rock_blast_with_loaded_dice",
+            PokemonState(
+                species="Rhyperior",
+                level=100,
+                current_hp=300,
+                max_hp=300,
+                item="Loaded Dice",
+            ),
+            PokemonState(species="Charizard", level=100, current_hp=300, max_hp=300),
+            PokemonMove(name="Rock Blast", current_pp=10, max_pp=16),
+            MoveResult(
+                min_damage=672,
+                max_damage=990,
+                knockout_probability=1.0,
+                critical_hit_probability=1 / 24,
+                crit_min_damage=1008,
+                crit_max_damage=1485,
+                hit_count="4-5",
+                status_effects={},
+                additional_effects=[],
+            ),
+        ),
+    )
+    def test_multihit_moves(
+        self,
+        attacker: PokemonState,
+        defender: PokemonState,
+        move: PokemonMove,
+        expected_result: MoveResult,
+    ) -> None:
+        result = self.simulator.estimate_move_result(attacker, defender, move)
 
         self.assertEqual(result, expected_result)
 

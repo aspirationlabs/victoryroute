@@ -2,7 +2,7 @@
 
 import random
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from python.game.data.game_data import GameData
 from python.game.schema.enums import SideCondition, Stat, Status, Terrain, Weather
@@ -104,6 +104,7 @@ class MoveResult:
     crit_max_damage: int
     status_effects: Dict[str, float]
     additional_effects: List[str]
+    hit_count: Union[int, str] = 1
 
 
 class BattleSimulator:
@@ -735,11 +736,40 @@ class BattleSimulator:
         crit_min_damage = int(crit_damage * 0.85)
         crit_max_damage = int(crit_damage * 1.0)
 
+        attacker_item = (
+            normalize_name(attacking_pokemon.item) if attacking_pokemon.item else ""
+        )
+        hit_count, hit_distribution = self._get_multihit_distribution(
+            move_data, attacker_ability, attacker_item
+        )
+
+        min_hits = min(hits for hits, _ in hit_distribution)
+        max_hits = max(hits for hits, _ in hit_distribution)
+
+        min_damage = int(min_damage * min_hits)
+        max_damage = int(max_damage * max_hits)
+        crit_min_damage = int(crit_min_damage * min_hits)
+        crit_max_damage = int(crit_max_damage * max_hits)
+
         ko_prob = 0.0
         if min_damage >= target_pokemon.current_hp:
             ko_prob = 1.0
         elif max_damage >= target_pokemon.current_hp:
-            ko_prob = 0.5
+            for hits, hit_prob in hit_distribution:
+                min_damage_for_hits = int(damage * 0.85 * hits)
+                max_damage_for_hits = int(damage * 1.0 * hits)
+
+                if min_damage_for_hits >= target_pokemon.current_hp:
+                    ko_prob += hit_prob
+                elif max_damage_for_hits >= target_pokemon.current_hp:
+                    damage_range = max_damage_for_hits - min_damage_for_hits
+                    if damage_range > 0:
+                        ko_roll_prob = (
+                            max_damage_for_hits - target_pokemon.current_hp
+                        ) / damage_range
+                        ko_prob += hit_prob * ko_roll_prob
+                    else:
+                        ko_prob += hit_prob * 0.5
 
         status_effects: Dict[str, float] = {}
         additional_effects: List[str] = []
@@ -753,6 +783,7 @@ class BattleSimulator:
             crit_max_damage=crit_max_damage,
             status_effects=status_effects,
             additional_effects=additional_effects,
+            hit_count=hit_count,
         )
 
     def _modify_attack_for_ability(
@@ -823,10 +854,7 @@ class BattleSimulator:
         if defense_stat == Stat.DEF:
             if defender_ability == "furcoat":
                 modified_defense = int(modified_defense * 2.0)
-            if (
-                defender_ability == "marvelscale"
-                and defender.status != Status.NONE
-            ):
+            if defender_ability == "marvelscale" and defender.status != Status.NONE:
                 modified_defense = int(modified_defense * 1.5)
         return modified_defense
 
@@ -842,6 +870,49 @@ class BattleSimulator:
 
     def _get_ability(self, pokemon: PokemonState) -> str:
         return normalize_name(pokemon.ability) if pokemon.ability else ""
+
+    def _get_multihit_distribution(
+        self, move_data, attacker_ability: str, attacker_item: str
+    ) -> Tuple[Union[int, str], List[Tuple[int, float]]]:
+        """Determine effective hit count and distribution for multi-hit moves.
+
+        Accounts for Skill Link (always max hits) and Loaded Dice (4-5 hits).
+
+        Returns:
+            Tuple of (hit_count_display, [(hits, probability), ...])
+            - hit_count_display: int for fixed hits, str for variable (e.g., "4-5")
+            - distribution: list of (hit_count, probability) tuples
+
+        Examples:
+            - Skill Link + Bullet Seed: (5, [(5, 1.0)])
+            - Loaded Dice + Bullet Seed: ("4-5", [(4, 0.5), (5, 0.5)])
+            - Normal Bullet Seed: ("2-5", [(2, 0.35), (3, 0.35), (4, 0.15), (5, 0.15)])
+            - Double Kick: (2, [(2, 1.0)])
+        """
+        if not move_data.multihit:
+            return (1, [(1, 1.0)])
+
+        if isinstance(move_data.multihit, int):
+            fixed_hits = move_data.multihit
+            return (fixed_hits, [(fixed_hits, 1.0)])
+
+        min_hits, max_hits = move_data.multihit
+
+        if attacker_ability == "skilllink":
+            return (max_hits, [(max_hits, 1.0)])
+
+        if attacker_item == "loadeddice":
+            if min_hits == 2 and max_hits == 5:
+                return ("4-5", [(4, 0.5), (5, 0.5)])
+
+        if min_hits == 2 and max_hits == 5:
+            return (
+                f"{min_hits}-{max_hits}",
+                [(2, 0.35), (3, 0.35), (4, 0.15), (5, 0.15)],
+            )
+
+        avg_hits = (min_hits + max_hits) / 2
+        return (f"{min_hits}-{max_hits}", [(int(avg_hits), 1.0)])
 
     def _is_grounded(self, pokemon: PokemonState) -> bool:
         ability = self._get_ability(pokemon)
@@ -984,7 +1055,10 @@ class BattleSimulator:
         ):
             damage *= 0.5
 
-        if effective_defender_ability == "thickfat" and move_data.type in {"Fire", "Ice"}:
+        if effective_defender_ability == "thickfat" and move_data.type in {
+            "Fire",
+            "Ice",
+        }:
             damage *= 0.5
         if effective_defender_ability == "waterbubble" and move_data.type == "Fire":
             damage *= 0.5
@@ -992,10 +1066,11 @@ class BattleSimulator:
             damage *= 0.5
         if effective_defender_ability == "dryskin" and move_data.type == "Fire":
             damage *= 1.25
-        if (
-            type_effectiveness > 1.0
-            and effective_defender_ability in {"filter", "solidrock", "prismarmor"}
-        ):
+        if type_effectiveness > 1.0 and effective_defender_ability in {
+            "filter",
+            "solidrock",
+            "prismarmor",
+        }:
             damage *= 0.75
         if (
             effective_defender_ability in {"multiscale", "shadowshield"}

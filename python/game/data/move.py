@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Tuple, Union
 
 from python.game.data.base import GameDataObject
 
@@ -17,3 +17,4 @@ class Move(GameDataObject):
     description: str = ""
     override_offensive_stat: Optional[str] = None
     override_defensive_stat: Optional[str] = None
+    multihit: Optional[Union[int, Tuple[int, int]]] = None

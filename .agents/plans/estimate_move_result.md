@@ -3,116 +3,231 @@
 ## Goal
 Add missing damage calculation effects to `estimate_move_result` to match Pokemon Showdown's damage calculator.
 
+## Completed Features
+
+All phases 1-8 have been completed:
+- ✅ Stat Override Moves (Body Press, Psyshock)
+- ✅ Terrain Effects (Electric/Grassy/Psychic/Misty terrain)
+- ✅ Screen Effects (Reflect/Light Screen/Aurora Veil)
+- ✅ Critical Hit Stat Boost Handling
+- ✅ Common Abilities (Adaptability, Technician, Huge Power, etc.)
+- ✅ Common Items (Choice Band/Specs, Life Orb, type boosters, etc.)
+- ✅ Weather Edge Cases (Sandstorm Rock SpD, Snow Ice Def)
+- ✅ Multi-Hit Moves (Double Kick, Bullet Seed, Rock Blast)
+
 ## Implementation Order
 
-### 1. Stat Override Moves (Body Press, Psyshock)
-**Status:** ✅ COMPLETED
+### Phase 1: Multi-Hit Moves
+**Status:** ✅ Completed
 **Complexity:** Easy
-**Value:** High (commonly used moves)
-
-- ✅ `override_offensive_stat` and `override_defensive_stat` added to Move dataclass
-- ✅ Stat selection in `estimate_move_result()` checks overrides (lines 445-485)
-- ✅ Parameterized test `test_stat_override_moves` with 2 test cases (body_press, psyshock)
-
-### 2. Terrain Effects
-**Status:** ✅ COMPLETED
-**Complexity:** Moderate
 **Value:** High (common in competitive)
 
-- ✅ Terrain damage modifiers implemented in `_apply_modifiers()` (lines 581-590)
-- ✅ `_is_grounded()` helper checks for Flying-type and Levitate ability (lines 542-552)
-- ✅ Multipliers applied:
-  - Electric/Grassy/Psychic Terrain + matching type: 1.3x
-  - Misty Terrain + Dragon moves: 0.5x
-- ✅ Parameterized test `test_terrain_effects` with 4 test cases (electric, grassy, psychic, misty)
+**Research findings from Pokemon Showdown:**
+- Moves can have fixed hits (e.g., `multihit: 2` for Double Kick, Twineedle, Bonemerang)
+- Or variable hits (e.g., `multihit: [2, 5]` for Fury Attack, Bullet Seed, Rock Blast)
+- Distribution for [2,5]: 35% 2 hits, 35% 3 hits, 15% 4 hits, 15% 5 hits
+- Loaded Dice item changes distribution to favor higher hit counts
 
-### 3. Screen Effects (Reflect/Light Screen)
-**Status:** ✅ COMPLETED
+**Implementation plan:**
+- Add `multihit` field to Move dataclass (Union[int, Tuple[int, int]])
+- Implement hit count logic in `estimate_move_result()`
+- Calculate damage per hit and total damage ranges
+- For variable hits, return average expected damage or damage ranges for each hit count
+- Add `hit_count` field to MoveResult to indicate number of hits
+
+**Test cases:**
+- Double Kick: 2 fixed hits
+- Fury Attack: 2-5 variable hits
+- Bullet Seed: 2-5 variable hits with Technician ability
+
+### Phase 2: Variable Base Power - HP-Based
+**Status:** Planned
+**Complexity:** Medium
+**Value:** High (includes Water Spout, common in competitive)
+
+**Research findings from Pokemon Showdown:**
+- Water Spout/Eruption: `BP = 150 * current_hp / max_hp`
+- Crush Grip/Wring Out: Complex formula based on target HP%
+  - `BP = floor(floor((120 * (100 * floor(hp * 4096 / maxHP)) + 2048 - 1) / 4096) / 100) || 1`
+- These use `basePowerCallback(pokemon, target, move)` function
+
+**Implementation plan:**
+- Add `base_power_callback_type` field to Move dataclass (enum: HP_BASED_ATTACKER, HP_BASED_DEFENDER)
+- Implement HP-based base power calculation in `estimate_move_result()`
+- Handle special cases: Eruption, Water Spout, Crush Grip, Wring Out
+
+**Test cases:**
+- Water Spout at 100% HP (150 BP), 50% HP (75 BP), 25% HP (37 BP)
+- Eruption at different HP percentages
+- Crush Grip against 100% HP target, 50% HP target, 1% HP target
+
+### Phase 3: Variable Base Power - Stat-Based
+**Status:** Planned
+**Complexity:** Medium
+**Value:** High (Electro Ball, Gyro Ball fairly common)
+
+**Research findings from Pokemon Showdown:**
+- **Electro Ball**: `ratio = floor(attacker_speed / target_speed)`, BP = [40, 60, 80, 120, 150][min(ratio, 4)]
+- **Gyro Ball**: `BP = min(floor(25 * target_speed / attacker_speed) + 1, 150)`
+- **Heavy Slam/Heat Crash**: Weight ratio based
+  - ≥5×: 120 BP, ≥4×: 100 BP, ≥3×: 80 BP, ≥2×: 60 BP, else: 40 BP
+- **Low Kick/Grass Knot**: Target weight based
+  - ≥200kg: 120 BP, ≥100kg: 100 BP, ≥50kg: 80 BP, ≥25kg: 60 BP, ≥10kg: 40 BP, else: 20 BP
+
+**Implementation plan:**
+- Add `weight` field to Pokemon dataclass or species data
+- Add `base_power_callback_type` enum values: SPEED_RATIO, INVERSE_SPEED_RATIO, WEIGHT_RATIO, TARGET_WEIGHT
+- Implement stat comparison formulas in `estimate_move_result()`
+- Need to calculate effective speeds (with paralysis, item, ability modifiers)
+
+**Test cases:**
+- Electro Ball: fast attacker (500 Spe) vs slow target (100 Spe) = 150 BP
+- Electro Ball: slow attacker (100 Spe) vs fast target (500 Spe) = 40 BP
+- Gyro Ball: slow attacker vs fast target
+- Heavy Slam: heavy Pokemon vs light Pokemon
+- Low Kick vs heavy Pokemon (Snorlax, Groudon)
+
+### Phase 4: Variable Base Power - Boost-Based
+**Status:** Planned
 **Complexity:** Easy
-**Value:** Medium (common defensive strategy)
+**Value:** Medium (niche moves)
 
-- ✅ Added `defender_side_conditions: Optional[List[SideCondition]]` parameter to `estimate_move_result()`
-- ✅ Implemented screen logic in `_apply_modifiers()`:
-  - Aurora Veil: 0.5x for both physical and special
-  - Reflect: 0.5x for physical only
-  - Light Screen: 0.5x for special only
-- ✅ Parameterized test `test_screen_effects` with 4 test cases (reflect_physical, light_screen_special, aurora_veil_physical, aurora_veil_special)
+**Research findings from Pokemon Showdown:**
+- **Stored Power/Power Trip**: `BP = 20 + 20 * pokemon.positiveBoosts()`
+- `positiveBoosts()` sums all positive stat stage increases (Atk, Def, SpA, SpD, Spe)
 
-### 4. Critical Hit Stat Boost Handling
-**Status:** ✅ COMPLETED
-**Complexity:** Moderate
-**Value:** Medium (improves accuracy)
+**Implementation plan:**
+- Add `base_power_callback_type` enum value: POSITIVE_BOOSTS
+- Calculate sum of positive stat boosts from attacker's stat_boosts
+- Apply formula: 20 + 20 × positive_boost_sum
 
-- ✅ Added `crit_min_damage` and `crit_max_damage` fields to MoveResult dataclass
-- ✅ `_get_crit_stat_multiplier()` helper method ignores bad boosts:
-  - For attackers: `max(boost, 0)` to ignore negative attack boosts
-  - For defenders: `min(boost, 0)` to ignore positive defense boosts
-- ✅ `estimate_move_result()` calculates both regular and crit damage ranges
-- ✅ Parameterized test `test_critical_hit_stat_boosts` with 4 test cases:
-  - Negative attack boost ignored on crit
-  - Positive defense boost ignored on crit
-  - Positive attack boost kept on crit
-  - Negative defense boost kept on crit
+**Test cases:**
+- Stored Power with no boosts (20 BP)
+- Stored Power with +2 Atk, +1 Spe (20 + 20×3 = 80 BP)
+- Stored Power with +6 SpA, +6 SpD (20 + 20×12 = 260 BP)
 
-### 5. Common Abilities
-**Status:** ✅ COMPLETED
+### Phase 5: Recoil and Drain Effects
+**Status:** Planned
+**Complexity:** Easy
+**Value:** Medium (affects HP management decisions)
+
+**Research findings from Pokemon Showdown:**
+- **Recoil moves**: `recoil: [numerator, denominator]`
+  - Double-Edge, Brave Bird, Flare Blitz: `recoil: [33, 100]` (1/3 of damage dealt)
+  - Take Down, Submission: `recoil: [1, 4]` (1/4 of damage dealt)
+  - Head Smash: `recoil: [1, 2]` (1/2 of damage dealt)
+- **Drain moves**: `drain: [numerator, denominator]`
+  - Absorb, Mega Drain, Giga Drain: `drain: [1, 2]` (50% of damage dealt)
+  - Draining Kiss, Parabolic Charge: `drain: [3, 4]` (75% of damage dealt)
+- Calculated from actual damage dealt (after all modifiers)
+
+**Implementation plan:**
+- Add `recoil` field to Move dataclass (Optional[Tuple[int, int]])
+- Add `drain` field to Move dataclass (Optional[Tuple[int, int]])
+- Add `recoil_damage` field to MoveResult (damage dealt to attacker)
+- Add `drain_heal` field to MoveResult (HP healed to attacker)
+- Calculate recoil/drain based on max_damage dealt
+
+**Test cases:**
+- Double-Edge: verify recoil = 33% of damage
+- Brave Bird: verify recoil = 33% of damage
+- Giga Drain: verify drain = 50% of damage
+- Head Smash with Rock Head ability (should have no recoil)
+
+### Phase 6: Secondary Effects - Status Infliction
+**Status:** Planned
+**Complexity:** Medium
+**Value:** Medium (affects strategic decisions)
+
+**Research findings from Pokemon Showdown:**
+- **Secondary effects** defined as:
+  ```typescript
+  secondary: {
+    chance: 10,  // 10% chance
+    status: 'par'  // inflict paralysis
+  }
+  ```
+- Examples:
+  - Thunderbolt: 10% paralysis
+  - Ice Beam: 10% freeze
+  - Flamethrower: 10% burn
+  - Bolt Strike: 20% paralysis
+- **Serene Grace ability**: Doubles secondary effect chances
+- **Sheer Force ability**: Removes secondary effects but adds 30% damage boost
+- **Shield Dust ability** (defender): Prevents secondary effects
+
+**Implementation plan:**
+- Add `secondary_effect` field to Move dataclass with `chance` and `status` subfields
+- Add `status_infliction_chances` field to MoveResult (Dict[str, float])
+- Calculate effective chance based on abilities (Serene Grace, Sheer Force, Shield Dust)
+- Sheer Force: remove secondary, add 1.3× damage multiplier (already handled in items phase)
+
+**Test cases:**
+- Thunderbolt: 10% paralysis chance
+- Thunderbolt with Serene Grace: 20% paralysis chance
+- Thunderbolt with Sheer Force: 0% paralysis, increased damage
+- Thunderbolt vs Shield Dust: 0% paralysis
+
+### Phase 7: Secondary Effects - Stat Changes
+**Status:** Planned
+**Complexity:** Medium
+**Value:** Low (less common, less impactful for damage estimation)
+
+**Research findings from Pokemon Showdown:**
+- **Stat-changing secondaries**:
+  ```typescript
+  secondary: {
+    chance: 10,
+    boosts: { spd: -1 }  // 10% chance to lower SpD by 1
+  }
+  ```
+- Examples:
+  - Acid: 10% chance -1 SpD (all adjacent foes)
+  - Shadow Ball: 20% chance -1 SpD
+  - Earth Power: 10% chance -1 SpD
+  - Crunch: 20% chance -1 Def
+
+**Implementation plan:**
+- Extend `secondary_effect` field to support `boosts` (Dict[Stat, int])
+- Add `stat_change_chances` field to MoveResult (Dict[str, Tuple[Stat, int, float]])
+- Calculate effective chance with Serene Grace/Shield Dust
+
+**Test cases:**
+- Acid: 10% chance to lower SpD
+- Shadow Ball: 20% chance to lower SpD
+- Crunch with Serene Grace: 40% chance to lower Def
+
+### Phase 8: More Complex Abilities
+**Status:** Planned
 **Complexity:** High
-**Value:** High (affects many calculations)
+**Value:** Medium (some competitive relevance)
 
-- ✅ Implemented attacker-side abilities: Adaptability, Technician, Huge Power, Pure Power, Guts, Hustle, Steelworker, Water Bubble, Overgrow/Blaze/Torrent/Swarm, Solar Power, Defeatist, Scrappy
-- ✅ Implemented defender-side abilities: Thick Fat, Heatproof, Water Bubble (fire resistance), Dry Skin (water immunity + fire penalty), Filter, Solid Rock, Prism Armor, Multiscale, Shadow Shield, Ice Scales, Purifying Salt, Fur Coat, Marvel Scale
-- ✅ Added immunity handling for Levitate, Flash Fire, Water Absorb, Storm Drain, Dry Skin, Volt Absorb, Lightning Rod, Motor Drive, Sap Sipper (with Mold Breaker/Teravolt/Turboblaze overrides)
-- ✅ Added burn penalty exceptions for Guts/Water Bubble and type effectiveness adjustment for Tinted Lens
-- ✅ Added regression-style tests covering each implemented ability interaction
+**Research findings from Pokemon Showdown:**
+- **Flag-based abilities** require move flags:
+  - Iron Fist: 1.2× for punch moves (flag: `punch`)
+  - Strong Jaw: 1.5× for bite moves (flag: `bite`)
+  - Mega Launcher: 1.5× for pulse/aura moves (flag: `pulse`)
+  - Sharpness: 1.5× for slicing moves (flag: `slicing`)
+- Requires extending Move dataclass with flags
 
-### 6. Common Items
-**Status:** ✅ COMPLETED
-**Complexity:** Moderate
-**Value:** High (very common in competitive)
+**Implementation plan:**
+- Add `flags` field to Move dataclass (Set[str])
+- Implement flag-based ability damage modifiers in `_modify_attack_for_ability()`
+- Add support for Iron Fist, Strong Jaw, Mega Launcher, Sharpness
 
-- ✅ Added `_get_item_damage_multiplier()` to mirror Showdown's `items.ts` logic and integrate with `_apply_modifiers()`.
-- ✅ Implemented multipliers for:
-  - Choice Band / Choice Specs (1.5× category-specific power)
-  - Life Orb (1.3× final damage with recoil tracking left to future work)
-  - Muscle Band & Wise Glasses (1.1× physical/special)
-  - Expert Belt (1.2× when type effectiveness > 1×)
-  - Type boosters (plates, incenses, bows, etc.) for all elemental types
-  - Signature species boosts (Adamant Orb/Crystal, Lustrous Orb/Globe, Griseous Orb/Core, Soul Dew, Vile Vial, Ogerpon masks)
-  - Species-based stat doublers (Light Ball, Thick Club, Deep Sea Tooth)
-- ✅ Added regression cases in `battle_simulator_test` to cover Choice Band, Choice Specs, Life Orb, Expert Belt, Mystic Water, and item mismatch scenarios that should have no effect.
-
-### 7. Weather Edge Cases
-**Status:** ✅ COMPLETED
-**Complexity:** Low
-**Value:** Low (less common)
-
-- ✅ `_get_weather_stat_modifier()` helper checks Pokemon type and weather
-- ✅ Sandstorm: 1.5x Rock-type Special Defense (applied to effective stat)
-- ✅ Snow: 1.5x Ice-type Defense (applied to effective stat)
-- ✅ Weather stat modifiers integrated into both regular and crit damage calculations (lines 611-617, 658-660)
-- ✅ Parameterized test `test_weather_stat_boosts` with 4 test cases:
-  - Sandstorm boosting Special Defense for Rock-type (Alakazam vs Golem)
-  - Sandstorm NOT boosting Defense for physical moves (Machamp vs Tyranitar)
-  - Snow boosting Defense for Ice-type (Machamp vs Glaceon)
-  - Snow NOT boosting Special Defense for special moves (Alakazam vs Glaceon)
-- Note: Harsh Sun/Heavy Rain extreme weather effects deferred for future implementation
+**Test cases:**
+- Mach Punch with Iron Fist (1.2× modifier)
+- Crunch with Strong Jaw (1.5× modifier)
+- Aura Sphere with Mega Launcher (1.5× modifier)
 
 ## Testing Strategy
 - TDD approach: write tests first for each feature
 - Use parameterized tests with expected MoveResult objects
-- Test edge cases (e.g., immunity, 0 damage, max damage)
-- Update test expectations to use MoveResult objects (already done by user)
+- Test edge cases (e.g., immunity, 0 damage, max damage, ability interactions)
+- Verify calculations match Pokemon Showdown damage calculator
 
-## Review Phase
-- Run code-review agent after implementation
-- Address critical issues
-- Remove implementation-guiding comments
-- Ensure no emojis in code
-- Run linters (ruff, pyrefly)
-
-## Follow-up TODOs
-- Secondary effects (status infliction chances from move data)
-- Multi-hit moves
-- Variable base power moves
-- Recoil/drain effects
-- More complex abilities and items
+## Notes
+- Each phase builds on Move dataclass incrementally
+- Priority is on high-value, commonly-used mechanics first
+- Complex variable BP moves and secondary effects deferred to later phases
+- Some features (like Loaded Dice for multi-hit) can be added in future iterations
