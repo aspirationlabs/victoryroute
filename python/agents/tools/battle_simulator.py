@@ -1148,8 +1148,6 @@ class BattleSimulator:
                             max_damage_for_hits - target_pokemon.current_hp
                         ) / damage_range
                         ko_prob += hit_prob * ko_roll_prob
-                    else:
-                        ko_prob += hit_prob * 0.5
 
         status_chances, stat_chances, additional_effects = (
             self._calculate_secondary_effects(
