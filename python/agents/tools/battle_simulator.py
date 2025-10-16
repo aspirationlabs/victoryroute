@@ -1,7 +1,8 @@
 """Battle simulation tools for calculating Pokemon stats and simulating scenarios."""
 
+import math
 import random
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from python.game.data.game_data import GameData
@@ -105,6 +106,12 @@ class MoveResult:
     status_effects: Dict[str, float]
     additional_effects: List[str]
     hit_count: Union[int, str] = 1
+    recoil_damage: int = 0
+    drain_heal: int = 0
+    status_infliction_chances: Dict[str, float] = field(default_factory=dict)
+    stat_change_chances: Dict[str, Tuple[Stat, int, float]] = field(
+        default_factory=dict
+    )
 
 
 class BattleSimulator:
@@ -225,6 +232,51 @@ class BattleSimulator:
             "types": None,
             "multiplier": 1.2,
         },
+    }
+
+    BASE_POWER_CALLBACK_TYPES: Dict[str, str] = {
+        "eruption": "hp_based_attacker",
+        "waterspout": "hp_based_attacker",
+        "crushgrip": "hp_based_defender",
+        "wringout": "hp_based_defender",
+        "electroball": "speed_ratio",
+        "gyroball": "inverse_speed_ratio",
+        "heavyslam": "weight_ratio",
+        "heatcrash": "weight_ratio",
+        "lowkick": "target_weight",
+        "grassknot": "target_weight",
+        "storedpower": "positive_boosts",
+        "powertrip": "positive_boosts",
+    }
+
+    RECOIL_MOVE_DATA: Dict[str, Tuple[int, int]] = {
+        "doubleedge": (33, 100),
+        "bravebird": (33, 100),
+        "flareblitz": (33, 100),
+        "headsmash": (1, 2),
+        "wavecrash": (33, 100),
+    }
+
+    DRAIN_MOVE_DATA: Dict[str, Tuple[int, int]] = {
+        "gigadrain": (1, 2),
+        "drainpunch": (1, 2),
+        "drainingkiss": (3, 4),
+        "paraboliccharge": (3, 4),
+    }
+
+    SECONDARY_EFFECTS_DATA: Dict[str, List[Dict[str, Any]]] = {
+        "thunderbolt": [{"chance": 10, "status": "par"}],
+        "flamethrower": [{"chance": 10, "status": "brn"}],
+        "scald": [{"chance": 30, "status": "brn"}],
+        "shadowball": [{"chance": 20, "boosts": {"spd": -1}}],
+        "crunch": [{"chance": 20, "boosts": {"def": -1}}],
+    }
+
+    MOVE_FLAGS_DATA: Dict[str, List[str]] = {
+        "machpunch": ["contact", "protect", "mirror", "punch", "metronome"],
+        "crunch": ["contact", "protect", "mirror", "metronome", "bite"],
+        "aurasphere": ["protect", "mirror", "distance", "metronome", "bullet", "pulse"],
+        "aquacutter": ["protect", "mirror", "metronome", "slicing"],
     }
 
     def __init__(self, game_data: GameData) -> None:
@@ -537,6 +589,276 @@ class BattleSimulator:
 
         return [action_1, action_2] if random.random() < 0.5 else [action_2, action_1]
 
+    def _get_base_power_callback_type(self, move_data, move_name: str) -> Optional[str]:
+        if move_data.base_power_callback_type:
+            return move_data.base_power_callback_type
+        return self.BASE_POWER_CALLBACK_TYPES.get(normalize_name(move_name))
+
+    def _get_pokemon_weight_hg(self, pokemon: PokemonState) -> int:
+        pokemon_data = self.game_data.get_pokemon(pokemon.species)
+        if pokemon_data.weight_kg is None:
+            return 0
+        weight_hg = int(pokemon_data.weight_kg * 10)
+        return max(weight_hg, 0)
+
+    def _get_effective_speed(
+        self,
+        pokemon: PokemonState,
+        field_state: Optional[FieldState],
+        side_conditions: Optional[List[SideCondition]] = None,
+    ) -> int:
+        pokemon_data = self.game_data.get_pokemon(pokemon.species)
+        base_speed = pokemon_data.base_stats["spe"]
+
+        weather = field_state.get_weather() if field_state else None
+        terrain = field_state.get_terrain() if field_state else None
+
+        side_condition_set = set(side_conditions) if side_conditions else None
+
+        effective_speed = self.calculate_action_speed(
+            pokemon,
+            base_speed,
+            weather or Weather.NONE,
+            terrain,
+            side_condition_set,
+            trick_room_active=False,
+        )
+        return max(1, effective_speed)
+
+    def _calculate_effective_base_power(
+        self,
+        move: PokemonMove,
+        move_data,
+        attacker: PokemonState,
+        defender: PokemonState,
+        field_state: Optional[FieldState],
+        defender_side_conditions: Optional[List[SideCondition]],
+    ) -> int:
+        callback_type = self._get_base_power_callback_type(move_data, move.name)
+        base_power = move_data.base_power
+
+        if not callback_type:
+            return base_power
+
+        if callback_type == "hp_based_attacker":
+            if attacker.max_hp <= 0:
+                return base_power
+            scaled = base_power * attacker.current_hp / attacker.max_hp
+            return max(1, int(scaled))
+
+        if callback_type == "hp_based_defender":
+            if defender.max_hp <= 0:
+                return 1
+            hp = defender.current_hp
+            max_hp = defender.max_hp
+            scaled_hp = math.floor(hp * 4096 / max_hp)
+            numerator = 120 * (100 * scaled_hp)
+            interim = math.floor((numerator + 2048 - 1) / 4096)
+            bp = math.floor(interim / 100)
+            return max(1, bp)
+
+        if callback_type == "speed_ratio":
+            attacker_speed = self._get_effective_speed(attacker, field_state)
+            defender_speed = self._get_effective_speed(
+                defender, field_state, defender_side_conditions
+            )
+            ratio = 0
+            if defender_speed > 0:
+                ratio = math.floor(attacker_speed / defender_speed)
+            ratio = max(0, min(4, ratio))
+            return [40, 60, 80, 120, 150][ratio]
+
+        if callback_type == "inverse_speed_ratio":
+            attacker_speed = self._get_effective_speed(attacker, field_state)
+            defender_speed = self._get_effective_speed(
+                defender, field_state, defender_side_conditions
+            )
+            if attacker_speed <= 0:
+                attacker_speed = 1
+            bp = math.floor(25 * defender_speed / attacker_speed) + 1
+            return max(1, min(150, bp))
+
+        if callback_type == "weight_ratio":
+            attacker_weight = self._get_pokemon_weight_hg(attacker)
+            defender_weight = self._get_pokemon_weight_hg(defender)
+            if defender_weight <= 0:
+                return 120
+            ratio = attacker_weight / defender_weight
+            if ratio >= 5:
+                return 120
+            if ratio >= 4:
+                return 100
+            if ratio >= 3:
+                return 80
+            if ratio >= 2:
+                return 60
+            return 40
+
+        if callback_type == "target_weight":
+            target_weight = self._get_pokemon_weight_hg(defender)
+            if target_weight >= 2000:
+                return 120
+            if target_weight >= 1000:
+                return 100
+            if target_weight >= 500:
+                return 80
+            if target_weight >= 250:
+                return 60
+            if target_weight >= 100:
+                return 40
+            return 20
+
+        if callback_type == "positive_boosts":
+            positive_boosts = 0
+            for boost in attacker.stat_boosts.values():
+                if boost > 0:
+                    positive_boosts += boost
+            return max(1, 20 + 20 * positive_boosts)
+
+        return base_power
+
+    def _get_move_recoil(self, move_data, move_name: str) -> Optional[Tuple[int, int]]:
+        if move_data.recoil:
+            recoil_tuple = tuple(move_data.recoil)
+            return recoil_tuple if recoil_tuple else None
+        return self.RECOIL_MOVE_DATA.get(normalize_name(move_name))
+
+    def _get_move_drain(self, move_data, move_name: str) -> Optional[Tuple[int, int]]:
+        if move_data.drain:
+            drain_tuple = tuple(move_data.drain)
+            return drain_tuple if drain_tuple else None
+        return self.DRAIN_MOVE_DATA.get(normalize_name(move_name))
+
+    def _round_half_up(self, value: float) -> int:
+        if value <= 0:
+            return 0
+        return int(math.floor(value + 0.5))
+
+    def _calculate_recoil_damage(
+        self,
+        recoil: Optional[Tuple[int, int]],
+        damage: int,
+        attacker: PokemonState,
+    ) -> int:
+        if not recoil or damage <= 0:
+            return 0
+        ability = self._get_ability(attacker)
+        if ability in {"rockhead", "magicguard"}:
+            return 0
+        numerator, denominator = recoil
+        recoil_damage = self._round_half_up(damage * numerator / denominator)
+        if recoil_damage == 0 and damage > 0:
+            return 1
+        return recoil_damage
+
+    def _calculate_drain_heal(
+        self,
+        drain: Optional[Tuple[int, int]],
+        damage: int,
+        attacker: PokemonState,
+        defender: PokemonState,
+    ) -> int:
+        if not drain or damage <= 0:
+            return 0
+        numerator, denominator = drain
+        heal_amount = self._round_half_up(damage * numerator / denominator)
+        if heal_amount == 0 and damage > 0:
+            heal_amount = 1
+        defender_ability = self._get_ability(defender)
+        if defender_ability == "liquidooze":
+            return -heal_amount
+        return heal_amount
+
+    def _get_secondary_effects(
+        self, move_data, move_name: str
+    ) -> List[Dict[str, Any]]:
+        effects: List[Dict[str, Any]] = []
+        if move_data.secondary_effects:
+            effects.extend(dict(effect) for effect in move_data.secondary_effects)
+        if not effects:
+            fallback = self.SECONDARY_EFFECTS_DATA.get(normalize_name(move_name))
+            if fallback:
+                effects.extend(dict(effect) for effect in fallback)
+        return effects
+
+    def _move_has_target_secondary_effect(
+        self, secondary_effects: List[Dict[str, Any]]
+    ) -> bool:
+        for effect in secondary_effects:
+            if effect.get("status") or effect.get("boosts") or effect.get(
+                "volatile_status"
+            ):
+                return True
+        return False
+
+    def _stat_from_key(self, stat_key: str) -> Optional[Stat]:
+        key_upper = stat_key.upper()
+        try:
+            return Stat[key_upper]
+        except KeyError:
+            for stat in Stat:
+                if stat.value == stat_key.lower():
+                    return stat
+        return None
+
+    def _status_from_string(self, status_key: str) -> Optional[Status]:
+        for status in Status:
+            if status.value == status_key:
+                return status
+        return None
+
+    def _calculate_secondary_effects(
+        self,
+        secondary_effects: List[Dict[str, Any]],
+        attacker_ability: str,
+        defender_ability: str,
+    ) -> Tuple[Dict[str, float], Dict[str, Tuple[Stat, int, float]], List[str]]:
+        if not secondary_effects:
+            return {}, {}, []
+
+        if attacker_ability == "sheerforce":
+            return {}, {}, []
+
+        if defender_ability == "shielddust":
+            return {}, {}, []
+
+        serene_grace = attacker_ability == "serenegrace"
+
+        status_chances: Dict[str, float] = {}
+        stat_chances: Dict[str, Tuple[Stat, int, float]] = {}
+        additional_effects: List[str] = []
+
+        for effect in secondary_effects:
+            chance = float(effect.get("chance", 100))
+            if serene_grace:
+                chance = min(100.0, chance * 2)
+            chance = max(0.0, min(100.0, chance))
+            probability = chance / 100.0
+            if probability <= 0:
+                continue
+
+            status_key = effect.get("status")
+            if status_key:
+                status_enum = self._status_from_string(status_key)
+                key = status_enum.value if status_enum else status_key
+                status_chances[key] = probability
+
+            boosts = effect.get("boosts")
+            if boosts:
+                for stat_key, change in boosts.items():
+                    stat_enum = self._stat_from_key(stat_key)
+                    if not stat_enum:
+                        continue
+                    stat_chances[stat_enum.value] = (stat_enum, int(change), probability)
+
+            volatile_status = effect.get("volatile_status")
+            if volatile_status:
+                additional_effects.append(
+                    f"{volatile_status}:{probability:.2f}"
+                )
+
+        return status_chances, stat_chances, additional_effects
+
     def estimate_move_result(
         self,
         attacking_pokemon: PokemonState,
@@ -558,6 +880,11 @@ class BattleSimulator:
                 status_effects={},
                 additional_effects=[],
             )
+
+        secondary_effects = self._get_secondary_effects(move_data, move.name)
+        has_target_secondary_effect = self._move_has_target_secondary_effect(
+            secondary_effects
+        )
 
         attacker_stats = self.get_pokemon_stats(
             attacking_pokemon, attacking_pokemon.level
@@ -647,7 +974,14 @@ class BattleSimulator:
         )
 
         level = attacking_pokemon.level
-        base_power = move_data.base_power
+        base_power = self._calculate_effective_base_power(
+            move,
+            move_data,
+            attacking_pokemon,
+            target_pokemon,
+            field_state,
+            defender_side_conditions,
+        )
 
         if attacker_ability == "technician" and base_power <= 60:
             base_power = int(base_power * 1.5)
@@ -677,6 +1011,7 @@ class BattleSimulator:
             is_crit=False,
             attacker_ability=attacker_ability,
             defender_ability=defender_ability,
+            has_target_secondary_effect=has_target_secondary_effect,
         )
 
         min_damage = int(damage * 0.85)
@@ -731,6 +1066,7 @@ class BattleSimulator:
             is_crit=True,
             attacker_ability=attacker_ability,
             defender_ability=defender_ability,
+            has_target_secondary_effect=has_target_secondary_effect,
         )
 
         crit_min_damage = int(crit_damage * 0.85)
@@ -771,8 +1107,21 @@ class BattleSimulator:
                     else:
                         ko_prob += hit_prob * 0.5
 
-        status_effects: Dict[str, float] = {}
-        additional_effects: List[str] = []
+        status_chances, stat_chances, additional_effects = (
+            self._calculate_secondary_effects(
+                secondary_effects, attacker_ability, defender_ability
+            )
+        )
+
+        recoil_tuple = self._get_move_recoil(move_data, move.name)
+        drain_tuple = self._get_move_drain(move_data, move.name)
+
+        recoil_damage = self._calculate_recoil_damage(
+            recoil_tuple, max_damage, attacking_pokemon
+        )
+        drain_heal = self._calculate_drain_heal(
+            drain_tuple, max_damage, attacking_pokemon, target_pokemon
+        )
 
         return MoveResult(
             min_damage=min_damage,
@@ -781,9 +1130,13 @@ class BattleSimulator:
             critical_hit_probability=crit_chance,
             crit_min_damage=crit_min_damage,
             crit_max_damage=crit_max_damage,
-            status_effects=status_effects,
+            status_effects=status_chances,
             additional_effects=additional_effects,
             hit_count=hit_count,
+            recoil_damage=recoil_damage,
+            drain_heal=drain_heal,
+            status_infliction_chances=status_chances,
+            stat_change_chances=stat_chances,
         )
 
     def _modify_attack_for_ability(
@@ -838,6 +1191,26 @@ class BattleSimulator:
                 and attacker.current_hp * 2 <= attacker.max_hp
             ):
                 modified_attack = int(modified_attack * 0.5)
+            move_flags_list: List[str] = []
+            if move_data.flags:
+                move_flags_list = list(move_data.flags)
+            else:
+                fallback_flags = self.MOVE_FLAGS_DATA.get(
+                    normalize_name(move_data.name)
+                )
+                if fallback_flags:
+                    move_flags_list = fallback_flags
+            move_flags = {flag.lower() for flag in move_flags_list}
+            if attacker_ability == "ironfist" and "punch" in move_flags:
+                modified_attack = int(modified_attack * 1.2)
+            if attacker_ability == "strongjaw" and "bite" in move_flags:
+                modified_attack = int(modified_attack * 1.5)
+            if attacker_ability == "megalauncher" and (
+                "pulse" in move_flags or "aura" in move_flags
+            ):
+                modified_attack = int(modified_attack * 1.5)
+            if attacker_ability == "sharpness" and "slicing" in move_flags:
+                modified_attack = int(modified_attack * 1.5)
         return modified_attack
 
     def _modify_defense_for_ability(
@@ -955,6 +1328,7 @@ class BattleSimulator:
         is_crit: bool,
         attacker_ability: str,
         defender_ability: str,
+        has_target_secondary_effect: bool,
     ) -> float:
         damage = float(base_damage)
 
@@ -1043,6 +1417,9 @@ class BattleSimulator:
         damage *= self._get_item_damage_multiplier(
             attacker, move_data, type_effectiveness
         )
+
+        if attacker_ability == "sheerforce" and has_target_secondary_effect:
+            damage *= 1.3
 
         is_resisted = 0.0 < type_effectiveness < 1.0
         if attacker_ability == "tintedlens" and is_resisted:
