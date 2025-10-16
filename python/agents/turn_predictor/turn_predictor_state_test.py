@@ -69,10 +69,18 @@ class TurnPredictorStateTest(unittest.TestCase):
         self.state.validate_input_state()
 
     def test_validate_input_state_missing_field(self) -> None:
-        """Validation fails when mandatory fields are empty."""
-        invalid_state = self.state.model_copy(update={"past_player_actions": ""})
+        """Validation fails when mandatory fields are None."""
+        invalid_state = self.state.model_copy(update={"past_player_actions": None})
         with self.assertRaises(ValueError):
             invalid_state.validate_input_state()
+
+    def test_validate_input_state_empty_strings_allowed(self) -> None:
+        """Empty strings for history fields are allowed (for first turn)."""
+        valid_state = self.state.model_copy(
+            update={"past_player_actions": "", "past_battle_event_logs": ""}
+        )
+        # Should not raise any exception
+        valid_state.validate_input_state()
 
     def test_from_state_round_trip(self) -> None:
         """from_state reconstructs an equivalent model."""
