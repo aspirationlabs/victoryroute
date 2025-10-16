@@ -663,8 +663,9 @@ class BattleSimulatorTest(parameterized.TestCase):
                 critical_hit_probability=1 / 24,
                 crit_min_damage=688,
                 crit_max_damage=810,
-                status_effects={},
+                status_effects={"par": 0.1},
                 additional_effects=[],
+                status_infliction_chances={"par": 0.1},
             ),
         ),
         (
@@ -1410,6 +1411,230 @@ class BattleSimulatorTest(parameterized.TestCase):
         result = self.simulator.estimate_move_result(attacker, defender, move)
 
         self.assertEqual(result, expected_result)
+
+    def test_hp_based_base_power_water_spout(self) -> None:
+        attacker_full = PokemonState(
+            species="Kyogre", level=100, current_hp=403, max_hp=403
+        )
+        attacker_half = PokemonState(
+            species="Kyogre", level=100, current_hp=201, max_hp=403
+        )
+        defender = PokemonState(
+            species="Groudon", level=100, current_hp=403, max_hp=403
+        )
+        move = PokemonMove(name="Water Spout", current_pp=5, max_pp=8)
+
+        full_result = self.simulator.estimate_move_result(attacker_full, defender, move)
+        half_result = self.simulator.estimate_move_result(attacker_half, defender, move)
+
+        self.assertEqual(full_result.min_damage, 464)
+        self.assertEqual(full_result.max_damage, 546)
+        self.assertEqual(half_result.min_damage, 229)
+        self.assertEqual(half_result.max_damage, 270)
+
+    def test_crush_grip_scales_with_target_hp(self) -> None:
+        attacker = PokemonState(species="Regigigas", level=100, current_hp=400, max_hp=400)
+        full_defender = PokemonState(
+            species="Blissey", level=100, current_hp=714, max_hp=714
+        )
+        low_defender = PokemonState(
+            species="Blissey", level=100, current_hp=71, max_hp=714
+        )
+        move = PokemonMove(name="Crush Grip", current_pp=5, max_pp=5)
+
+        full_result = self.simulator.estimate_move_result(attacker, full_defender, move)
+        low_result = self.simulator.estimate_move_result(attacker, low_defender, move)
+
+        self.assertEqual(full_result.max_damage, 534)
+        self.assertEqual(low_result.max_damage, 51)
+
+    def test_speed_based_moves(self) -> None:
+        electro_attacker = PokemonState(species="Jolteon", level=100, current_hp=300, max_hp=300)
+        electro_defender = PokemonState(species="Snorlax", level=100, current_hp=460, max_hp=460)
+        electro_move = PokemonMove(name="Electro Ball", current_pp=10, max_pp=10)
+
+        gyro_attacker = PokemonState(species="Bronzong", level=100, current_hp=300, max_hp=300)
+        gyro_defender = PokemonState(species="Jolteon", level=100, current_hp=300, max_hp=300)
+        gyro_move = PokemonMove(name="Gyro Ball", current_pp=5, max_pp=5)
+
+        electro_result = self.simulator.estimate_move_result(
+            electro_attacker, electro_defender, electro_move
+        )
+        gyro_result = self.simulator.estimate_move_result(
+            gyro_attacker, gyro_defender, gyro_move
+        )
+
+        self.assertEqual(electro_result.max_damage, 103)
+        self.assertEqual(gyro_result.max_damage, 45)
+
+    def test_weight_based_moves(self) -> None:
+        heavy_attacker = PokemonState(species="Celesteela", level=100, current_hp=300, max_hp=300)
+        light_defender = PokemonState(species="Pikachu", level=100, current_hp=200, max_hp=200)
+        heavy_move = PokemonMove(name="Heavy Slam", current_pp=10, max_pp=10)
+
+        lowkick_attacker = PokemonState(species="Lucario", level=100, current_hp=300, max_hp=300)
+        heavy_defender = PokemonState(species="Snorlax", level=100, current_hp=460, max_hp=460)
+        lowkick_move = PokemonMove(name="Low Kick", current_pp=20, max_pp=20)
+
+        heavy_result = self.simulator.estimate_move_result(
+            heavy_attacker, light_defender, heavy_move
+        )
+        lowkick_result = self.simulator.estimate_move_result(
+            lowkick_attacker, heavy_defender, lowkick_move
+        )
+
+        self.assertEqual(heavy_result.max_damage, 128)
+        self.assertEqual(lowkick_result.max_damage, 426)
+
+    def test_stored_power_positive_boosts(self) -> None:
+        attacker = PokemonState(
+            species="Espeon",
+            level=100,
+            current_hp=300,
+            max_hp=300,
+            stat_boosts={Stat.SPA: 2, Stat.SPD: 1, Stat.SPE: 1},
+        )
+        defender = PokemonState(species="Machamp", level=100, current_hp=300, max_hp=300)
+        move = PokemonMove(name="Stored Power", current_pp=10, max_pp=10)
+
+        result = self.simulator.estimate_move_result(attacker, defender, move)
+
+        self.assertEqual(result.max_damage, 678)
+
+    def test_recoil_and_rock_head(self) -> None:
+        recoil_attacker = PokemonState(species="Staraptor", level=100, current_hp=320, max_hp=320)
+        defender = PokemonState(species="Ferrothorn", level=100, current_hp=300, max_hp=300)
+        brave_bird = PokemonMove(name="Brave Bird", current_pp=15, max_pp=15)
+        brave_result = self.simulator.estimate_move_result(recoil_attacker, defender, brave_bird)
+
+        rock_head_attacker = PokemonState(
+            species="Aggron", level=100, current_hp=330, max_hp=330, ability="Rock Head"
+        )
+        head_smash = PokemonMove(name="Head Smash", current_pp=5, max_pp=5)
+        head_result = self.simulator.estimate_move_result(rock_head_attacker, defender, head_smash)
+
+        self.assertEqual(brave_result.recoil_damage, 48)
+        self.assertEqual(head_result.recoil_damage, 0)
+
+    def test_drain_moves_and_liquid_ooze(self) -> None:
+        attacker = PokemonState(species="Venusaur", level=100, current_hp=320, max_hp=320)
+        defender = PokemonState(species="Swampert", level=100, current_hp=320, max_hp=320)
+        move = PokemonMove(name="Giga Drain", current_pp=10, max_pp=10)
+
+        normal_result = self.simulator.estimate_move_result(attacker, defender, move)
+
+        ooze_defender = PokemonState(
+            species="Tentacruel", level=100, current_hp=300, max_hp=300, ability="Liquid Ooze"
+        )
+        ooze_result = self.simulator.estimate_move_result(attacker, ooze_defender, move)
+
+        self.assertEqual(normal_result.drain_heal, 207)
+        self.assertEqual(ooze_result.drain_heal, -43)
+
+    def test_secondary_status_chances(self) -> None:
+        base_attacker = PokemonState(species="Raichu", level=100, current_hp=300, max_hp=300)
+        defender = PokemonState(species="Milotic", level=100, current_hp=340, max_hp=340)
+        move = PokemonMove(name="Thunderbolt", current_pp=15, max_pp=15)
+
+        base_result = self.simulator.estimate_move_result(base_attacker, defender, move)
+
+        serene_attacker = PokemonState(
+            species="Togekiss", level=100, current_hp=300, max_hp=300, ability="Serene Grace"
+        )
+        serene_result = self.simulator.estimate_move_result(serene_attacker, defender, move)
+
+        sheer_attacker = PokemonState(
+            species="Nidoking", level=100, current_hp=300, max_hp=300, ability="Sheer Force"
+        )
+        sheer_result = self.simulator.estimate_move_result(sheer_attacker, defender, move)
+
+        shield_defender = PokemonState(
+            species="Venomoth", level=100, current_hp=300, max_hp=300, ability="Shield Dust"
+        )
+        shield_result = self.simulator.estimate_move_result(base_attacker, shield_defender, move)
+
+        self.assertEqual(base_result.status_infliction_chances["par"], 0.1)
+        self.assertEqual(serene_result.status_infliction_chances["par"], 0.2)
+        self.assertEqual(sheer_result.status_infliction_chances, {})
+        self.assertEqual(shield_result.status_infliction_chances, {})
+
+    def test_secondary_stat_drop(self) -> None:
+        attacker = PokemonState(species="Raichu", level=100, current_hp=300, max_hp=300)
+        defender = PokemonState(species="Milotic", level=100, current_hp=340, max_hp=340)
+        move = PokemonMove(name="Shadow Ball", current_pp=15, max_pp=15)
+
+        result = self.simulator.estimate_move_result(attacker, defender, move)
+
+        self.assertIn("spd", result.stat_change_chances)
+        stat_enum, change, chance = result.stat_change_chances["spd"]
+        self.assertEqual(stat_enum, Stat.SPD)
+        self.assertEqual(change, -1)
+        self.assertEqual(chance, 0.2)
+
+    def test_flag_based_ability_damage_modifiers(self) -> None:
+        ferrothorn = PokemonState(species="Ferrothorn", level=100, current_hp=300, max_hp=300)
+        swampert = PokemonState(species="Swampert", level=100, current_hp=320, max_hp=320)
+        rapidash = PokemonState(species="Rapidash", level=100, current_hp=300, max_hp=300)
+
+        iron_fist_attacker = PokemonState(
+            species="Conkeldurr", level=100, current_hp=360, max_hp=360, ability="Iron Fist"
+        )
+        guts_attacker = PokemonState(
+            species="Conkeldurr", level=100, current_hp=360, max_hp=360, ability="Guts"
+        )
+        mach_punch = PokemonMove(name="Mach Punch", current_pp=30, max_pp=30)
+        iron_fist_result = self.simulator.estimate_move_result(
+            iron_fist_attacker, ferrothorn, mach_punch
+        )
+        guts_result = self.simulator.estimate_move_result(guts_attacker, ferrothorn, mach_punch)
+        self.assertEqual(iron_fist_result.max_damage, 132)
+        self.assertEqual(guts_result.max_damage, 111)
+
+        strong_jaw_attacker = PokemonState(
+            species="Manectric", level=100, current_hp=300, max_hp=300, ability="Strong Jaw"
+        )
+        static_attacker = PokemonState(
+            species="Manectric", level=100, current_hp=300, max_hp=300, ability="Static"
+        )
+        crunch = PokemonMove(name="Crunch", current_pp=15, max_pp=15)
+        strong_jaw_result = self.simulator.estimate_move_result(
+            strong_jaw_attacker, swampert, crunch
+        )
+        static_result = self.simulator.estimate_move_result(static_attacker, swampert, crunch)
+        self.assertEqual(strong_jaw_result.max_damage, 91)
+        self.assertEqual(static_result.max_damage, 61)
+
+        mega_launcher_attacker = PokemonState(
+            species="Clawitzer", level=100, current_hp=300, max_hp=300, ability="Mega Launcher"
+        )
+        torrent_attacker = PokemonState(
+            species="Clawitzer", level=100, current_hp=300, max_hp=300, ability="Torrent"
+        )
+        aura_sphere = PokemonMove(name="Aura Sphere", current_pp=20, max_pp=20)
+        mega_launcher_result = self.simulator.estimate_move_result(
+            mega_launcher_attacker, swampert, aura_sphere
+        )
+        torrent_result = self.simulator.estimate_move_result(
+            torrent_attacker, swampert, aura_sphere
+        )
+        self.assertEqual(mega_launcher_result.max_damage, 124)
+        self.assertEqual(torrent_result.max_damage, 83)
+
+        sharpness_attacker = PokemonState(
+            species="Gallade", level=100, current_hp=300, max_hp=300, ability="Sharpness"
+        )
+        steadfast_attacker = PokemonState(
+            species="Gallade", level=100, current_hp=300, max_hp=300, ability="Steadfast"
+        )
+        aqua_cutter = PokemonMove(name="Aqua Cutter", current_pp=20, max_pp=20)
+        sharpness_result = self.simulator.estimate_move_result(
+            sharpness_attacker, rapidash, aqua_cutter
+        )
+        steadfast_result = self.simulator.estimate_move_result(
+            steadfast_attacker, rapidash, aqua_cutter
+        )
+        self.assertEqual(sharpness_result.max_damage, 260)
+        self.assertEqual(steadfast_result.max_damage, 174)
 
 
 if __name__ == "__main__":

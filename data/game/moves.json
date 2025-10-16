@@ -250,7 +250,13 @@
         "pp": 20,
         "priority": 0,
         "category": "Physical",
-        "description": "Has a higher chance for a critical hit."
+        "description": "Has a higher chance for a critical hit.",
+        "flags": [
+            "protect",
+            "mirror",
+            "metronome",
+            "slicing"
+        ]
     },
     {
         "name": "Aqua Jet",
@@ -415,7 +421,15 @@
         "pp": 20,
         "priority": 0,
         "category": "Special",
-        "description": "This move does not check accuracy."
+        "description": "This move does not check accuracy.",
+        "flags": [
+            "protect",
+            "mirror",
+            "distance",
+            "metronome",
+            "bullet",
+            "pulse"
+        ]
     },
     {
         "name": "Aura Wheel",
@@ -933,7 +947,11 @@
         "pp": 15,
         "priority": 0,
         "category": "Physical",
-        "description": "If the target lost HP, the user takes recoil damage equal to 33% the HP lost by the target, rounded half up, but not less than 1 HP."
+        "description": "If the target lost HP, the user takes recoil damage equal to 33% the HP lost by the target, rounded half up, but not less than 1 HP.",
+        "recoil": [
+            33,
+            100
+        ]
     },
     {
         "name": "Breaking Swipe",
@@ -1663,7 +1681,23 @@
         "pp": 15,
         "priority": 0,
         "category": "Physical",
-        "description": "Has a 20% chance to lower the target's Defense by 1 stage."
+        "description": "Has a 20% chance to lower the target's Defense by 1 stage.",
+        "secondary_effects": [
+            {
+                "chance": 20,
+                "boosts": {
+                    "def": -1
+                }
+            }
+        ],
+        "has_secondary_effect": true,
+        "flags": [
+            "contact",
+            "protect",
+            "mirror",
+            "metronome",
+            "bite"
+        ]
     },
     {
         "name": "Crush Claw",
@@ -1685,7 +1719,8 @@
         "pp": 5,
         "priority": 0,
         "category": "Physical",
-        "description": "Power is equal to 120 * (target's current HP / target's maximum HP), rounded half down, but not less than 1."
+        "description": "Power is equal to 120 * (target's current HP / target's maximum HP), rounded half down, but not less than 1.",
+        "base_power_callback_type": "hp_based_defender"
     },
     {
         "name": "Curse",
@@ -1949,7 +1984,11 @@
         "pp": 15,
         "priority": 0,
         "category": "Physical",
-        "description": "If the target lost HP, the user takes recoil damage equal to 33% the HP lost by the target, rounded half up, but not less than 1 HP."
+        "description": "If the target lost HP, the user takes recoil damage equal to 33% the HP lost by the target, rounded half up, but not less than 1 HP.",
+        "recoil": [
+            33,
+            100
+        ]
     },
     {
         "name": "Double Hit",
@@ -2170,7 +2209,11 @@
         "pp": 10,
         "priority": 0,
         "category": "Special",
-        "description": "The user recovers 3/4 the HP lost by the target, rounded half up. If Big Root is held by the user, the HP recovered is 1.3x normal, rounded half down."
+        "description": "The user recovers 3/4 the HP lost by the target, rounded half up. If Big Root is held by the user, the HP recovered is 1.3x normal, rounded half down.",
+        "drain": [
+            3,
+            4
+        ]
     },
     {
         "name": "Drain Punch",
@@ -2181,7 +2224,11 @@
         "pp": 10,
         "priority": 0,
         "category": "Physical",
-        "description": "The user recovers 1/2 the HP lost by the target, rounded half up. If Big Root is held by the user, the HP recovered is 1.3x normal, rounded half down."
+        "description": "The user recovers 1/2 the HP lost by the target, rounded half up. If Big Root is held by the user, the HP recovered is 1.3x normal, rounded half down.",
+        "drain": [
+            1,
+            2
+        ]
     },
     {
         "name": "Dream Eater",
@@ -2368,7 +2415,8 @@
         "pp": 10,
         "priority": 0,
         "category": "Special",
-        "description": "The power of this move depends on (user's current Speed / target's current Speed), rounded down. Power is equal to 150 if the result is 4 or more, 120 if 3, 80 if 2, 60 if 1, 40 if less than 1. If the target's current Speed is 0, this move's power is 40."
+        "description": "The power of this move depends on (user's current Speed / target's current Speed), rounded down. Power is equal to 150 if the result is 4 or more, 120 if 3, 80 if 2, 60 if 1, 40 if less than 1. If the target's current Speed is 0, this move's power is 40.",
+        "base_power_callback_type": "speed_ratio"
     },
     {
         "name": "Electro Drift",
@@ -2489,7 +2537,8 @@
         "pp": 5,
         "priority": 0,
         "category": "Special",
-        "description": "Power is equal to (user's current HP * 150 / user's maximum HP), rounded down, but not less than 1."
+        "description": "Power is equal to (user's current HP * 150 / user's maximum HP), rounded down, but not less than 1.",
+        "base_power_callback_type": "hp_based_attacker"
     },
     {
         "name": "Esper Wing",
@@ -2896,7 +2945,14 @@
         "pp": 15,
         "priority": 0,
         "category": "Special",
-        "description": "Has a 10% chance to burn the target."
+        "description": "Has a 10% chance to burn the target.",
+        "secondary_effects": [
+            {
+                "chance": 10,
+                "status": "brn"
+            }
+        ],
+        "has_secondary_effect": true
     },
     {
         "name": "Flare Blitz",
@@ -2907,7 +2963,11 @@
         "pp": 15,
         "priority": 0,
         "category": "Physical",
-        "description": "Has a 10% chance to burn the target. If the target lost HP, the user takes recoil damage equal to 33% the HP lost by the target, rounded half up, but not less than 1 HP."
+        "description": "Has a 10% chance to burn the target. If the target lost HP, the user takes recoil damage equal to 33% the HP lost by the target, rounded half up, but not less than 1 HP.",
+        "recoil": [
+            33,
+            100
+        ]
     },
     {
         "name": "Flash",
@@ -3336,7 +3396,11 @@
         "pp": 10,
         "priority": 0,
         "category": "Special",
-        "description": "The user recovers 1/2 the HP lost by the target, rounded half up. If Big Root is held by the user, the HP recovered is 1.3x normal, rounded half down."
+        "description": "The user recovers 1/2 the HP lost by the target, rounded half up. If Big Root is held by the user, the HP recovered is 1.3x normal, rounded half down.",
+        "drain": [
+            1,
+            2
+        ]
     },
     {
         "name": "Giga Impact",
@@ -3798,7 +3862,8 @@
         "pp": 20,
         "priority": 0,
         "category": "Special",
-        "description": "This move's power is 20 if the target weighs less than 10 kg, 40 if less than 25 kg, 60 if less than 50 kg, 80 if less than 100 kg, 100 if less than 200 kg, and 120 if greater than or equal to 200 kg."
+        "description": "This move's power is 20 if the target weighs less than 10 kg, 40 if less than 25 kg, 60 if less than 50 kg, 80 if less than 100 kg, 100 if less than 200 kg, and 120 if greater than or equal to 200 kg.",
+        "base_power_callback_type": "target_weight"
     },
     {
         "name": "Grass Pledge",
@@ -3974,7 +4039,8 @@
         "pp": 5,
         "priority": 0,
         "category": "Physical",
-        "description": "Power is equal to (25 * target's current Speed / user's current Speed) + 1, rounded down, but not more than 150. If the user's current Speed is 0, this move's power is 1."
+        "description": "Power is equal to (25 * target's current Speed / user's current Speed) + 1, rounded down, but not more than 150. If the user's current Speed is 0, this move's power is 1.",
+        "base_power_callback_type": "inverse_speed_ratio"
     },
     {
         "name": "Hail",
@@ -4084,7 +4150,11 @@
         "pp": 5,
         "priority": 0,
         "category": "Physical",
-        "description": "If the target lost HP, the user takes recoil damage equal to 1/2 the HP lost by the target, rounded half up, but not less than 1 HP."
+        "description": "If the target lost HP, the user takes recoil damage equal to 1/2 the HP lost by the target, rounded half up, but not less than 1 HP.",
+        "recoil": [
+            1,
+            2
+        ]
     },
     {
         "name": "Heal Bell",
@@ -4172,7 +4242,8 @@
         "pp": 10,
         "priority": 0,
         "category": "Physical",
-        "description": "The power of this move depends on (user's weight / target's weight), rounded down. Power is equal to 120 if the result is 5 or more, 100 if 4, 80 if 3, 60 if 2, and 40 if 1 or less. Damage doubles and no accuracy check is done if the target has used Minimize while active."
+        "description": "The power of this move depends on (user's weight / target's weight), rounded down. Power is equal to 120 if the result is 5 or more, 100 if 4, 80 if 3, 60 if 2, and 40 if 1 or less. Damage doubles and no accuracy check is done if the target has used Minimize while active.",
+        "base_power_callback_type": "weight_ratio"
     },
     {
         "name": "Heat Wave",
@@ -4194,7 +4265,8 @@
         "pp": 10,
         "priority": 0,
         "category": "Physical",
-        "description": "The power of this move depends on (user's weight / target's weight), rounded down. Power is equal to 120 if the result is 5 or more, 100 if 4, 80 if 3, 60 if 2, and 40 if 1 or less. Damage doubles and no accuracy check is done if the target has used Minimize while active."
+        "description": "The power of this move depends on (user's weight / target's weight), rounded down. Power is equal to 120 if the result is 5 or more, 100 if 4, 80 if 3, 60 if 2, and 40 if 1 or less. Damage doubles and no accuracy check is done if the target has used Minimize while active.",
+        "base_power_callback_type": "weight_ratio"
     },
     {
         "name": "Helping Hand",
@@ -5261,7 +5333,8 @@
         "pp": 20,
         "priority": 0,
         "category": "Physical",
-        "description": "This move's power is 20 if the target weighs less than 10 kg, 40 if less than 25 kg, 60 if less than 50 kg, 80 if less than 100 kg, 100 if less than 200 kg, and 120 if greater than or equal to 200 kg."
+        "description": "This move's power is 20 if the target weighs less than 10 kg, 40 if less than 25 kg, 60 if less than 50 kg, 80 if less than 100 kg, 100 if less than 200 kg, and 120 if greater than or equal to 200 kg.",
+        "base_power_callback_type": "target_weight"
     },
     {
         "name": "Low Sweep",
@@ -5349,7 +5422,14 @@
         "pp": 30,
         "priority": 1,
         "category": "Physical",
-        "description": "No additional effect."
+        "description": "No additional effect.",
+        "flags": [
+            "contact",
+            "protect",
+            "mirror",
+            "punch",
+            "metronome"
+        ]
     },
     {
         "name": "Magical Leaf",
@@ -6515,7 +6595,11 @@
         "pp": 20,
         "priority": 0,
         "category": "Special",
-        "description": "The user recovers 1/2 the HP lost by the target, rounded half up. If Big Root is held by the user, the HP recovered is 1.3x normal, rounded half down."
+        "description": "The user recovers 1/2 the HP lost by the target, rounded half up. If Big Root is held by the user, the HP recovered is 1.3x normal, rounded half down.",
+        "drain": [
+            3,
+            4
+        ]
     },
     {
         "name": "Parting Shot",
@@ -6889,7 +6973,8 @@
         "pp": 10,
         "priority": 0,
         "category": "Physical",
-        "description": "Power is equal to 20+(X*20), where X is the user's total stat stage changes that are greater than 0."
+        "description": "Power is equal to 20+(X*20), where X is the user's total stat stage changes that are greater than 0.",
+        "base_power_callback_type": "positive_boosts"
     },
     {
         "name": "Power-Up Punch",
@@ -7785,7 +7870,14 @@
         "pp": 15,
         "priority": 0,
         "category": "Special",
-        "description": "Has a 30% chance to burn the target. The target thaws out if it is frozen."
+        "description": "Has a 30% chance to burn the target. The target thaws out if it is frozen.",
+        "secondary_effects": [
+            {
+                "chance": 30,
+                "status": "brn"
+            }
+        ],
+        "has_secondary_effect": true
     },
     {
         "name": "Scale Shot",
@@ -7939,7 +8031,16 @@
         "pp": 15,
         "priority": 0,
         "category": "Special",
-        "description": "Has a 20% chance to lower the target's Special Defense by 1 stage."
+        "description": "Has a 20% chance to lower the target's Special Defense by 1 stage.",
+        "secondary_effects": [
+            {
+                "chance": 20,
+                "boosts": {
+                    "spd": -1
+                }
+            }
+        ],
+        "has_secondary_effect": true
     },
     {
         "name": "Shadow Bone",
@@ -8940,7 +9041,8 @@
         "pp": 10,
         "priority": 0,
         "category": "Special",
-        "description": "Power is equal to 20+(X*20), where X is the user's total stat stage changes that are greater than 0."
+        "description": "Power is equal to 20+(X*20), where X is the user's total stat stage changes that are greater than 0.",
+        "base_power_callback_type": "positive_boosts"
     },
     {
         "name": "Storm Throw",
@@ -9600,7 +9702,14 @@
         "pp": 15,
         "priority": 0,
         "category": "Special",
-        "description": "Has a 10% chance to paralyze the target."
+        "description": "Has a 10% chance to paralyze the target.",
+        "secondary_effects": [
+            {
+                "chance": 10,
+                "status": "par"
+            }
+        ],
+        "has_secondary_effect": true
     },
     {
         "name": "Thunder Cage",
@@ -10183,7 +10292,8 @@
         "pp": 5,
         "priority": 0,
         "category": "Special",
-        "description": "Power is equal to (user's current HP * 150 / user's maximum HP), rounded down, but not less than 1."
+        "description": "Power is equal to (user's current HP * 150 / user's maximum HP), rounded down, but not less than 1.",
+        "base_power_callback_type": "hp_based_attacker"
     },
     {
         "name": "Wave Crash",
@@ -10194,7 +10304,11 @@
         "pp": 10,
         "priority": 0,
         "category": "Physical",
-        "description": "If the target lost HP, the user takes recoil damage equal to 33% the HP lost by the target, rounded half up, but not less than 1 HP."
+        "description": "If the target lost HP, the user takes recoil damage equal to 33% the HP lost by the target, rounded half up, but not less than 1 HP.",
+        "recoil": [
+            33,
+            100
+        ]
     },
     {
         "name": "Weather Ball",
@@ -10392,7 +10506,8 @@
         "pp": 5,
         "priority": 0,
         "category": "Special",
-        "description": "Power is equal to 120 * (target's current HP / target's maximum HP), rounded half down, but not less than 1."
+        "description": "Power is equal to 120 * (target's current HP / target's maximum HP), rounded half down, but not less than 1.",
+        "base_power_callback_type": "hp_based_defender"
     },
     {
         "name": "X-Scissor",

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from python.game.data.base import GameDataObject
 
@@ -11,3 +11,4 @@ class Pokemon(GameDataObject):
     types: List[str]
     base_stats: Dict[str, int]
     abilities: Dict[str, str]
+    weight_kg: Optional[float] = None

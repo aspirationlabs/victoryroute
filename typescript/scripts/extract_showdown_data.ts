@@ -40,6 +40,63 @@ const DAMAGE_MULTIPLIERS: Record<number, number> = {
   3: 0.0,
 };
 
+const BASE_POWER_CALLBACK_TYPES: Record<string, string> = {
+  eruption: "hp_based_attacker",
+  waterspout: "hp_based_attacker",
+  crushgrip: "hp_based_defender",
+  wringout: "hp_based_defender",
+  electroball: "speed_ratio",
+  gyroball: "inverse_speed_ratio",
+  heavyslam: "weight_ratio",
+  heatcrash: "weight_ratio",
+  lowkick: "target_weight",
+  grassknot: "target_weight",
+  storedpower: "positive_boosts",
+  powertrip: "positive_boosts",
+};
+
+function extractSecondaryEffects(moveData: any): any[] | null {
+  const rawSecondaries: any[] = [];
+
+  if (moveData.secondary) {
+    rawSecondaries.push(moveData.secondary);
+  }
+  if (Array.isArray(moveData.secondaries)) {
+    for (const secondary of moveData.secondaries) {
+      if (secondary) {
+        rawSecondaries.push(secondary);
+      }
+    }
+  }
+
+  const effects: any[] = [];
+  for (const effect of rawSecondaries) {
+    const chance = effect.chance ?? 100;
+    if (effect.status) {
+      effects.push({
+        chance,
+        status: effect.status,
+      });
+    }
+
+    if (effect.boosts) {
+      effects.push({
+        chance,
+        boosts: effect.boosts,
+      });
+    }
+
+    if (effect.volatileStatus) {
+      effects.push({
+        chance,
+        volatile_status: effect.volatileStatus,
+      });
+    }
+  }
+
+  return effects.length > 0 ? effects : null;
+}
+
 function transformNatures(raw: any): any[] {
   const natures: any[] = [];
   for (const [natureId, natureData] of Object.entries<any>(raw)) {
@@ -94,7 +151,10 @@ function transformMoves(raw: any, textData: any): any[] {
     const textEntry = textData[moveId];
     const description = textEntry?.desc || textEntry?.shortDesc || "";
 
-    moves.push({
+    const secondaryEffects = extractSecondaryEffects(moveData);
+    const hasSecondaryEffect = Boolean(secondaryEffects);
+
+    const moveEntry: any = {
       name: moveData.name,
       num: moveData.num,
       type: moveData.type,
@@ -104,7 +164,20 @@ function transformMoves(raw: any, textData: any): any[] {
       priority: moveData.priority,
       category: moveData.category,
       description: description,
-    });
+      base_power_callback_type:
+        BASE_POWER_CALLBACK_TYPES[moveId as string] || null,
+      recoil: moveData.recoil ?? null,
+      drain: moveData.drain ?? null,
+      secondary_effects: secondaryEffects,
+      has_secondary_effect: hasSecondaryEffect,
+      flags: moveData.flags ? Object.keys(moveData.flags) : [],
+    };
+
+    if (moveData.multihit) {
+      moveEntry.multihit = moveData.multihit;
+    }
+
+    moves.push(moveEntry);
   }
   return moves;
 }
@@ -158,6 +231,7 @@ function transformPokemon(raw: any): any[] {
       types: speciesData.types,
       base_stats: speciesData.baseStats,
       abilities: speciesData.abilities,
+      weight_kg: speciesData.weightkg ?? null,
     });
   }
   return pokemonList;
