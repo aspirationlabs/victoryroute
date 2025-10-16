@@ -109,7 +109,7 @@ class ZeroShotAgent(Agent):
             """Look up game data for Pokemon, Move, Ability, Item, or Nature.
 
             Returns detailed stats, types, effects, and descriptions. Use to check:
-            type matchups, move power/effects, ability mechanics, item effects.
+            Pokemon base stats, move power/effects, ability mechanics, item effects, nature effects.
 
             Args:
                 name: Object name (e.g., "Landorus", "Earthquake", "Intimidate", "Choice Scarf")
