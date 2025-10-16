@@ -736,43 +736,40 @@ class BattleSimulator:
         crit_min_damage = int(crit_damage * 0.85)
         crit_max_damage = int(crit_damage * 1.0)
 
-        hit_count: Union[int, str] = 1
-        min_hit_multiplier = 1
-        max_hit_multiplier = 1
+        attacker_item = (
+            normalize_name(attacking_pokemon.item) if attacking_pokemon.item else ""
+        )
+        hit_count, hit_distribution = self._get_multihit_distribution(
+            move_data, attacker_ability, attacker_item
+        )
 
-        if move_data.multihit:
-            if isinstance(move_data.multihit, int):
-                hit_count = move_data.multihit
-                min_hit_multiplier = move_data.multihit
-                max_hit_multiplier = move_data.multihit
-            elif isinstance(move_data.multihit, (tuple, list)):
-                min_hits, max_hits = move_data.multihit
-                min_hit_multiplier = min_hits
-                max_hit_multiplier = max_hits
-                hit_count = f"{min_hits}-{max_hits}"
+        min_hits = min(hits for hits, _ in hit_distribution)
+        max_hits = max(hits for hits, _ in hit_distribution)
 
-        min_damage = int(min_damage * min_hit_multiplier)
-        max_damage = int(max_damage * max_hit_multiplier)
-        crit_min_damage = int(crit_min_damage * min_hit_multiplier)
-        crit_max_damage = int(crit_max_damage * max_hit_multiplier)
+        min_damage = int(min_damage * min_hits)
+        max_damage = int(max_damage * max_hits)
+        crit_min_damage = int(crit_min_damage * min_hits)
+        crit_max_damage = int(crit_max_damage * max_hits)
 
         ko_prob = 0.0
         if min_damage >= target_pokemon.current_hp:
             ko_prob = 1.0
         elif max_damage >= target_pokemon.current_hp:
-            if move_data.multihit and isinstance(move_data.multihit, (tuple, list)):
-                min_hits, max_hits = move_data.multihit
-                if min_hits == 2 and max_hits == 5:
-                    ko_count = 0.0
-                    for hits, prob in [(2, 0.35), (3, 0.35), (4, 0.15), (5, 0.15)]:
-                        max_damage_for_hits = int(damage * 1.0 * hits)
-                        if max_damage_for_hits >= target_pokemon.current_hp:
-                            ko_count += prob
-                    ko_prob = ko_count
-                else:
-                    ko_prob = 0.5
-            else:
-                ko_prob = 0.5
+            for hits, hit_prob in hit_distribution:
+                min_damage_for_hits = int(damage * 0.85 * hits)
+                max_damage_for_hits = int(damage * 1.0 * hits)
+
+                if min_damage_for_hits >= target_pokemon.current_hp:
+                    ko_prob += hit_prob
+                elif max_damage_for_hits >= target_pokemon.current_hp:
+                    damage_range = max_damage_for_hits - min_damage_for_hits
+                    if damage_range > 0:
+                        ko_roll_prob = (
+                            max_damage_for_hits - target_pokemon.current_hp
+                        ) / damage_range
+                        ko_prob += hit_prob * ko_roll_prob
+                    else:
+                        ko_prob += hit_prob * 0.5
 
         status_effects: Dict[str, float] = {}
         additional_effects: List[str] = []
@@ -873,6 +870,49 @@ class BattleSimulator:
 
     def _get_ability(self, pokemon: PokemonState) -> str:
         return normalize_name(pokemon.ability) if pokemon.ability else ""
+
+    def _get_multihit_distribution(
+        self, move_data, attacker_ability: str, attacker_item: str
+    ) -> Tuple[Union[int, str], List[Tuple[int, float]]]:
+        """Determine effective hit count and distribution for multi-hit moves.
+
+        Accounts for Skill Link (always max hits) and Loaded Dice (4-5 hits).
+
+        Returns:
+            Tuple of (hit_count_display, [(hits, probability), ...])
+            - hit_count_display: int for fixed hits, str for variable (e.g., "4-5")
+            - distribution: list of (hit_count, probability) tuples
+
+        Examples:
+            - Skill Link + Bullet Seed: (5, [(5, 1.0)])
+            - Loaded Dice + Bullet Seed: ("4-5", [(4, 0.5), (5, 0.5)])
+            - Normal Bullet Seed: ("2-5", [(2, 0.35), (3, 0.35), (4, 0.15), (5, 0.15)])
+            - Double Kick: (2, [(2, 1.0)])
+        """
+        if not move_data.multihit:
+            return (1, [(1, 1.0)])
+
+        if isinstance(move_data.multihit, int):
+            fixed_hits = move_data.multihit
+            return (fixed_hits, [(fixed_hits, 1.0)])
+
+        min_hits, max_hits = move_data.multihit
+
+        if attacker_ability == "skilllink":
+            return (max_hits, [(max_hits, 1.0)])
+
+        if attacker_item == "loadeddice":
+            if min_hits == 2 and max_hits == 5:
+                return ("4-5", [(4, 0.5), (5, 0.5)])
+
+        if min_hits == 2 and max_hits == 5:
+            return (
+                f"{min_hits}-{max_hits}",
+                [(2, 0.35), (3, 0.35), (4, 0.15), (5, 0.15)],
+            )
+
+        avg_hits = (min_hits + max_hits) / 2
+        return (f"{min_hits}-{max_hits}", [(int(avg_hits), 1.0)])
 
     def _is_grounded(self, pokemon: PokemonState) -> bool:
         ability = self._get_ability(pokemon)
