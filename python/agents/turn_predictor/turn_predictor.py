@@ -57,15 +57,11 @@ class TurnPredictorAgent(Agent):
         #     model_name=self._model_name,
         #     max_retries=self._max_retries,
         # )
-        # TODO: Create a custom agent now.
-        # Read state['opponent_predicted_active_pokemon'] and battle state.
-        # Compute for each possible move/switch, a SimulationAction.
-        # 1. Move + (tera/no-tera) * Opponent move / switch (4 * 2 + 5 for 13 options) = 52. Pick best option.
-        # 2. Switch * Opponent move / switch (4 * 2 + 5 for 13 options) = 65
-        # 3. Output: state['simulation_actions'] -> List[SimulationAction].
-        # tool call: BattleSimulator.get_move_order
-        # tool call: BattleSimulator.estimate_move_result
-        # If the pokemon will faint after first move goes, then indicate ko potential, and if not ko'd then return the end hps.
+        # TODO: Use this ActionSimulationAgent in the implementation
+        # action_simulation_agent = ActionSimulationAgent(
+        #     name="action_simulation_agent",
+        #     battle_simulator=BattleSimulator(),
+        # )
 
         # TODO: Create a LoopAgent.
         # Based on the simulation actions, choose the best available move/switch we use.

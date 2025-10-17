@@ -122,6 +122,31 @@ class TurnPredictorPromptBuilder:
         if opponent_active_pokemon is None:
             raise ValueError("Opponent active pokemon is required")
 
+        # Convert available moves and switches to BattleAction objects
+        from python.game.interface.battle_action import ActionType, BattleAction
+
+        available_actions = []
+
+        # Add move actions
+        if battle_state.available_moves:
+            for move in battle_state.available_moves:
+                available_actions.append(
+                    BattleAction(action_type=ActionType.MOVE, move_name=move)
+                )
+
+        # Add switch actions
+        if battle_state.available_switches:
+            our_team = battle_state.get_team(our_player_id)
+            for switch_index in battle_state.available_switches:
+                if 0 <= switch_index < len(our_team.pokemon):
+                    pokemon_name = our_team.pokemon[switch_index].species
+                    available_actions.append(
+                        BattleAction(
+                            action_type=ActionType.SWITCH,
+                            switch_pokemon_name=pokemon_name,
+                        )
+                    )
+
         return TurnPredictorState(
             our_player_id=our_player_id,
             turn_number=battle_state.field_state.turn_number,
@@ -130,5 +155,6 @@ class TurnPredictorPromptBuilder:
             past_player_actions=self._format_past_actions_from_store(
                 our_player_id, opponent_player_id, past_turns=past_turns
             ),
+            available_actions=available_actions,
             battle_state=battle_state,
         )
