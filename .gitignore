@@ -213,4 +213,4 @@ node_modules/*
 
 # ADK evaluation results
 .adk/eval_history/
-*/.adk/eval_history/
+**/.adk/eval_history/

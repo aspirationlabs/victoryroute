@@ -5,11 +5,16 @@ from typing import Any, Optional
 from absl import logging
 from google.adk.agents import BaseAgent, LlmAgent
 from google.adk.agents.callback_context import CallbackContext
+from google.adk.models import LlmResponse
 from google.adk.models.lite_llm import LiteLlm
 from google.adk.planners import BuiltInPlanner
 from google.genai import types
 
 from python.agents.tools.get_object_game_data import get_object_game_data
+from python.agents.turn_predictor.json_extraction_utils import (
+    extract_json_from_text,
+    validate_opponent_pokemon_prediction,
+)
 from python.agents.turn_predictor.turn_predictor_state import (
     OpponentPokemonPrediction,
     TurnPredictorState,
@@ -62,6 +67,57 @@ class TeamPredictorAgent:
             state.validate_input_state()
             return None
 
+        def clean_model_output(
+            callback_context: CallbackContext,
+            llm_response: LlmResponse,
+        ) -> Optional[LlmResponse]:
+            """Extract and clean JSON from model output before schema validation."""
+            if not llm_response or not hasattr(llm_response, "content"):
+                return None
+
+            if not llm_response.content:
+                return None
+
+            if (
+                not llm_response.content.parts
+                or not hasattr(llm_response.content.parts[0], "text")
+                or not llm_response.content.parts[0].text
+            ):
+                return None
+
+            text = llm_response.content.parts[0].text
+            extracted_json = extract_json_from_text(text)
+            if extracted_json:
+                clean_json = json.dumps(extracted_json)
+
+                is_valid = validate_opponent_pokemon_prediction(extracted_json)
+                if not is_valid:
+                    logging.warning(
+                        "[TeamPredictorAgent] Extracted JSON failed validation but returning anyway"
+                    )
+
+                if len(text) != len(clean_json):
+                    logging.info(
+                        f"[TeamPredictorAgent] Cleaned model output from {len(text)} chars to {len(clean_json)} chars"
+                    )
+
+                # Create a new LlmResponse with modified content
+                new_response = LlmResponse(
+                    content=types.Content(
+                        parts=[types.Part(text=clean_json)],
+                        role=llm_response.content.role,
+                    ),
+                    grounding_metadata=llm_response.grounding_metadata
+                    if hasattr(llm_response, "grounding_metadata")
+                    else None,
+                )
+                return new_response
+            else:
+                logging.warning(
+                    f"[TeamPredictorAgent] Could not extract JSON from model output: {text[:200]}..."
+                )
+                return None
+
         def log_agent_response(
             callback_context: CallbackContext,
         ) -> Optional[types.Content]:
@@ -90,6 +146,7 @@ class TeamPredictorAgent:
             disallow_transfer_to_parent=True,
             disallow_transfer_to_peers=True,
             before_agent_callback=log_and_validate_input_state,
+            after_model_callback=clean_model_output,
             after_agent_callback=log_agent_response,
         )
 
