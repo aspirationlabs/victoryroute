@@ -1,3 +1,4 @@
 data/stats/gen9ou/1500.json filter=lfs diff=lfs merge=lfs -text
 data/game/moves.json filter=lfs diff=lfs merge=lfs -text
 data/game/pokemon.json filter=lfs diff=lfs merge=lfs -text
+python/agents/adk_agents/opponent_pokemon_predictor/team_predictor_evalset.evalset.json filter=lfs diff=lfs merge=lfs -text

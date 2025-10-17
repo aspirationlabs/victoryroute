@@ -5,11 +5,16 @@ from typing import Any, Optional
 from absl import logging
 from google.adk.agents import BaseAgent, LlmAgent
 from google.adk.agents.callback_context import CallbackContext
+from google.adk.models import LlmResponse
 from google.adk.models.lite_llm import LiteLlm
 from google.adk.planners import BuiltInPlanner
 from google.genai import types
 
 from python.agents.tools.get_object_game_data import get_object_game_data
+from python.agents.turn_predictor.json_extraction_utils import (
+    extract_json_from_text,
+    validate_opponent_pokemon_prediction,
+)
 from python.agents.turn_predictor.turn_predictor_state import (
     OpponentPokemonPrediction,
     TurnPredictorState,
@@ -41,14 +46,13 @@ class TeamPredictorAgent:
             """
             return get_object_game_data(name, self._game_data)
 
-        def tool_get_pokemon_usage_stats(mode: str, pokemon_species: str) -> str:
+        def tool_get_pokemon_usage_stats(pokemon_species: str) -> str:
             priors = priors_reader.get_pokemon_state_priors(pokemon_species)
             if priors is None:
                 return json.dumps({"pokemon_species": pokemon_species, "priors": None})
             return json.dumps(
                 {
                     "pokemon_species": pokemon_species,
-                    "mode": mode,
                     "priors": asdict(priors),
                 }
             )
@@ -56,23 +60,70 @@ class TeamPredictorAgent:
         def log_and_validate_input_state(
             callback_context: CallbackContext,
         ) -> Optional[types.Content]:
-            state = TurnPredictorState.from_state(
-                _ensure_mapping(callback_context.state)
-            )
+            state = _coerce_turn_predictor_state(callback_context.state)
             logging.info(
                 f"[TeamPredictorAgent] Turn {state.turn_number}, state: {state}"
             )
             state.validate_input_state()
             return None
 
+        def clean_model_output(
+            callback_context: CallbackContext,
+            llm_response: LlmResponse,
+        ) -> Optional[LlmResponse]:
+            """Extract and clean JSON from model output before schema validation."""
+            if not llm_response or not hasattr(llm_response, "content"):
+                return None
+
+            if not llm_response.content:
+                return None
+
+            if (
+                not llm_response.content.parts
+                or not hasattr(llm_response.content.parts[0], "text")
+                or not llm_response.content.parts[0].text
+            ):
+                return None
+
+            text = llm_response.content.parts[0].text
+            extracted_json = extract_json_from_text(text)
+            if extracted_json:
+                clean_json = json.dumps(extracted_json)
+
+                is_valid = validate_opponent_pokemon_prediction(extracted_json)
+                if not is_valid:
+                    logging.warning(
+                        "[TeamPredictorAgent] Extracted JSON failed validation but returning anyway"
+                    )
+
+                if len(text) != len(clean_json):
+                    logging.info(
+                        f"[TeamPredictorAgent] Cleaned model output from {len(text)} chars to {len(clean_json)} chars"
+                    )
+
+                # Create a new LlmResponse with modified content
+                new_response = LlmResponse(
+                    content=types.Content(
+                        parts=[types.Part(text=clean_json)],
+                        role=llm_response.content.role,
+                    ),
+                    grounding_metadata=llm_response.grounding_metadata
+                    if hasattr(llm_response, "grounding_metadata")
+                    else None,
+                )
+                return new_response
+            else:
+                logging.warning(
+                    f"[TeamPredictorAgent] Could not extract JSON from model output: {text[:200]}..."
+                )
+                return None
+
         def log_agent_response(
             callback_context: CallbackContext,
         ) -> Optional[types.Content]:
-            state = TurnPredictorState.from_state(
-                _ensure_mapping(callback_context.state)
-            )
+            state = _coerce_turn_predictor_state(callback_context.state)
             logging.info(
-                f"[TeamPredictorAgent] Turn {state.turn_number}, state post-response: {state}"
+                f"[TeamPredictorAgent] Turn {state.turn_number}, opponent predicted active pokemon: {state.opponent_predicted_active_pokemon}"
             )
             return None
 
@@ -95,6 +146,7 @@ class TeamPredictorAgent:
             disallow_transfer_to_parent=True,
             disallow_transfer_to_peers=True,
             before_agent_callback=log_and_validate_input_state,
+            after_model_callback=clean_model_output,
             after_agent_callback=log_agent_response,
         )
 
@@ -103,17 +155,16 @@ class TeamPredictorAgent:
         return self._agent
 
 
-def _ensure_mapping(state: Any) -> dict[str, Any]:
-    """Safely coerce a callback context state into a plain dictionary."""
-    if isinstance(state, dict):
-        return state
-    if hasattr(state, "copy"):
-        copied = state.copy()
-        if isinstance(copied, dict):
-            return copied
-    if hasattr(state, "__iter__"):
-        try:
-            return dict(state)
-        except TypeError:
-            pass
-    raise TypeError("callback context state must be convertible to a dictionary")
+def _coerce_turn_predictor_state(raw_state: Any) -> TurnPredictorState:
+    """Convert an ADK callback state into a TurnPredictorState."""
+    if isinstance(raw_state, TurnPredictorState):
+        return raw_state
+    if hasattr(raw_state, "model_dump"):
+        return TurnPredictorState.from_state(raw_state)  # type: ignore[arg-type]
+    if hasattr(raw_state, "to_dict"):
+        return TurnPredictorState.model_validate(raw_state.to_dict())
+    if isinstance(raw_state, dict):
+        return TurnPredictorState.model_validate(raw_state)
+    raise TypeError(
+        f"Unsupported state type {type(raw_state)!r}; cannot convert to TurnPredictorState"
+    )

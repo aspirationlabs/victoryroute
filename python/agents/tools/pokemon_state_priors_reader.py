@@ -23,7 +23,9 @@ class PokemonStatePriors:
     tera: List[Dict[str, Any]]
     teammates: List[Dict[str, Any]]
 
-    def __eq__(self, other: "PokemonStatePriors") -> bool:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, PokemonStatePriors):
+            return False
         return (
             self.abilities == other.abilities
             and self.items == other.items
@@ -107,4 +109,4 @@ class PokemonStatePriorsReader:
         self, pokemon_species: str
     ) -> Optional[PokemonStatePriors]:
         key = normalize_name(pokemon_species)
-        return self._stats_lookup.get(key)
+        return self._stats_lookup.get(key, None)

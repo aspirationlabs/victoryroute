@@ -2,27 +2,25 @@ from __future__ import annotations
 
 import json
 from pydantic import BaseModel, Field, ConfigDict
-from typing import Any, List, Mapping, Optional
+from typing import Any, List, Optional
 
 from python.game.schema.pokemon_state import PokemonState
 from python.game.schema.battle_state import BattleState
 
 
+class MovePrediction(BaseModel):
+    model_config = ConfigDict(frozen=True)
+    name: str = Field(description="Move name.")
+    confidence: float = Field(description="Confidence, between 0 and 1.")
+
+
 class OpponentPokemonPrediction(BaseModel):
     model_config = ConfigDict(frozen=True)
-
     species: str = Field(description="Pokemon species.")
-    moves: List["MovePrediction"] = Field(description="Active pokemon moves (up to 4).")
+    moves: List[MovePrediction] = Field(description="Active pokemon moves (up to 4).")
     item: str = Field(description="Item name.")
     ability: str = Field(description="Ability name.")
     tera_type: str = Field(description="Tera type name.")
-
-
-class MovePrediction(BaseModel):
-    model_config = ConfigDict(frozen=True)
-
-    name: str = Field(description="Move name.")
-    confidence: float = Field(description="Confidence, between 0 and 1.")
 
 
 class TurnPredictorState(BaseModel):
@@ -43,28 +41,27 @@ class TurnPredictorState(BaseModel):
     @classmethod
     def from_session(cls, session: Any) -> "TurnPredictorState":
         """Create from any object by extracting matching fields."""
-        return cls(
-            our_player_id=session.state["our_player_id"],
-            turn_number=session.state["turn_number"],
-            opponent_active_pokemon=session.state["opponent_active_pokemon"],
-            past_battle_event_logs=session.state["past_battle_event_logs"],
-            past_player_actions=session.state["past_player_actions"],
-            battle_state=session.state["battle_state"],
-            opponent_predicted_active_pokemon=session.state.get(
-                "opponent_predicted_active_pokemon", None
-            ),
-        )
+        if not hasattr(session, "state"):
+            raise AttributeError("Session object must have a 'state' attribute")
+        state = session.state
+        if isinstance(state, BaseModel):
+            return cls.from_state(state)
+        return cls.model_validate(state)
 
     @classmethod
-    def from_state(cls, state: Mapping[str, Any]) -> "TurnPredictorState":
+    def from_state(cls, state: BaseModel) -> "TurnPredictorState":
+        if isinstance(state, cls):
+            return state
+
+        state_data = state.model_dump()
         return cls(
-            our_player_id=state["our_player_id"],
-            turn_number=state["turn_number"],
-            opponent_active_pokemon=state["opponent_active_pokemon"],
-            past_battle_event_logs=state["past_battle_event_logs"],
-            past_player_actions=state["past_player_actions"],
-            battle_state=state["battle_state"],
-            opponent_predicted_active_pokemon=state.get(
+            our_player_id=state_data["our_player_id"],
+            turn_number=state_data["turn_number"],
+            opponent_active_pokemon=state_data["opponent_active_pokemon"],
+            past_battle_event_logs=state_data["past_battle_event_logs"],
+            past_player_actions=state_data["past_player_actions"],
+            battle_state=state_data["battle_state"],
+            opponent_predicted_active_pokemon=state_data.get(
                 "opponent_predicted_active_pokemon", None
             ),
         )
