@@ -19,7 +19,7 @@
 - Refresh Showdown assets through `pnpm install && pnpm run sync` (set `SHOWDOWN_DIR` when pointing at a local clone) and pull teams with `uv run python python/scripts/download_teams.py --format gen9ou`.
 
 ## Python Standards
-- Activate the venv and run `pyrefly check <files>`, `ruff check .`, and `ruff format .` before proposing Python changes.
+- Activate the venv (`uv venv` to create, `uv sync` to sync packages, `source .venv/bin/activate` to use) and run `pyrefly check <files>`, `ruff check .`, and `ruff format .` before proposing Python changes.
 - Keep imports top-level and alphabetized, avoid `# type: ignore`, honor Ruff’s 88-character lines, and provide explicit type hints.
 - Prefer dataclasses, pydantic models, UTC-aware timestamps, and dependency-injected fakes; maintain `*_test.py` absltest suites that mirror real behavior.
 

@@ -84,13 +84,19 @@ class TurnPredictorStateTest(unittest.TestCase):
 
     def test_from_state_round_trip(self) -> None:
         """from_state reconstructs an equivalent model."""
-        input_state = dict(self.base_kwargs)
+        input_state = self.state.model_copy()
         result = TurnPredictorState.from_state(input_state)
         self.assertEqual(result, self.state)
 
     def test_from_session_round_trip(self) -> None:
         """from_session uses session.state dict to rebuild model."""
         session = SimpleNamespace(state=dict(self.base_kwargs))
+        result = TurnPredictorState.from_session(session)
+        self.assertEqual(result, self.state)
+
+    def test_from_session_handles_pydantic_state(self) -> None:
+        """from_session accepts a session whose state is a Pydantic model."""
+        session = SimpleNamespace(state=self.state.model_copy())
         result = TurnPredictorState.from_session(session)
         self.assertEqual(result, self.state)
 
@@ -113,16 +119,24 @@ class TurnPredictorStateTest(unittest.TestCase):
 
     def test_from_state_missing_optional_field(self) -> None:
         """from_state handles missing opponent_predicted_active_pokemon."""
-        input_state = dict(self.base_kwargs)
-        del input_state["opponent_predicted_active_pokemon"]
+        input_state = self.state.model_copy(
+            update={"opponent_predicted_active_pokemon": None}
+        )
         result = TurnPredictorState.from_state(input_state)
         self.assertIsNone(result.opponent_predicted_active_pokemon)
 
+    def test_from_state_accepts_pydantic_model(self) -> None:
+        """from_state accepts an existing TurnPredictorState instance."""
+        source = self.state.model_copy()
+        result = TurnPredictorState.from_state(source)
+        self.assertEqual(result, self.state)
+
     def test_from_session_missing_optional_field(self) -> None:
         """from_session handles missing opponent_predicted_active_pokemon."""
-        state_dict = dict(self.base_kwargs)
-        del state_dict["opponent_predicted_active_pokemon"]
-        session = SimpleNamespace(state=state_dict)
+        session_state = self.state.model_copy(
+            update={"opponent_predicted_active_pokemon": None}
+        )
+        session = SimpleNamespace(state=session_state)
         result = TurnPredictorState.from_session(session)
         self.assertIsNone(result.opponent_predicted_active_pokemon)
 

@@ -210,3 +210,7 @@ __marimo__/
 node_modules/*
 
 .claude/settings.local.json
+
+# ADK evaluation results
+.adk/eval_history/
+*/.adk/eval_history/

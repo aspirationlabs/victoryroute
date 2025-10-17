@@ -27,6 +27,7 @@ dependencies = [
     "fastapi",
     "filelock",
     "google-adk",
+    "google-adk[eval]",
     "greenlet",
     "griffe",
     "h11",
