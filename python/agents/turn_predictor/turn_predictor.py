@@ -7,6 +7,7 @@ from google.adk.sessions import BaseSessionService, InMemorySessionService, Sess
 
 from python.agents.agent_interface import Agent
 from python.agents.battle_action_generator import BattleActionGenerator
+from python.agents.tools.get_object_game_data import get_object_game_data
 from python.agents.tools.llm_event_logger import LlmEventLogger
 from python.agents.turn_predictor.turn_predictor_prompt_builder import (
     TurnPredictorPromptBuilder,
@@ -43,15 +44,14 @@ class TurnPredictorAgent(Agent):
         )
 
     def _create_agent(self, model_name, app_name, system_instructions) -> BaseAgent:
-        # User query will provide:
-        # state['turn_number'] -> str (input)
-        # state['our_player_id'] -> str (input)
-        # state['available_actions'] -> List[str] (input) or List[BattleAction]
-        # state['battle_state'] -> BattleState (input)
-        # state['opponent_potential_actions'] -> str (input) or List[BattleAction]
-        # state['opponent_active_pokemon'] -> PokemonState (input)
-        # state['past_battle_event_logs_xml'] -> string (input) or dict[int, str]
-        # state['past_player_actions_xml'] -> string (input) or dict[str, List[BattleAction]]
+        def tool_get_object_game_data(name: str) -> str:
+            """Look up game data for Pokemon, Move, Ability, Item, or Nature.
+            Returns detailed stats, types, effects, and descriptions. Use to check:
+            Pokemon base stats, move power/effects, ability mechanics, item effects, nature effects.
+            Args:
+                name: Object name (e.g., "Landorus", "Earthquake", "Intimidate", "Choice Scarf")
+            """
+            return get_object_game_data(name, self._game_data)
 
         # TODO: Implement this method properly
         # priors_reader = PokemonStatePriorsReader(mode=self._mode)
@@ -71,26 +71,70 @@ class TurnPredictorAgent(Agent):
         #     name="action_simulation_agent",
         #     battle_simulator=BattleSimulator(),
         # )
+        primary_agent = LlmAgent(
+            model=LiteLlm(model=model_name),
+            name="battle_action_planner",
+            instruction="",  # TODO: Add the system prompt to the promt_builder, and use it here.
+            planner=BuiltInPlanner(
+                thinking_config=types.ThinkingConfig(
+                    include_thoughts=True,
+                    thinking_budget=1024,
+                )
+            ),
+            include_contents="none",
+            tools=[tool_get_object_game_data],
+            output_schema=DecisionProposal,
+            output_key="decision_proposal",
+            disallow_transfer_to_parent=True,
+            disallow_transfer_to_peers=True,
+        )
 
-        # TODO: Create a LoopAgent.
-        # Based on the simulation actions, choose the best available move/switch we use.
-        # Reason based on what the moves do, the opponent potential actions, and potential simulations to guide damage and outcomes.
-        # For example, if a simulation includes a setup move and opponent can KO, probably don't want to use the setup move.
-        # If the opponent doesn't have a setup move and no real damage moves, it's probably safe to set up.
-        # Protect can scout.
-        # Priority moves can move first to try to KO. Opt for damage/KO when possible.
-        # - state['battle_state']
-        # - state['available_actions']
-        # - state['available_opponent_actions'] (?)
-        # - state['simulation_actions']
-        # tool call: get_object_game_data.
-        # Agent 1: Output first action.
-        # Agent 2: Critique (what edge cases did you not consider in either the simulation actions or potential opponent actions not in simulation that can be a threat, adn why is it a threat? Do you reconsider or update your rationale? Why? If you update your rationale, what is the new rationale?)
-        # Agent 3: Output a new action or update rationale. Reformat and make sure you output a proper BattleAction.
-        # Output: BattleAction.
-        # ...
-        # TODO: Implement this method to return a proper BaseAgent
-        raise NotImplementedError("_create_agent not yet implemented")
+        critique_agent = LlmAgent(
+            model=llm,
+            name="risk_analyst",
+            instruction="",  # TODO: Add the system prompt to the promt_builder, and use it here.
+            planner=BuiltInPlanner(
+                thinking_config=types.ThinkingConfig(
+                    include_thoughts=True,
+                    thinking_budget=1024,
+                )
+            ),
+            include_contents="none",
+            tools=[tool_get_object_game_data],
+            output_schema=DecisionCritique,
+            output_key="decision_critique",
+            disallow_transfer_to_parent=True,
+            disallow_transfer_to_peers=True,
+        )
+
+        final_agent = LlmAgent(
+            model=llm,
+            name="battle_action_lead",
+            instruction="",  # TODO: Add the system prompt to the promt_builder, and use it here.
+            planner=BuiltInPlanner(
+                thinking_config=types.ThinkingConfig(
+                    include_thoughts=True,
+                    thinking_budget=1024,
+                )
+            ),
+            include_contents="none",
+            tools=[tool_get_object_game_data],
+            output_schema=DecisionProposal,
+            output_key="decision_proposal",
+            disallow_transfer_to_parent=True,
+            disallow_transfer_to_peers=True,
+        )
+
+        decision_loop = LoopAgent(
+            name="battle_action_decision_loop",
+            sub_agents=[primary_agent, critique_agent, final_agent],
+            max_iterations=2,
+        )
+
+        return SequentialAgent(
+            name="turn_predictor_workflow",
+            sub_agents=[opponent_agent, simulation_agent, decision_loop],
+        )
 
     def _get_action_generator(
         self, battle_room: str, player_name: str
@@ -113,7 +157,7 @@ class TurnPredictorAgent(Agent):
     async def retry_action_on_server_error(
         self, error_text: str, state: BattleState
     ) -> Optional[BattleAction]:
-        raise NotImplementedError("retry_action_on_server_error not implemented")
+        return self.choose_action(state, battle_room, battle_stream_store)
 
     async def cleanup_battle(self, battle_room: str) -> None:
         if battle_room in self._battle_room_to_logger:
