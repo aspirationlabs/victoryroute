@@ -39,6 +39,7 @@ class TurnPredictorState(BaseModel):
     battle_state: BattleState
     available_actions: List[BattleAction]
     opponent_predicted_active_pokemon: Optional[OpponentPokemonPrediction] = None
+    simulation_actions: Optional[List[SimulationAction]] = None
 
     @classmethod
     def from_session(cls, session: Any) -> "TurnPredictorState":
