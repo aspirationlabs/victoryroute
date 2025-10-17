@@ -35,7 +35,7 @@ class TeamPredictorAgent:
         model_name: str = "openrouter/google/gemini-2.5-flash-lite-preview-09-2025",
         max_retries: int = 3,
     ):
-        self._game_data: GameData = GameData()
+        self._game_data: GameData = game_data
 
         def tool_get_object_game_data(name: str) -> str:
             """Look up game data for Pokemon, Move, Ability, Item, or Nature.

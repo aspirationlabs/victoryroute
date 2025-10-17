@@ -1,0 +1,13 @@
+{
+    "eval_set_id": "turn_predictor_evalset",
+    "name": "Turn Predictor Evalset",
+    "description": "Evalset to determine how well the Turn Predictor Agent chooses the next BattleAction.",
+    "eval_cases": [
+        # TODO: Add eval cases, similar to how generate_turn_prediction_state is used to generate the state for team_predictor_evalset.evalset.json, and
+        # then run to generate a response. 
+        # Case 1: turn 1 (very beginning of battle): Ideally we switch Lokix out to Zamazenta. 
+        # Case 2: turn 3, ideally Gliscor uses Knock Off on Iron Crown.
+        # Case 3: Turn 6, ideally Gliscor switches out to Pecharunt against Samurott.
+        # Case 4: Turn 12, Ideally Zamazenta uses Ice Fang on Landorus-T.
+    ]
+}

@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import json
-from pydantic import BaseModel, Field, ConfigDict
 from typing import Any, List, Optional
 
-from python.game.schema.pokemon_state import PokemonState
-from python.game.schema.battle_state import BattleState
+from pydantic import BaseModel, ConfigDict, Field
+
+from python.agents.turn_predictor.simulation_result import SimulationResult
 from python.game.interface.battle_action import BattleAction
+from python.game.schema.battle_state import BattleState
+from python.game.schema.pokemon_state import PokemonState
 
 
 class MovePrediction(BaseModel):
@@ -39,6 +41,7 @@ class TurnPredictorState(BaseModel):
     battle_state: BattleState
     available_actions: List[BattleAction]
     opponent_predicted_active_pokemon: Optional[OpponentPokemonPrediction] = None
+    simulation_actions: Optional[List[SimulationResult]] = None
 
     @classmethod
     def from_session(cls, session: Any) -> "TurnPredictorState":
