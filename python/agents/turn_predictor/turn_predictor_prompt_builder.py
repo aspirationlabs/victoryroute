@@ -13,6 +13,11 @@ class TurnPredictorPromptBuilder:
     def __init__(self, battle_stream_store: BattleStreamStore, mode: str = "gen9ou"):
         self._mode_rules = self._load_filename(f"modes/{mode}.md")
         self._team_predictor_prompt = self._load_filename("team_predictor_agent.md")
+        self._initial_decision_prompt = self._load_filename("initial_decision_agent.md")
+        self._decision_critique_prompt = self._load_filename(
+            "decision_critique_agent.md"
+        )
+        self._final_decision_prompt = self._load_filename("final_decision_agent.md")
         self._battle_stream_store = battle_stream_store
 
     def _load_filename(self, filename: str) -> str:
@@ -97,6 +102,15 @@ class TurnPredictorPromptBuilder:
 
     def get_team_predictor_system_prompt(self) -> str:
         return self._team_predictor_prompt
+
+    def get_initial_decision_prompt(self) -> str:
+        return self._initial_decision_prompt
+
+    def get_decision_critique_prompt(self) -> str:
+        return self._decision_critique_prompt
+
+    def get_final_decision_prompt(self) -> str:
+        return self._final_decision_prompt
 
     def get_new_turn_state_prompt(
         self, battle_state: BattleState, past_turns: int = 3
