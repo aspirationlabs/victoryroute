@@ -9,6 +9,7 @@ from python.agents.turn_predictor.turn_predictor_state import (
     OpponentPokemonPrediction,
     TurnPredictorState,
 )
+from python.game.interface.battle_action import ActionType, BattleAction
 from python.game.schema.battle_state import BattleState
 from python.game.schema.field_state import FieldState
 from python.game.schema.pokemon_state import PokemonState
@@ -52,6 +53,11 @@ class TurnPredictorStateTest(unittest.TestCase):
             tera_type="ground",
         )
 
+        self.available_actions = [
+            BattleAction(action_type=ActionType.MOVE, move_name="Hydro Pump"),
+            BattleAction(action_type=ActionType.MOVE, move_name="Volt Switch"),
+        ]
+
         self.base_kwargs = {
             "our_player_id": "p1",
             "turn_number": 5,
@@ -59,6 +65,7 @@ class TurnPredictorStateTest(unittest.TestCase):
             "past_battle_event_logs": "<past_server_events></past_server_events>",
             "past_player_actions": "<past_actions></past_actions>",
             "battle_state": self.battle_state,
+            "available_actions": self.available_actions,
             "opponent_predicted_active_pokemon": self.prediction,
         }
 

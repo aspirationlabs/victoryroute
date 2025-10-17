@@ -6,6 +6,7 @@ from typing import Any, List, Optional
 
 from python.game.schema.pokemon_state import PokemonState
 from python.game.schema.battle_state import BattleState
+from python.game.interface.battle_action import BattleAction
 
 
 class MovePrediction(BaseModel):
@@ -36,6 +37,7 @@ class TurnPredictorState(BaseModel):
     past_battle_event_logs: str
     past_player_actions: str
     battle_state: BattleState
+    available_actions: List[BattleAction]
     opponent_predicted_active_pokemon: Optional[OpponentPokemonPrediction] = None
 
     @classmethod
@@ -61,6 +63,7 @@ class TurnPredictorState(BaseModel):
             past_battle_event_logs=state_data["past_battle_event_logs"],
             past_player_actions=state_data["past_player_actions"],
             battle_state=state_data["battle_state"],
+            available_actions=state_data["available_actions"],
             opponent_predicted_active_pokemon=state_data.get(
                 "opponent_predicted_active_pokemon", None
             ),
@@ -79,6 +82,8 @@ class TurnPredictorState(BaseModel):
             raise ValueError("past_player_actions is required")
         if not self.battle_state:
             raise ValueError("battle_state is required")
+        if not self.available_actions:
+            raise ValueError("available_actions is required")
 
     def update_session_state(self, session: Any) -> None:
         session.state.update(self.model_dump(mode="json"))
