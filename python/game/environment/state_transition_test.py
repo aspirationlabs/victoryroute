@@ -38,6 +38,13 @@ from python.game.schema.team_state import TeamState
 class StateTransitionTest(parameterized.TestCase):
     """Test state transition handlers."""
 
+    def _get_active_pokemon_safe(self, team: TeamState) -> PokemonState:
+        """Get active pokemon with type assertion for tests."""
+        pokemon = team.get_active_pokemon()
+        self.assertIsNotNone(pokemon, "Active pokemon should not be None")
+        assert pokemon is not None  # For type checking
+        return pokemon
+
     def setUp(self) -> None:
         """Set up test fixtures."""
         self.pikachu = PokemonState(
@@ -88,9 +95,12 @@ class StateTransitionTest(parameterized.TestCase):
         )
 
         new_state = StateTransition.apply(state, event)
-        self.assertEqual(state.teams["p1"].get_active_pokemon().current_hp, initial_hp)
+        original_active = state.teams["p1"].get_active_pokemon()
+        self.assertIsNotNone(original_active)
+        self.assertEqual(original_active.current_hp, initial_hp)
 
         new_pokemon = new_state.teams["p1"].get_active_pokemon()
+        self.assertIsNotNone(new_pokemon)
         self.assertEqual(new_pokemon.current_hp, expected_hp)
         self.assertEqual(new_pokemon.status, expected_status)
 
@@ -204,7 +214,8 @@ class StateTransitionTest(parameterized.TestCase):
         )
 
         new_state = StateTransition.apply(state, event)
-        self.assertEqual(state.teams["p1"].get_active_pokemon().current_hp, initial_hp)
+        original_active = self._get_active_pokemon_safe(state.teams["p1"])
+        self.assertEqual(original_active.current_hp, initial_hp)
 
         new_pokemon = new_state.teams["p1"].get_active_pokemon()
         self.assertEqual(new_pokemon.current_hp, expected_hp)
@@ -260,10 +271,10 @@ class StateTransitionTest(parameterized.TestCase):
         self.assertEqual(new_state.teams["p2"].get_active_pokemon().current_hp, 60)
 
     @parameterized.parameters(
-        # (species, level, gender, hp_current, hp_max, status, expected_volatiles_cleared)
-        ("Charizard", 100, "M", 100, 100, None, True),
-        ("Garchomp", 100, "F", 85, 100, "brn", True),
-        ("Landorus-Therian", 100, None, 90, 100, None, True),
+        # (species, level, gender, hp_current, hp_max, status, expected_current_hp, expected_max_hp, expected_volatiles_cleared)
+        ("Charizard", 100, "M", 100, 100, None, 360, 360, True),  # 100% of 360
+        ("Garchomp", 100, "F", 85, 100, "brn", 357, 420, True),  # 85% of 420
+        ("Landorus-Therian", 100, None, 90, 100, None, 343, 382, True),  # 90% of 382
     )
     def test_apply_switch(
         self,
@@ -273,6 +284,8 @@ class StateTransitionTest(parameterized.TestCase):
         hp_current: int,
         hp_max: int,
         status: str,
+        expected_current_hp: int,
+        expected_max_hp: int,
         expected_volatiles_cleared: bool,
     ) -> None:
         """Test switch event application."""
@@ -296,8 +309,8 @@ class StateTransitionTest(parameterized.TestCase):
         self.assertEqual(active.species, species)
         self.assertEqual(active.level, level)
         self.assertEqual(active.gender, gender)
-        self.assertEqual(active.current_hp, hp_current)
-        self.assertEqual(active.max_hp, hp_max)
+        self.assertEqual(active.current_hp, expected_current_hp)
+        self.assertEqual(active.max_hp, expected_max_hp)
 
         if expected_volatiles_cleared:
             self.assertEqual(active.volatile_conditions, {})
@@ -322,7 +335,7 @@ class StateTransitionTest(parameterized.TestCase):
 
         active = new_state.teams["p1"].get_active_pokemon()
         self.assertEqual(active.species, "Garchomp")
-        self.assertEqual(active.current_hp, 90)
+        self.assertEqual(active.current_hp, 378)  # 90% of Garchomp's max HP (420)
         self.assertEqual(active.volatile_conditions, {})
 
     def test_apply_faint(self) -> None:
@@ -791,6 +804,126 @@ class StateTransitionTest(parameterized.TestCase):
         # Other state should be preserved
         self.assertEqual(["Move1", "Move2"], new_state.available_moves)
         self.assertEqual([1, 2], new_state.available_switches)
+
+    def test_damage_percentage_hp_preserves_max_hp(self) -> None:
+        """Test that percentage-based damage events preserve calculated max_hp."""
+        # Create Pokemon with actual max HP (e.g., Iron Crown with 384 HP)
+        pokemon = PokemonState(
+            species="Iron Crown",
+            current_hp=384,
+            max_hp=384,
+            is_active=True,
+        )
+        team = TeamState(pokemon=[pokemon], active_pokemon_index=0)
+        state = BattleState(teams={"p2": team, "p1": TeamState()})
+
+        # Apply damage event with percentage (58/100 means 58%)
+        event = DamageEvent(
+            raw_message="|-damage|p2a: Iron Crown|58/100",
+            player_id="p2",
+            position="a",
+            pokemon_name="Iron Crown",
+            hp_current=58,
+            hp_max=100,
+            status=None,
+        )
+
+        new_state = StateTransition.apply(state, event)
+        updated_pokemon = new_state.teams["p2"].get_active_pokemon()
+
+        # Max HP should remain 384, not be overwritten to 100
+        self.assertEqual(384, updated_pokemon.max_hp)
+        # Current HP should be 58% of 384 = 222
+        self.assertEqual(222, updated_pokemon.current_hp)
+
+    def test_heal_percentage_hp_preserves_max_hp(self) -> None:
+        """Test that percentage-based heal events preserve calculated max_hp."""
+        pokemon = PokemonState(
+            species="Iron Crown",
+            current_hp=222,  # 58% of 384
+            max_hp=384,
+            is_active=True,
+        )
+        team = TeamState(pokemon=[pokemon], active_pokemon_index=0)
+        state = BattleState(teams={"p2": team, "p1": TeamState()})
+
+        # Apply heal event with percentage (75/100 means 75%)
+        event = HealEvent(
+            raw_message="|-heal|p2a: Iron Crown|75/100",
+            player_id="p2",
+            position="a",
+            pokemon_name="Iron Crown",
+            hp_current=75,
+            hp_max=100,
+            status=None,
+        )
+
+        new_state = StateTransition.apply(state, event)
+        updated_pokemon = new_state.teams["p2"].get_active_pokemon()
+
+        # Max HP should remain 384
+        self.assertEqual(384, updated_pokemon.max_hp)
+        # Current HP should be 75% of 384 = 288
+        self.assertEqual(288, updated_pokemon.current_hp)
+
+    def test_sethp_percentage_hp_preserves_max_hp(self) -> None:
+        """Test that percentage-based sethp events preserve calculated max_hp."""
+        pokemon = PokemonState(
+            species="Iron Crown",
+            current_hp=222,
+            max_hp=384,
+            is_active=True,
+        )
+        team = TeamState(pokemon=[pokemon], active_pokemon_index=0)
+        state = BattleState(teams={"p2": team, "p1": TeamState()})
+
+        # Apply sethp event with percentage (50/100 means 50%)
+        event = SetHpEvent(
+            raw_message="|-sethp|p2a: Iron Crown|50/100",
+            player_id="p2",
+            position="a",
+            pokemon_name="Iron Crown",
+            hp_current=50,
+            hp_max=100,
+            status=None,
+        )
+
+        new_state = StateTransition.apply(state, event)
+        updated_pokemon = new_state.teams["p2"].get_active_pokemon()
+
+        # Max HP should remain 384
+        self.assertEqual(384, updated_pokemon.max_hp)
+        # Current HP should be 50% of 384 = 192
+        self.assertEqual(192, updated_pokemon.current_hp)
+
+    def test_actual_hp_values_are_used_directly(self) -> None:
+        """Test that non-percentage HP values are used directly."""
+        pokemon = PokemonState(
+            species="Lokix",
+            current_hp=283,
+            max_hp=283,
+            is_active=True,
+        )
+        team = TeamState(pokemon=[pokemon], active_pokemon_index=0)
+        state = BattleState(teams={"p1": team, "p2": TeamState()})
+
+        # Apply damage with actual HP values (144/283)
+        event = DamageEvent(
+            raw_message="|-damage|p1a: Lokix|144/283",
+            player_id="p1",
+            position="a",
+            pokemon_name="Lokix",
+            hp_current=144,
+            hp_max=283,
+            status=None,
+        )
+
+        new_state = StateTransition.apply(state, event)
+        updated_pokemon = new_state.teams["p1"].get_active_pokemon()
+
+        # Should use values directly
+        self.assertEqual(283, updated_pokemon.max_hp)
+        self.assertEqual(144, updated_pokemon.current_hp)
 
 
 if __name__ == "__main__":

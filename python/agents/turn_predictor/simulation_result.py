@@ -17,6 +17,7 @@ class PokemonOutcome:
 
     # HP outcomes (accounting for damage ranges)
     active_pokemon_hp_range: Tuple[int, int]  # (min_hp, max_hp) after all actions
+    active_pokemon_max_hp: int  # Maximum HP of the active Pokemon
     critical_hit_received_hp_range: Tuple[int, int]  # HP range if critical hit received
 
     # Probability outcomes

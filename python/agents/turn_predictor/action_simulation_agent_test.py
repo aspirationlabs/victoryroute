@@ -8,7 +8,11 @@ from absl.testing import absltest
 from google.adk.agents import InvocationContext
 from google.adk.events import Event
 
-from python.agents.tools.battle_simulator import BattleSimulator
+from python.agents.tools.battle_simulator import (
+    BattleSimulator,
+    MoveAction,
+    MoveResult,
+)
 from python.agents.turn_predictor.action_simulation_agent import (
     ActionSimulationAgent,
 )
@@ -292,54 +296,191 @@ class ActionSimulationAgentTest(absltest.TestCase, unittest.IsolatedAsyncioTestC
         )
         self.assertIsNone(target)
 
-    async def test_simulate_move_vs_move_not_implemented(self):
-        """Test that move vs move simulation raises NotImplementedError."""
-        with self.assertRaises(NotImplementedError):
-            await self.agent._simulate_move_vs_move(
-                our_pokemon=self.sample_our_pokemon,
-                our_move="Earthquake",
-                our_tera=False,
-                opponent_pokemon=self.sample_opponent_pokemon,
-                opponent_move="U-turn",
-                field_state=FieldState(),
-                our_player_id="p1",
-                opponent_player_id="p2",
-            )
+    async def test_simulate_move_vs_move(self):
+        """Verify move-vs-move simulations produce expected outcomes."""
+        self.mock_simulator.reset_mock()
 
-    async def test_simulate_move_vs_switch_not_implemented(self):
-        """Test that move vs switch simulation raises NotImplementedError."""
-        with self.assertRaises(NotImplementedError):
-            await self.agent._simulate_move_vs_switch(
-                our_pokemon=self.sample_our_pokemon,
-                our_move="Earthquake",
-                our_tera=False,
-                opponent_switching_to=self.sample_opponent_pokemon,
-                field_state=FieldState(),
-                our_player_id="p1",
-                opponent_player_id="p2",
-            )
+        our_move_obj = next(
+            move for move in self.sample_our_pokemon.moves if move.name == "Earthquake"
+        )
+        opponent_move_obj = next(
+            move for move in self.sample_opponent_pokemon.moves if move.name == "U-turn"
+        )
 
-    async def test_simulate_switch_vs_move_not_implemented(self):
-        """Test that switch vs move simulation raises NotImplementedError."""
-        with self.assertRaises(NotImplementedError):
-            await self.agent._simulate_switch_vs_move(
-                our_switching_to=self.sample_our_pokemon,
-                opponent_pokemon=self.sample_opponent_pokemon,
-                opponent_move="U-turn",
-                field_state=FieldState(),
-                our_player_id="p1",
-                opponent_player_id="p2",
-            )
+        self.mock_simulator.get_move_order.return_value = [
+            MoveAction(
+                pokemon=self.sample_our_pokemon,
+                move=our_move_obj,
+                priority=0,
+                fractional_priority=0.0,
+                speed=120,
+            ),
+            MoveAction(
+                pokemon=self.sample_opponent_pokemon,
+                move=opponent_move_obj,
+                priority=0,
+                fractional_priority=0.0,
+                speed=100,
+            ),
+        ]
 
-    async def test_simulate_switch_vs_switch_not_implemented(self):
-        """Test that switch vs switch simulation raises NotImplementedError."""
-        with self.assertRaises(NotImplementedError):
-            await self.agent._simulate_switch_vs_switch(
-                our_switching_to=self.sample_our_pokemon,
-                opponent_switching_to=self.sample_opponent_pokemon,
-                our_player_id="p1",
-                opponent_player_id="p2",
-            )
+        our_result = MoveResult(
+            min_damage=50,
+            max_damage=70,
+            knockout_probability=0.2,
+            critical_hit_probability=0.1,
+            crit_min_damage=90,
+            crit_max_damage=110,
+            status_effects={},
+            additional_effects=[],
+        )
+        opponent_result = MoveResult(
+            min_damage=40,
+            max_damage=60,
+            knockout_probability=0.1,
+            critical_hit_probability=0.05,
+            crit_min_damage=80,
+            crit_max_damage=100,
+            status_effects={},
+            additional_effects=[],
+        )
+        self.mock_simulator.estimate_move_result.side_effect = [
+            our_result,
+            opponent_result,
+        ]
+
+        result = await self.agent._simulate_move_vs_move(
+            battle_state=self.sample_battle_state,
+            our_pokemon=self.sample_our_pokemon,
+            our_move="Earthquake",
+            our_tera=False,
+            opponent_pokemon=self.sample_opponent_pokemon,
+            opponent_move="U-turn",
+            field_state=self.sample_battle_state.field_state,
+            our_player_id="p1",
+            opponent_player_id="p2",
+        )
+
+        self.mock_simulator.get_move_order.assert_called_once()
+        self.assertEqual(result.actions["p1"].move_name, "Earthquake")
+        self.assertEqual(result.actions["p2"].move_name, "U-turn")
+        self.assertEqual(result.player_move_order, ("p1", "p2"))
+        self.assertEqual(result.move_results["p1"], our_result)
+        self.assertEqual(result.move_results["p2"], opponent_result)
+
+        our_outcome = result.player_outcomes["p1"]
+        opp_outcome = result.player_outcomes["p2"]
+        self.assertEqual(our_outcome.active_pokemon_hp_range, (240, 300))
+        self.assertEqual(our_outcome.critical_hit_received_hp_range, (200, 300))
+        self.assertAlmostEqual(our_outcome.active_pokemon_fainted_probability, 0.08)
+        self.assertAlmostEqual(opp_outcome.active_pokemon_moves_probability, 0.8)
+        self.assertEqual(opp_outcome.active_pokemon_hp_range, (180, 200))
+        self.assertEqual(opp_outcome.critical_hit_received_hp_range, (140, 160))
+
+    async def test_simulate_move_vs_switch(self):
+        """Verify move-vs-switch simulation applies damage to incoming Pokemon."""
+        self.mock_simulator.reset_mock()
+
+        our_move_result = MoveResult(
+            min_damage=60,
+            max_damage=80,
+            knockout_probability=0.3,
+            critical_hit_probability=0.15,
+            crit_min_damage=90,
+            crit_max_damage=110,
+            status_effects={},
+            additional_effects=[],
+        )
+        self.mock_simulator.estimate_move_result.return_value = our_move_result
+
+        result = await self.agent._simulate_move_vs_switch(
+            battle_state=self.sample_battle_state,
+            our_pokemon=self.sample_our_pokemon,
+            our_move="Earthquake",
+            our_tera=False,
+            opponent_switching_to=self.sample_opponent_pokemon,
+            field_state=self.sample_battle_state.field_state,
+            our_player_id="p1",
+            opponent_player_id="p2",
+        )
+
+        self.mock_simulator.estimate_move_result.assert_called_once()
+        self.assertEqual(result.actions["p2"].action_type, ActionType.SWITCH)
+        self.assertEqual(result.player_move_order, ("p2", "p1"))
+        self.assertEqual(result.move_results["p1"], our_move_result)
+        self.assertIsNone(result.move_results["p2"])
+
+        opponent_outcome = result.player_outcomes["p2"]
+        self.assertEqual(opponent_outcome.active_pokemon_hp_range, (170, 190))
+        self.assertAlmostEqual(opponent_outcome.active_pokemon_fainted_probability, 0.3)
+        self.assertAlmostEqual(opponent_outcome.critical_hit_received_probability, 0.15)
+
+    async def test_simulate_switch_vs_move(self):
+        """Verify switch-vs-move applies damage to the incoming Pokemon."""
+        self.mock_simulator.reset_mock()
+
+        opponent_move_result = MoveResult(
+            min_damage=45,
+            max_damage=65,
+            knockout_probability=0.25,
+            critical_hit_probability=0.05,
+            crit_min_damage=70,
+            crit_max_damage=90,
+            status_effects={},
+            additional_effects=[],
+        )
+        self.mock_simulator.estimate_move_result.return_value = opponent_move_result
+
+        result = await self.agent._simulate_switch_vs_move(
+            battle_state=self.sample_battle_state,
+            our_switching_to=self.sample_our_pokemon,
+            opponent_pokemon=self.sample_opponent_pokemon,
+            opponent_move="U-turn",
+            field_state=self.sample_battle_state.field_state,
+            our_player_id="p1",
+            opponent_player_id="p2",
+        )
+
+        self.mock_simulator.estimate_move_result.assert_called_once()
+        self.assertEqual(result.actions["p1"].action_type, ActionType.SWITCH)
+        self.assertEqual(result.actions["p2"].move_name, "U-turn")
+        self.assertEqual(result.player_move_order, ("p1", "p2"))
+        self.assertIsNone(result.move_results["p1"])
+        self.assertEqual(result.move_results["p2"], opponent_move_result)
+
+        our_outcome = result.player_outcomes["p1"]
+        self.assertEqual(our_outcome.active_pokemon_hp_range, (235, 255))
+        self.assertAlmostEqual(our_outcome.active_pokemon_fainted_probability, 0.25)
+
+    async def test_simulate_switch_vs_switch(self):
+        """Verify switch-vs-switch leaves HP untouched and no damage results."""
+        self.mock_simulator.reset_mock()
+
+        result = await self.agent._simulate_switch_vs_switch(
+            battle_state=self.sample_battle_state,
+            our_switching_to=self.sample_our_pokemon,
+            opponent_switching_to=self.sample_opponent_pokemon,
+            our_player_id="p1",
+            opponent_player_id="p2",
+        )
+
+        self.mock_simulator.get_move_order.assert_not_called()
+        self.mock_simulator.estimate_move_result.assert_not_called()
+        self.assertEqual(result.actions["p1"].action_type, ActionType.SWITCH)
+        self.assertEqual(result.actions["p2"].action_type, ActionType.SWITCH)
+        self.assertEqual(result.move_results["p1"], None)
+        self.assertEqual(result.move_results["p2"], None)
+        self.assertEqual(
+            result.player_outcomes["p1"].active_pokemon_hp_range,
+            (self.sample_our_pokemon.current_hp, self.sample_our_pokemon.current_hp),
+        )
+        self.assertEqual(
+            result.player_outcomes["p2"].active_pokemon_hp_range,
+            (
+                self.sample_opponent_pokemon.current_hp,
+                self.sample_opponent_pokemon.current_hp,
+            ),
+        )
 
 
 if __name__ == "__main__":
