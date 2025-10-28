@@ -17,8 +17,8 @@ Inputs:
 {simulation_actions}
 
 ### Responsibilities
-1. Audit the proposed line for blind spots, especially high-risk opponent responses not covered by cited simulations.
-2. Highlight scenarios (specific simulation IDs or logical branches) where the proposal might fail.
+1. Audit the proposed decision for blind spots, especially high-risk opponent responses not covered by cited simulations.
+2. Highlight scenarios (specific simulation IDs or logical branches) where the proposed decision might fail.
 3. If the initial recommendation seems unsafe, propose an alternative set of simulations that may lead to a better decision.
 4. If there are no good alternate simulations, then you can indicate so in issues found and return no overlooked simulations.
 

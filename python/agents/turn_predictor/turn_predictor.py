@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Dict, Optional
 
+from absl import logging
 from google.adk.agents import BaseAgent, LlmAgent, LoopAgent, SequentialAgent
 from google.adk.models.lite_llm import LiteLlm
 from google.adk.planners import BuiltInPlanner
@@ -26,7 +27,7 @@ from python.agents.turn_predictor.turn_predictor_prompt_builder import (
 )
 from python.game.data.game_data import GameData
 from python.game.environment.battle_stream_store import BattleStreamStore
-from python.game.interface.battle_action import BattleAction
+from python.game.interface.battle_action import ActionType, BattleAction
 from python.game.schema.battle_state import BattleState
 
 
@@ -54,11 +55,11 @@ class TurnPredictorAgent(Agent):
         self._prompt_builder: TurnPredictorPromptBuilder = TurnPredictorPromptBuilder(
             battle_stream_store, mode=mode
         )
+        self._agent = self._create_agent(model_name)
 
     def _create_agent(
         self,
         model_name: str,
-        prompt_builder: TurnPredictorPromptBuilder,
     ) -> BaseAgent:
         def tool_get_object_game_data(name: str) -> str:
             """Look up game data for Pokemon, Move, Ability, Item, or Nature.
@@ -70,23 +71,20 @@ class TurnPredictorAgent(Agent):
             return get_object_game_data(name, self._game_data)
 
         priors_reader = PokemonStatePriorsReader(mode=self._mode)
-
         opponent_agent = TeamPredictorAgent(
             priors_reader=priors_reader,
-            prompt_builder=prompt_builder,
+            prompt_builder=self._prompt_builder,
             game_data=self._game_data,
             model_name=model_name,
             max_retries=self._max_retries,
         ).get_adk_agent
-
         simulation_agent = ActionSimulationAgent(
             name="action_simulation_agent",
             battle_simulator=BattleSimulator(game_data=self._game_data),
         )
-
-        initial_decision_prompt = prompt_builder.get_initial_decision_prompt()
-        critique_prompt = prompt_builder.get_decision_critique_prompt()
-        final_decision_prompt = prompt_builder.get_final_decision_prompt()
+        initial_decision_prompt = self._prompt_builder.get_initial_decision_prompt()
+        critique_prompt = self._prompt_builder.get_decision_critique_prompt()
+        final_decision_prompt = self._prompt_builder.get_final_decision_prompt()
 
         primary_agent = LlmAgent(
             model=LiteLlm(model=model_name),
@@ -105,7 +103,6 @@ class TurnPredictorAgent(Agent):
             disallow_transfer_to_parent=True,
             disallow_transfer_to_peers=True,
         )
-
         critique_agent = LlmAgent(
             model=LiteLlm(model=model_name),
             name="risk_analyst",
@@ -123,7 +120,6 @@ class TurnPredictorAgent(Agent):
             disallow_transfer_to_parent=True,
             disallow_transfer_to_peers=True,
         )
-
         final_agent = LlmAgent(
             model=LiteLlm(model=model_name),
             name="battle_action_lead",
@@ -141,22 +137,23 @@ class TurnPredictorAgent(Agent):
             disallow_transfer_to_parent=True,
             disallow_transfer_to_peers=True,
         )
-
         decision_loop = LoopAgent(
             name="battle_action_decision_loop",
             sub_agents=[primary_agent, critique_agent, final_agent],
-            max_iterations=1,
+            max_iterations=2,
         )
-
         return SequentialAgent(
             name="turn_predictor_workflow",
             sub_agents=[opponent_agent, simulation_agent, decision_loop],
         )
 
+    @property
+    def get_adk_agent(self) -> BaseAgent:
+        return self._agent
+
     def _get_action_generator(
         self,
         battle_room: str,
-        player_name: str,  # noqa: ARG002
     ) -> BattleActionGenerator:
         if battle_room not in self._battle_room_to_action_generator:
             raise ValueError(
@@ -177,10 +174,6 @@ class TurnPredictorAgent(Agent):
     async def choose_action(self, state: BattleState) -> BattleAction:
         session = await self._get_or_create_session(self._battle_room)
 
-        prompt_builder = TurnPredictorPromptBuilder(
-            battle_stream_store=self._battle_stream_store, mode=self._mode
-        )
-
         if self._battle_room not in self._battle_room_to_logger:
             self._battle_room_to_logger[self._battle_room] = LlmEventLogger(
                 battle_room=self._battle_room,
@@ -188,16 +181,9 @@ class TurnPredictorAgent(Agent):
                 model_name=self._model_name,
             )
 
-        turn_state = prompt_builder.get_new_turn_state_prompt(state)
-
+        turn_state = self._prompt_builder.get_new_turn_state_prompt(state)
         turn_state.update_session_state(session)
-
-        agent = self._create_agent(
-            model_name=self._model_name,
-            prompt_builder=prompt_builder,
-        )
-
-        runner = Runner(agent=agent, session_service=self._session_service)
+        runner = Runner(agent=self._agent, session_service=self._session_service)
 
         query_text = "Choose the best battle action for this turn."
         user_query = types.Content(
@@ -225,12 +211,16 @@ class TurnPredictorAgent(Agent):
         if final_proposal is None:
             raise ValueError("No decision proposal returned from agent workflow")
 
+        logging.debug(
+            "Final proposal for battle_room=%s: %s",
+            self._battle_room,
+            final_proposal.model_dump_json(),
+        )
+
         action = self._convert_proposal_to_action(final_proposal)
         return action
 
     def _convert_proposal_to_action(self, proposal: DecisionProposal) -> BattleAction:
-        from python.game.interface.battle_action import ActionType
-
         action_type_str = proposal.action_type.lower()
 
         if action_type_str == "move":

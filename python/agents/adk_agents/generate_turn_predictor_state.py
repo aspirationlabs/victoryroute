@@ -158,8 +158,7 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--battle-id",
-        required=True,
-        help="Battle room ID (e.g., battle-gen9ou-822).",
+        help="Battle room ID (e.g., battle-gen9ou-822). Not required if --file is provided.",
     )
     parser.add_argument(
         "--turn",
@@ -174,6 +173,11 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         help="Directory containing replay log files.",
     )
     parser.add_argument(
+        "--file",
+        type=Path,
+        help="Direct path to a specific log file to read instead of searching log-dir.",
+    )
+    parser.add_argument(
         "--past-turns",
         type=int,
         default=3,
@@ -184,14 +188,20 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
 
 def main(argv: Optional[Sequence[str]] = None) -> None:
     args = parse_args(argv)
-    log_dir: Path = args.log_dir
-    battle_id: str = args.battle_id
 
-    log_paths = find_log_files(log_dir, battle_id)
+    if args.file:
+        log_paths = [args.file]
+    else:
+        if not args.battle_id:
+            raise ValueError("Either --file or --battle-id must be provided")
+        log_dir: Path = args.log_dir
+        battle_id: str = args.battle_id
+        log_paths = find_log_files(log_dir, battle_id)
+
     event_strings = list(_iter_log_lines(log_paths))
 
     if not event_strings:
-        raise RuntimeError(f"No events found for battle {battle_id}")
+        raise RuntimeError(f"No events found in {log_paths}")
 
     target_turns = set(args.turn) if args.turn else None
 

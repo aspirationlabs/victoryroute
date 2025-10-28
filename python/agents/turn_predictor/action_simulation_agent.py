@@ -29,7 +29,10 @@ from python.agents.turn_predictor.simulation_result import (
     PokemonOutcome,
     SimulationResult,
 )
-from python.agents.turn_predictor.turn_predictor_state import OpponentPokemonPrediction
+from python.agents.turn_predictor.turn_predictor_state import (
+    OpponentPokemonPrediction,
+    TurnPredictorState,
+)
 from python.game.interface.battle_action import ActionType, BattleAction
 from python.game.schema.battle_state import BattleState
 from python.game.schema.enums import FieldEffect, SideCondition, Weather
@@ -58,12 +61,12 @@ class ActionSimulationAgent(BaseAgent):
         self, ctx: InvocationContext
     ) -> AsyncGenerator[Event, None]:
         """Main agent execution that simulates all action combinations."""
-        state: Any = ctx.state  # type: ignore[attr-defined]
+        raw_state: Any = ctx.state  # type: ignore[attr-defined]
+        state = TurnPredictorState.model_validate(raw_state)
+
         our_player_id = state.our_player_id
         opponent_player_id = "p2" if our_player_id == "p1" else "p1"
-
         our_actions = state.available_actions
-
         if not state.opponent_predicted_active_pokemon:
             yield Event(
                 author="ActionSimulationAgent",
@@ -90,7 +93,6 @@ class ActionSimulationAgent(BaseAgent):
             battle_state, opponent_player_id
         )
 
-        # We've already checked that opponent_predicted_active_pokemon exists
         opponent_active_pokemon = self._build_opponent_pokemon_state(
             battle_state,
             state.opponent_predicted_active_pokemon,
@@ -105,6 +107,10 @@ class ActionSimulationAgent(BaseAgent):
         switch_switch_results = 0
         for our_action in our_actions:
             if our_action.action_type == ActionType.MOVE:
+                if not our_action.move_name:
+                    raise ValueError(
+                        "Action type is MOVE, but move_name unset: {our_action}"
+                    )
                 for move_prediction in state.opponent_predicted_active_pokemon.moves:
                     result = await self._simulate_move_vs_move(
                         battle_state=battle_state,
@@ -133,11 +139,17 @@ class ActionSimulationAgent(BaseAgent):
                     simulation_results.append(result)
                     move_switch_results += 1
             elif our_action.action_type == ActionType.SWITCH:
+                if not our_action.switch_pokemon_name:
+                    raise ValueError(
+                        "Action type is SWITCH, but switch_pokemon_name unset: {our_action}"
+                    )
                 our_switch_target = self._get_switch_target(
                     battle_state, our_player_id, our_action.switch_pokemon_name
                 )
                 if not our_switch_target:
-                    continue
+                    raise ValueError(
+                        "No switch target found for our action: {our_action}"
+                    )
                 for move_prediction in state.opponent_predicted_active_pokemon.moves:
                     result = await self._simulate_switch_vs_move(
                         battle_state=battle_state,
@@ -160,7 +172,7 @@ class ActionSimulationAgent(BaseAgent):
                     )
                     switch_switch_results += 1
                     simulation_results.append(result)
-        state["simulation_actions"] = simulation_results  # type: ignore[index]
+        raw_state["simulation_actions"] = simulation_results  # type: ignore[index]
         logging.info(
             f"Action simulator found {move_move_results} move-move, {move_switch_results} move-switch, {switch_move_results} switch-move, {switch_switch_results} switch-switch results."
         )
@@ -184,7 +196,6 @@ class ActionSimulationAgent(BaseAgent):
 
         switches = []
         for pokemon in opponent_team.pokemon:
-            # Skip if fainted or currently active
             if not pokemon.is_alive() or pokemon.is_active:
                 continue
             switches.append(pokemon)

@@ -101,7 +101,6 @@ class TeamPredictorAgent:
                         f"[TeamPredictorAgent] Cleaned model output from {len(text)} chars to {len(clean_json)} chars"
                     )
 
-                # Create a new LlmResponse with modified content
                 new_response = LlmResponse(
                     content=types.Content(
                         parts=[types.Part(text=clean_json)],
