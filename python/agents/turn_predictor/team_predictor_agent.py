@@ -35,7 +35,7 @@ class TeamPredictorAgent:
         model_name: str = "openrouter/google/gemini-2.5-flash-lite-preview-09-2025",
         max_retries: int = 3,
     ):
-        self._game_data: GameData = GameData()
+        self._game_data: GameData = game_data
 
         def tool_get_object_game_data(name: str) -> str:
             """Look up game data for Pokemon, Move, Ability, Item, or Nature.
@@ -61,7 +61,7 @@ class TeamPredictorAgent:
             callback_context: CallbackContext,
         ) -> Optional[types.Content]:
             state = _coerce_turn_predictor_state(callback_context.state)
-            logging.info(
+            logging.debug(
                 f"[TeamPredictorAgent] Turn {state.turn_number}, state: {state}"
             )
             state.validate_input_state()
@@ -101,7 +101,6 @@ class TeamPredictorAgent:
                         f"[TeamPredictorAgent] Cleaned model output from {len(text)} chars to {len(clean_json)} chars"
                     )
 
-                # Create a new LlmResponse with modified content
                 new_response = LlmResponse(
                     content=types.Content(
                         parts=[types.Part(text=clean_json)],
@@ -114,7 +113,7 @@ class TeamPredictorAgent:
                 return new_response
             else:
                 logging.warning(
-                    f"[TeamPredictorAgent] Could not extract JSON from model output: {text[:200]}..."
+                    f"[TeamPredictorAgent] Could not extract JSON from model output: {text}"
                 )
                 return None
 

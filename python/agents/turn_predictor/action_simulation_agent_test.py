@@ -1,6 +1,7 @@
 """Unit tests for ActionSimulationAgent."""
 
 import unittest
+from types import SimpleNamespace
 from typing import List
 from unittest.mock import AsyncMock, Mock
 
@@ -149,36 +150,29 @@ class ActionSimulationAgentTest(absltest.TestCase, unittest.IsolatedAsyncioTestC
 
     async def test_agent_produces_simulation_results(self):
         """Test that agent produces simulation results for all action combinations."""
-        # Create a mock state with proper spec
-        mock_state = Mock(spec=TurnPredictorState)
-        mock_state.our_player_id = "p1"
-        mock_state.available_actions = [
-            BattleAction(action_type=ActionType.MOVE, move_name="Earthquake"),
-            BattleAction(
-                action_type=ActionType.MOVE, move_name="Dragon Claw", tera=True
-            ),
-            BattleAction(
-                action_type=ActionType.SWITCH, switch_pokemon_name="Rotom-Wash"
-            ),
-        ]
-        mock_state.opponent_predicted_active_pokemon = self.sample_opponent_prediction
-        mock_state.battle_state = self.sample_battle_state
+        turn_state = TurnPredictorState(
+            our_player_id="p1",
+            turn_number=1,
+            opponent_active_pokemon=self.sample_opponent_pokemon,
+            past_battle_event_logs="<logs/>",
+            past_player_actions="<actions/>",
+            battle_state=self.sample_battle_state,
+            available_actions=[
+                BattleAction(action_type=ActionType.MOVE, move_name="Earthquake"),
+                BattleAction(
+                    action_type=ActionType.MOVE, move_name="Dragon Claw", tera=True
+                ),
+                BattleAction(
+                    action_type=ActionType.SWITCH, switch_pokemon_name="Rotom-Wash"
+                ),
+            ],
+            opponent_predicted_active_pokemon=self.sample_opponent_prediction,
+        )
 
-        # Mock the InvocationContext
         ctx = Mock(spec=InvocationContext)
-
-        # Create a dict-like object that supports both attribute access and item assignment
-        class StateDict(dict):
-            def __init__(self, mock_state):
-                super().__init__()
-                self.our_player_id = mock_state.our_player_id
-                self.available_actions = mock_state.available_actions
-                self.opponent_predicted_active_pokemon = (
-                    mock_state.opponent_predicted_active_pokemon
-                )
-                self.battle_state = mock_state.battle_state
-
-        ctx.state = StateDict(mock_state)
+        session = SimpleNamespace(state=None)
+        turn_state.update_session_state(session)
+        ctx.session = session
 
         # Mock the simulation methods to return placeholder results
         mock_result = Mock(spec=SimulationResult)
@@ -191,8 +185,8 @@ class ActionSimulationAgentTest(absltest.TestCase, unittest.IsolatedAsyncioTestC
         async for event in self.agent._run_async_impl(ctx):
             events.append(event)
 
-        self.assertIn("simulation_actions", ctx.state)
-        simulation_actions = ctx.state["simulation_actions"]
+        self.assertIn("simulation_actions", ctx.session.state)
+        simulation_actions = ctx.session.state["simulation_actions"]
 
         # Should have results for:
         # - 2 moves * (4 opponent moves + 1 opponent switch) = 10
@@ -230,18 +224,9 @@ class ActionSimulationAgentTest(absltest.TestCase, unittest.IsolatedAsyncioTestC
             opponent_predicted_active_pokemon=self.sample_opponent_prediction,
         )
 
-        # Create a dict-like state from the TurnPredictorState
-        class StateDict(dict):
-            def __init__(self, state: TurnPredictorState):
-                super().__init__()
-                self.our_player_id = state.our_player_id
-                self.available_actions = state.available_actions
-                self.opponent_predicted_active_pokemon = (
-                    state.opponent_predicted_active_pokemon
-                )
-                self.battle_state = state.battle_state
-
-        ctx.state = StateDict(initial_state)
+        session = SimpleNamespace(state=None)
+        initial_state.update_session_state(session)
+        ctx.session = session
 
         mock_result = Mock(spec=SimulationResult)
         self.agent._simulate_move_vs_move = AsyncMock(return_value=mock_result)
@@ -254,24 +239,29 @@ class ActionSimulationAgentTest(absltest.TestCase, unittest.IsolatedAsyncioTestC
             events.append(event)
 
         # Check that simulation_actions was added to the state dict
-        self.assertIn("simulation_actions", ctx.state)
-        simulation_actions = ctx.state["simulation_actions"]
+        self.assertIn("simulation_actions", ctx.session.state)
+        simulation_actions = ctx.session.state["simulation_actions"]
         self.assertEqual(len(simulation_actions), 15)
         self.assertEqual(len(events), 1)
 
     async def test_agent_handles_no_opponent_prediction(self):
         """Test that agent handles case when no opponent prediction is available."""
-        mock_state = Mock()
-        mock_state.our_player_id = "p1"
-        mock_state.available_actions = [
-            BattleAction(action_type=ActionType.MOVE, move_name="Earthquake")
-        ]
-        mock_state.opponent_predicted_active_pokemon = None
-        mock_state.battle_state = self.sample_battle_state
-
-        # Mock the InvocationContext
         ctx = Mock(spec=InvocationContext)
-        ctx.state = mock_state
+        turn_state = TurnPredictorState(
+            our_player_id="p1",
+            turn_number=2,
+            opponent_active_pokemon=self.sample_opponent_pokemon,
+            past_battle_event_logs="<logs/>",
+            past_player_actions="<actions/>",
+            battle_state=self.sample_battle_state,
+            available_actions=[
+                BattleAction(action_type=ActionType.MOVE, move_name="Earthquake")
+            ],
+            opponent_predicted_active_pokemon=None,
+        )
+        session = SimpleNamespace(state=None)
+        turn_state.update_session_state(session)
+        ctx.session = session
 
         events = []
         async for event in self.agent._run_async_impl(ctx):
