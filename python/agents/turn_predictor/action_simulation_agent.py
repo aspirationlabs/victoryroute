@@ -366,9 +366,12 @@ class ActionSimulationAgent(BaseAgent):
 
             second_result: Optional[MoveResult] = None
             if opponent_survival > 0 and not our_self_fainted:
+                defender_after_self_damage = replace(
+                    our_sim_pokemon, current_hp=our_post_move_hp
+                )
                 second_result = self._simulator.estimate_move_result(
                     opponent_sim_pokemon,
-                    our_sim_pokemon,
+                    defender_after_self_damage,
                     opponent_move_obj,
                     field_state,
                     list(our_side_conditions) if our_side_conditions else None,

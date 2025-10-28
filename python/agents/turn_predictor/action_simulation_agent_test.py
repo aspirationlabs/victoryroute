@@ -496,6 +496,8 @@ class ActionSimulationAgentTest(absltest.TestCase, unittest.IsolatedAsyncioTestC
             opponent_player_id="p2",
         )
 
+        second_call_args = self.mock_simulator.estimate_move_result.call_args_list[1][0]
+        self.assertEqual(second_call_args[1].current_hp, 250)
         our_outcome = result.player_outcomes["p1"]
         self.assertEqual(our_outcome.active_pokemon_hp_range, (190, 250))
         self.assertEqual(our_outcome.critical_hit_received_hp_range, (150, 250))
