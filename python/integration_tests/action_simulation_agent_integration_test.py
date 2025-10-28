@@ -255,7 +255,7 @@ class ActionSimulationAgentIntegrationTest(
                 tera_type="Steel",
             ),
             81,
-            BattleAction(action_type=ActionType.SWITCH, switch_pokemon_name="Latios"),
+            BattleAction(action_type=ActionType.SWITCH, switch_pokemon_name="Ting-Lu"),
             BattleAction(action_type=ActionType.MOVE, move_name="Sucker Punch"),
         ),
         (
@@ -274,7 +274,7 @@ class ActionSimulationAgentIntegrationTest(
                 tera_type="Steel",
             ),
             72,
-            BattleAction(action_type=ActionType.SWITCH, switch_pokemon_name="Latios"),
+            BattleAction(action_type=ActionType.SWITCH, switch_pokemon_name="Ting-Lu"),
             BattleAction(action_type=ActionType.MOVE, move_name="Knock Off"),
         ),
         (

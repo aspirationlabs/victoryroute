@@ -281,9 +281,39 @@ class StateTransitionTest(parameterized.TestCase):
 
     @parameterized.parameters(
         # (species, level, gender, hp_current, hp_max, status, expected_current_hp, expected_max_hp, expected_volatiles_cleared)
-        ("Charizard", 100, "M", 100, 100, None, 360, 360, True),  # 100% of 360
-        ("Garchomp", 100, "F", 85, 100, "brn", 357, 420, True),  # 85% of 420
-        ("Landorus-Therian", 100, None, 90, 100, None, 343, 382, True),  # 90% of 382
+        (
+            "Charizard",
+            100,
+            "M",
+            100,
+            100,
+            None,
+            297,
+            297,
+            True,
+        ),  # 100% of usage-based max HP
+        (
+            "Garchomp",
+            100,
+            "F",
+            85,
+            100,
+            "brn",
+            303,
+            357,
+            True,
+        ),  # 85% of usage-based max HP
+        (
+            "Landorus-Therian",
+            100,
+            None,
+            90,
+            100,
+            None,
+            287,
+            319,
+            True,
+        ),  # 90% of usage-based max HP
     )
     def test_apply_switch(
         self,
@@ -346,7 +376,7 @@ class StateTransitionTest(parameterized.TestCase):
         active = new_state.teams["p1"].get_active_pokemon()
         self.assertIsNotNone(active)
         self.assertEqual(active.species, "Garchomp")
-        self.assertEqual(active.current_hp, 378)  # 90% of Garchomp's max HP (420)
+        self.assertEqual(active.current_hp, 321)  # 90% of usage-based Garchomp HP (357)
         self.assertEqual(active.volatile_conditions, {})
 
     def test_apply_faint(self) -> None:
