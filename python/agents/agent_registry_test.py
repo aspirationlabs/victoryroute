@@ -6,7 +6,7 @@ from python.agents.agent_interface import Agent
 from python.agents.agent_registry import AgentRegistry
 from python.agents.first_available_agent import FirstAvailableAgent
 from python.agents.random_agent import RandomAgent
-from python.game.data.game_data import GameData
+from python.game.environment.battle_stream_store import BattleStreamStore
 from python.game.interface.battle_action import ActionType, BattleAction
 from python.game.schema.battle_state import BattleState
 
@@ -42,23 +42,31 @@ class AgentRegistryTest(unittest.TestCase):
 
     def test_create_agent_returns_random_agent(self) -> None:
         """Test that create_agent returns RandomAgent for 'random'."""
-        agent = AgentRegistry.create_agent("random")
+        agent = AgentRegistry.create_agent("random", "test-battle", BattleStreamStore())
 
         self.assertIsInstance(agent, RandomAgent)
         self.assertIsInstance(agent, Agent)
 
     def test_create_agent_returns_first_available_agent(self) -> None:
         """Test that create_agent returns FirstAvailableAgent for 'first_move'."""
-        agent = AgentRegistry.create_agent("first_move")
+        agent = AgentRegistry.create_agent(
+            "first_move", "test-battle", BattleStreamStore()
+        )
 
         self.assertIsInstance(agent, FirstAvailableAgent)
         self.assertIsInstance(agent, Agent)
 
     def test_create_agent_is_case_insensitive(self) -> None:
         """Test that create_agent is case insensitive."""
-        agent1 = AgentRegistry.create_agent("Random")
-        agent2 = AgentRegistry.create_agent("RANDOM")
-        agent3 = AgentRegistry.create_agent("First_Move")
+        agent1 = AgentRegistry.create_agent(
+            "Random", "test-battle", BattleStreamStore()
+        )
+        agent2 = AgentRegistry.create_agent(
+            "RANDOM", "test-battle", BattleStreamStore()
+        )
+        agent3 = AgentRegistry.create_agent(
+            "First_Move", "test-battle", BattleStreamStore()
+        )
 
         self.assertIsInstance(agent1, RandomAgent)
         self.assertIsInstance(agent2, RandomAgent)
@@ -67,7 +75,9 @@ class AgentRegistryTest(unittest.TestCase):
     def test_create_agent_raises_value_error_for_unknown_agent(self) -> None:
         """Test that create_agent raises ValueError for unknown agents."""
         with self.assertRaises(ValueError) as context:
-            AgentRegistry.create_agent("unknown_agent")
+            AgentRegistry.create_agent(
+                "unknown_agent", "test-battle", BattleStreamStore()
+            )
 
         self.assertIn("Unknown agent", str(context.exception))
         self.assertIn("unknown_agent", str(context.exception))
@@ -75,8 +85,12 @@ class AgentRegistryTest(unittest.TestCase):
 
     def test_create_agent_returns_new_instances(self) -> None:
         """Test that create_agent returns new instances each time."""
-        agent1 = AgentRegistry.create_agent("random")
-        agent2 = AgentRegistry.create_agent("random")
+        agent1 = AgentRegistry.create_agent(
+            "random", "test-battle", BattleStreamStore()
+        )
+        agent2 = AgentRegistry.create_agent(
+            "random", "test-battle", BattleStreamStore()
+        )
 
         self.assertIsNot(agent1, agent2)
 
@@ -84,20 +98,25 @@ class AgentRegistryTest(unittest.TestCase):
         """Test that register_agent adds a new agent to the registry."""
 
         class TestAgent(Agent):
-            async def choose_action(
-                self, state: BattleState, game_data: GameData, battle_room: str
-            ) -> BattleAction:
-                return BattleAction(action_type=ActionType.MOVE, move_index=0)
+            async def choose_action(self, state: BattleState) -> BattleAction:
+                return BattleAction(action_type=ActionType.MOVE, move_name="testmove")
 
         original_agents = set(AgentRegistry.get_available_agents())
 
         try:
-            AgentRegistry.register_agent("test_agent", lambda: TestAgent())
+            AgentRegistry.register_agent(
+                "test_agent",
+                lambda battle_room, battle_stream_store: TestAgent(
+                    battle_room, battle_stream_store
+                ),
+            )
 
             self.assertTrue(AgentRegistry.has_agent("test_agent"))
             self.assertIn("test_agent", AgentRegistry.get_available_agents())
 
-            agent = AgentRegistry.create_agent("test_agent")
+            agent = AgentRegistry.create_agent(
+                "test_agent", "test-battle", BattleStreamStore()
+            )
             self.assertIsInstance(agent, TestAgent)
         finally:
             if "test_agent" in AgentRegistry._AGENT_MAP:
@@ -109,7 +128,12 @@ class AgentRegistryTest(unittest.TestCase):
     def test_register_agent_raises_error_for_duplicate(self) -> None:
         """Test that register_agent raises error for duplicate names."""
         with self.assertRaises(ValueError) as context:
-            AgentRegistry.register_agent("random", lambda: RandomAgent())
+            AgentRegistry.register_agent(
+                "random",
+                lambda battle_room, battle_stream_store: RandomAgent(
+                    battle_room, battle_stream_store
+                ),
+            )
 
         self.assertIn("already registered", str(context.exception))
 

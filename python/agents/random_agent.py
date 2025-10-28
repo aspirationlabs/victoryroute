@@ -1,7 +1,6 @@
 """Random agent that selects random valid actions."""
 
 import random
-from typing import Optional
 
 from python.agents.agent_interface import Agent
 from python.game.environment.battle_stream_store import BattleStreamStore
@@ -29,13 +28,15 @@ class RandomAgent(Agent):
 
     Example Usage:
         ```python
-        agent = RandomAgent()
         env = BattleEnvironment(client)
-        game_data = GameData()
+        agent = RandomAgent(
+            battle_room=env.get_battle_room(),
+            battle_stream_store=env.get_battle_stream_store(),
+        )
 
         state = await env.reset()
         while not env.is_battle_over():
-            action = await agent.choose_action(state, game_data)
+            action = await agent.choose_action(state)
             state = await env.step(action)
         ```
 
@@ -45,22 +46,22 @@ class RandomAgent(Agent):
 
     def __init__(
         self,
+        battle_room: str,
+        battle_stream_store: BattleStreamStore,
         switch_probability: float = 0.1,
     ) -> None:
         """Initialize RandomAgent with customizable probabilities.
 
         Args:
+            battle_room: The battle room identifier
+            battle_stream_store: Store containing all battle events
             switch_probability: Probability (0-1) of choosing switch over move
                                when both are available (default 0.1)
         """
+        super().__init__(battle_room, battle_stream_store)
         self.switch_probability = switch_probability
 
-    async def choose_action(
-        self,
-        state: BattleState,
-        battle_room: str,
-        battle_stream_store: Optional[BattleStreamStore] = None,
-    ) -> BattleAction:
+    async def choose_action(self, state: BattleState) -> BattleAction:
         """Choose a random action from available moves and switches.
 
         Decision logic:
@@ -70,8 +71,6 @@ class RandomAgent(Agent):
 
         Args:
             state: Current battle state with available actions
-            battle_room: Battle room identifier (unused by this agent)
-            battle_stream_store: Battle stream store (unused by this agent)
 
         Returns:
             BattleAction with randomly selected move or switch
@@ -82,7 +81,7 @@ class RandomAgent(Agent):
         Examples:
             Random move selection:
             >>> state = BattleState(available_moves=["move1", "move2", "move3"])
-            >>> action = await agent.choose_action(state, game_data)
+            >>> action = await agent.choose_action(state)
             >>> action.action_type == ActionType.MOVE
             True
             >>> 0 <= action.move_index < 3
@@ -90,7 +89,7 @@ class RandomAgent(Agent):
 
             Forced switch:
             >>> state = BattleState(available_switches=[0, 2, 4], force_switch=True)
-            >>> action = await agent.choose_action(state, game_data)
+            >>> action = await agent.choose_action(state)
             >>> action.action_type == ActionType.SWITCH
             True
         """

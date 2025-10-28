@@ -5,7 +5,7 @@ from typing import List
 from unittest.mock import patch
 
 from python.agents.random_agent import RandomAgent
-from python.game.data.game_data import GameData
+from python.game.environment.battle_stream_store import BattleStreamStore
 from python.game.interface.battle_action import ActionType, BattleAction
 from python.game.schema.battle_state import BattleState
 from python.game.schema.pokemon_state import PokemonMove, PokemonState
@@ -17,8 +17,7 @@ class RandomAgentTest(unittest.IsolatedAsyncioTestCase):
 
     def setUp(self) -> None:
         """Set up test fixtures."""
-        self.agent = RandomAgent()
-        self.game_data = GameData()
+        self.agent = RandomAgent("test-battle", BattleStreamStore())
 
     def _create_test_state(
         self, available_moves: List[str], available_switches: List[int] = []
@@ -67,9 +66,7 @@ class RandomAgentTest(unittest.IsolatedAsyncioTestCase):
             with patch(
                 "python.agents.random_agent.random.choice", return_value="move3"
             ):
-                action = await self.agent.choose_action(
-                    state, self.game_data, "test-battle"
-                )
+                action = await self.agent.choose_action(state)
 
         self.assertIsInstance(action, BattleAction)
         self.assertEqual(action.action_type, ActionType.MOVE)
@@ -94,9 +91,7 @@ class RandomAgentTest(unittest.IsolatedAsyncioTestCase):
         )
 
         with patch("python.agents.random_agent.random.choice", return_value=3):
-            action = await self.agent.choose_action(
-                state, self.game_data, "test-battle"
-            )
+            action = await self.agent.choose_action(state)
 
         self.assertIsInstance(action, BattleAction)
         self.assertEqual(action.action_type, ActionType.SWITCH)
@@ -123,9 +118,7 @@ class RandomAgentTest(unittest.IsolatedAsyncioTestCase):
             "python.agents.random_agent.random.random", return_value=0.05
         ):  # < 0.1
             with patch("python.agents.random_agent.random.choice", return_value=2):
-                action = await self.agent.choose_action(
-                    state, self.game_data, "test-battle"
-                )
+                action = await self.agent.choose_action(state)
 
         self.assertEqual(action.action_type, ActionType.SWITCH)
         self.assertEqual(action.switch_pokemon_name, "Pokemon2")
@@ -149,9 +142,7 @@ class RandomAgentTest(unittest.IsolatedAsyncioTestCase):
         )
 
         with patch("python.agents.random_agent.random.choice", return_value=2):
-            action = await self.agent.choose_action(
-                state, self.game_data, "test-battle"
-            )
+            action = await self.agent.choose_action(state)
 
         self.assertEqual(action.action_type, ActionType.SWITCH)
         self.assertEqual(action.switch_pokemon_name, "Pokemon2")
@@ -163,7 +154,7 @@ class RandomAgentTest(unittest.IsolatedAsyncioTestCase):
         )
 
         with self.assertRaises(ValueError) as context:
-            await self.agent.choose_action(state, "test-battle")
+            await self.agent.choose_action(state)
 
         self.assertIn("switch", str(context.exception).lower())
 
@@ -179,7 +170,7 @@ class RandomAgentTest(unittest.IsolatedAsyncioTestCase):
         )
 
         with self.assertRaises(ValueError):
-            await self.agent.choose_action(state, "test-battle")
+            await self.agent.choose_action(state)
 
     async def test_random_agent_produces_varied_results(self) -> None:
         """Test that agent produces different results across multiple calls."""
@@ -214,9 +205,7 @@ class RandomAgentTest(unittest.IsolatedAsyncioTestCase):
         # Collect results from multiple calls
         results = []
         for _ in range(100):
-            action = await self.agent.choose_action(
-                state, self.game_data, "test-battle"
-            )
+            action = await self.agent.choose_action(state)
             results.append(
                 (action.action_type, action.move_name, action.switch_pokemon_name)
             )
@@ -233,8 +222,7 @@ class RandomAgentTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_random_agent_custom_probabilities(self) -> None:
         """Test RandomAgent with custom switch probability."""
-        # Agent that switches 50% of the time
-        agent = RandomAgent(switch_probability=0.5)
+        agent = RandomAgent("test-battle", BattleStreamStore(), switch_probability=0.5)
         pokemon_list = [
             PokemonState(species="Pokemon0", current_hp=100, max_hp=100),
             PokemonState(species="Pokemon1", current_hp=100, max_hp=100),
@@ -252,7 +240,7 @@ class RandomAgentTest(unittest.IsolatedAsyncioTestCase):
         # Mock random to be just below switch probability
         with patch("python.agents.random_agent.random.random", return_value=0.49):
             with patch("python.agents.random_agent.random.choice", return_value=2):
-                action = await agent.choose_action(state, self.game_data, "test-battle")
+                action = await agent.choose_action(state)
 
         self.assertEqual(action.action_type, ActionType.SWITCH)
         self.assertEqual(action.switch_pokemon_name, "Pokemon2")
@@ -271,9 +259,7 @@ class RandomAgentTest(unittest.IsolatedAsyncioTestCase):
                     "python.agents.random_agent.random.choice",
                     return_value=move_name,
                 ):
-                    action = await self.agent.choose_action(
-                        state, self.game_data, "test-battle"
-                    )
+                    action = await self.agent.choose_action(state)
 
             self.assertEqual(action.move_name, move_name)
 
@@ -300,9 +286,7 @@ class RandomAgentTest(unittest.IsolatedAsyncioTestCase):
             with patch(
                 "python.agents.random_agent.random.choice", return_value=expected_index
             ):
-                action = await self.agent.choose_action(
-                    state, self.game_data, "test-battle"
-                )
+                action = await self.agent.choose_action(state)
 
             self.assertEqual(action.switch_pokemon_name, f"Pokemon{expected_index}")
 

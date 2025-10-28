@@ -77,6 +77,8 @@ class ZeroShotAgent(Agent):
 
     def __init__(
         self,
+        battle_room: str,
+        battle_stream_store: BattleStreamStore,
         session_service: BaseSessionService = InMemorySessionService(),
         model_name: str = "openrouter/google/gemini-2.5-flash-lite-preview-09-2025",
         mode: str = "gen9ou",
@@ -86,10 +88,15 @@ class ZeroShotAgent(Agent):
         """Initialize the zero-shot agent.
 
         Args:
+            battle_room: The battle room identifier
+            battle_stream_store: Store containing all battle events
+            session_service: Session service for managing agent sessions
             model_name: LiteLLM model name
             mode: Battle mode for loading mode-specific rules (default: "gen9ou")
-            max_retries: Maximum number of retries for invalid actions (default: 2)
+            past_actions_count: Number of past actions to include in context
+            max_retries: Maximum number of retries for invalid actions (default: 3)
         """
+        super().__init__(battle_room, battle_stream_store)
         self._model_name: str = model_name
         self._app_name: str = "zero_shot_pokemon_trainer_agent"
         self._game_data: GameData = GameData()
@@ -102,6 +109,9 @@ class ZeroShotAgent(Agent):
         self._system_instruction: str = _load_static_system_instruction(mode)
         self._agent: LlmAgent = self._create_llm_agent(
             model_name, self._app_name, self._system_instruction
+        )
+        self._prompt_builder: ZeroShotPromptBuilder = ZeroShotPromptBuilder(
+            battle_stream_store
         )
 
     def _create_llm_agent(self, model_name, app_name, system_instructions) -> LlmAgent:
@@ -157,18 +167,11 @@ class ZeroShotAgent(Agent):
             )
         return self._battle_room_to_action_generator[battle_room]
 
-    async def choose_action(
-        self,
-        state: BattleState,
-        battle_room: str,
-        battle_stream_store: BattleStreamStore,
-    ) -> BattleAction:
+    async def choose_action(self, state: BattleState) -> BattleAction:
         """Choose a battle action using LLM reasoning with retry logic.
 
         Args:
             state: Current battle state
-            battle_room: Battle room identifier
-            battle_stream_store: BattleStreamStore with all battle events
 
         Returns:
             BattleAction chosen by the LLM
@@ -180,15 +183,15 @@ class ZeroShotAgent(Agent):
             raise ValueError("our_player_id must be set in the battle state")
         opponent_player_id = "p2" if state.our_player_id == "p1" else "p1"
 
-        session = self._battle_room_to_session.get(battle_room)
+        session = self._battle_room_to_session.get(self._battle_room)
         if session is None:
             session = await self._session_service.create_session(
                 app_name=self._app_name,
-                user_id=battle_room,
+                user_id=self._battle_room,
             )
-            self._battle_room_to_session[battle_room] = session
+            self._battle_room_to_session[self._battle_room] = session
 
-        turn_context = ZeroShotPromptBuilder(battle_stream_store).build_turn_context(
+        turn_context = self._prompt_builder.build_turn_context(
             state, opponent_player_id
         )
         content = types.Content(
@@ -196,25 +199,21 @@ class ZeroShotAgent(Agent):
             role="player_" + state.our_player_id,
         )
         action_generator = self._get_action_generator(
-            battle_room, state.player_usernames[state.our_player_id]
+            self._battle_room, state.player_usernames[state.our_player_id]
         )
         action = await action_generator.generate_action(
             user_query=content,
             state=state,
-            user_id=battle_room,
+            user_id=self._battle_room,
             session_id=session.id,
             max_retries=self._max_retries,
         )
         return action
 
     async def retry_action_on_server_error(
-        self,
-        error_text: str,
-        state: BattleState,
-        battle_room: str,
-        battle_stream_store: BattleStreamStore,
+        self, error_text: str, state: BattleState
     ) -> Optional[BattleAction]:
-        return await self.choose_action(state, battle_room, battle_stream_store)
+        return await self.choose_action(state)
 
     async def cleanup_battle(self, battle_room: str) -> None:
         if battle_room in self._battle_room_to_logger:
