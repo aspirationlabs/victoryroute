@@ -2,7 +2,9 @@ import json
 import threading
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
+
+from absl import logging
 
 from python.game.schema.object_name_normalizer import normalize_name
 
@@ -77,23 +79,35 @@ class PokemonStatePriorsReader:
             repo_root = module_dir.parent.parent.parent
             self.data_file = repo_root / "data" / "stats" / mode / file_name
             self._stats_lookup: Dict[str, PokemonStatePriors] = {}
+            self._data_available = False
             self._load_stats()
             self._initialized = True
 
     def _load_stats(self) -> None:
         if not self.data_file.exists():
-            raise FileNotFoundError(
-                f"Pokemon stats file not found: {self.data_file}. "
-                f"Ensure the file exists at the specified path."
+            logging.warning(
+                "Pokemon stats file not found at %s. Continuing without priors data.",
+                self.data_file,
             )
+            return
 
         try:
-            with open(self.data_file, "r") as f:
+            with open(self.data_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
         except json.JSONDecodeError as e:
-            raise ValueError(f"Invalid JSON in stats file {self.data_file}: {e}") from e
-        except IOError as e:
-            raise IOError(f"Failed to read stats file {self.data_file}: {e}") from e
+            logging.warning(
+                "Invalid JSON in stats file %s (%s). Continuing without priors data.",
+                self.data_file,
+                e,
+            )
+            return
+        except OSError as e:
+            logging.warning(
+                "Failed to read stats file %s (%s). Continuing without priors data.",
+                self.data_file,
+                e,
+            )
+            return
 
         for key, stats in data.items():
             self._stats_lookup[normalize_name(key)] = PokemonStatePriors(
@@ -105,8 +119,63 @@ class PokemonStatePriorsReader:
                 teammates=stats.get("teammates", []),
             )
 
+        self._data_available = True
+
     def get_pokemon_state_priors(
         self, pokemon_species: str
     ) -> Optional[PokemonStatePriors]:
         key = normalize_name(pokemon_species)
         return self._stats_lookup.get(key, None)
+
+    @property
+    def data_available(self) -> bool:
+        return self._data_available
+
+    def get_top_usage_spread(
+        self, pokemon_species: str
+    ) -> Optional[Tuple[Optional[str], Tuple[int, int, int, int, int, int]]]:
+        """Return the highest-usage nature/EV spread for the given species.
+
+        Args:
+            pokemon_species: Species name to look up.
+
+        Returns:
+            Tuple of (nature, EV spread) where EV spread is a 6-tuple in the order
+            (hp, attack, defense, special_attack, special_defense, speed).
+            Returns None if no spread information is available.
+        """
+        priors = self.get_pokemon_state_priors(pokemon_species)
+        if not priors or not priors.spreads:
+            return None
+
+        top_spread = max(
+            priors.spreads, key=lambda spread: spread.get("percentage", 0.0)
+        )
+
+        stats = top_spread.get("stats")
+        if not isinstance(stats, list) or len(stats) != 6:
+            return None
+
+        try:
+            ev_values_raw = tuple(int(value) for value in stats)
+        except (TypeError, ValueError):
+            return None
+
+        if len(ev_values_raw) != 6:
+            return None
+
+        ev_values: Tuple[int, int, int, int, int, int] = (
+            ev_values_raw[0],
+            ev_values_raw[1],
+            ev_values_raw[2],
+            ev_values_raw[3],
+            ev_values_raw[4],
+            ev_values_raw[5],
+        )
+
+        nature = top_spread.get("nature")
+        nature_str = nature.strip() if isinstance(nature, str) else None
+        if nature_str == "":
+            nature_str = None
+
+        return nature_str, ev_values

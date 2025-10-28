@@ -1,5 +1,6 @@
 import threading
 import unittest
+from typing import Never
 
 from absl.testing import parameterized
 
@@ -7,8 +8,16 @@ from python.agents.tools.pokemon_state_priors_reader import PokemonStatePriorsRe
 
 
 class PokemonStatePriorsReaderTest(parameterized.TestCase):
-    def setUp(self):
-        self.reader = PokemonStatePriorsReader()
+    def setUp(self) -> Never:
+        super().setUp()
+        reader = PokemonStatePriorsReader()
+        self.reader: PokemonStatePriorsReader = reader
+        if not reader.data_available:
+            return self._skip_due_to_missing_data()
+        return
+
+    def _skip_due_to_missing_data(self) -> Never:
+        self.skipTest("Smogon usage statistics were not downloaded.")
 
     def test_singleton_returns_same_instance(self) -> None:
         reader1 = PokemonStatePriorsReader()
@@ -64,6 +73,9 @@ class PokemonStatePriorsReaderTest(parameterized.TestCase):
 
     def test_kingambit_has_expected_structure(self) -> None:
         priors = self.reader.get_pokemon_state_priors("Kingambit")
+        self.assertIsNotNone(priors)
+        if priors is None:
+            self.fail("Expected priors for Kingambit to be available.")
 
         self.assertEqual(priors.abilities[0]["name"], "Supreme Overlord")
         self.assertAlmostEqual(priors.abilities[0]["percentage"], 95.982, places=3)
@@ -91,6 +103,17 @@ class PokemonStatePriorsReaderTest(parameterized.TestCase):
 
         self.assertEqual(priors_normal, priors_no_hyphen)
         self.assertEqual(priors_normal, priors_lowercase)
+
+    def test_get_top_usage_spread_returns_best_spread(self) -> None:
+        result = self.reader.get_top_usage_spread("Gholdengo")
+        self.assertIsNotNone(result)
+        nature, evs = result
+        self.assertEqual(nature, "Timid")
+        self.assertEqual(evs, (0, 0, 0, 252, 4, 252))
+
+    def test_get_top_usage_spread_returns_none_for_missing_data(self) -> None:
+        result = self.reader.get_top_usage_spread("NonexistentPokemon")
+        self.assertIsNone(result)
 
 
 if __name__ == "__main__":

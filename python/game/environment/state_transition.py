@@ -7,11 +7,14 @@ immutable battle states. The main entry point is StateTransition.apply().
 import json
 from dataclasses import replace
 
-from typing import Tuple
+from typing import Dict, Optional, Tuple
 
 from absl import logging
 
-from python.agents.tools.battle_simulator import BattleSimulator
+from python.agents.tools.battle_simulator import BattleSimulator, EffortValues
+from python.agents.tools.pokemon_state_priors_reader import (
+    PokemonStatePriorsReader,
+)
 from python.game.data.game_data import GameData
 from python.game.events.battle_event import (
     AbilityEvent,
@@ -100,6 +103,30 @@ class StateTransition:
     # Initialize eagerly to catch any initialization errors early
     _game_data: GameData = GameData()
     _battle_simulator: BattleSimulator = BattleSimulator(_game_data)
+    _priors_reader: PokemonStatePriorsReader = PokemonStatePriorsReader()
+    _usage_spread_cache: Dict[str, Tuple[Optional[str], Optional[EffortValues]]] = {}
+
+    @staticmethod
+    def _get_usage_spread(
+        species: str,
+    ) -> Tuple[Optional[str], Optional[EffortValues]]:
+        cached = StateTransition._usage_spread_cache.get(species)
+        if cached is not None:
+            return cached
+
+        spread = StateTransition._priors_reader.get_top_usage_spread(species)
+        if not spread:
+            result = (None, None)
+        else:
+            nature, ev_values_tuple = spread
+            try:
+                ev_values = EffortValues(*ev_values_tuple)
+            except (TypeError, ValueError):
+                ev_values = None
+            result = (nature, ev_values)
+
+        StateTransition._usage_spread_cache[species] = result
+        return result
 
     @staticmethod
     def _calculate_max_pp(move_name: str) -> int:
@@ -132,8 +159,12 @@ class StateTransition:
             Tuple of (current_hp, max_hp) as actual values
         """
         placeholder_pokemon = PokemonState(species=species, level=level)
+        nature, evs = StateTransition._get_usage_spread(species)
         stats = StateTransition._battle_simulator.get_pokemon_stats(
-            placeholder_pokemon, level
+            placeholder_pokemon,
+            level,
+            evs=evs or BattleSimulator.DEFAULT_EFFORT_VALUES,
+            nature=nature or BattleSimulator.DEFAULT_NATURE,
         )
         max_hp = stats.hp
         current_hp = int((max_hp * hp_percentage) / 100)
