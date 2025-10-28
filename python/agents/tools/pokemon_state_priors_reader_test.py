@@ -1,5 +1,6 @@
 import threading
 import unittest
+from typing import Never
 
 from absl.testing import parameterized
 
@@ -7,9 +8,16 @@ from python.agents.tools.pokemon_state_priors_reader import PokemonStatePriorsRe
 
 
 class PokemonStatePriorsReaderTest(parameterized.TestCase):
-    def setUp(self):  # type: ignore[override]
+    def setUp(self) -> Never:
         super().setUp()
-        self.reader = PokemonStatePriorsReader()
+        reader = PokemonStatePriorsReader()
+        self.reader: PokemonStatePriorsReader = reader
+        if not reader.data_available:
+            return self._skip_due_to_missing_data()
+        return
+
+    def _skip_due_to_missing_data(self) -> Never:
+        self.skipTest("Smogon usage statistics were not downloaded.")
 
     def test_singleton_returns_same_instance(self) -> None:
         reader1 = PokemonStatePriorsReader()
@@ -66,7 +74,8 @@ class PokemonStatePriorsReaderTest(parameterized.TestCase):
     def test_kingambit_has_expected_structure(self) -> None:
         priors = self.reader.get_pokemon_state_priors("Kingambit")
         self.assertIsNotNone(priors)
-        assert priors is not None
+        if priors is None:
+            self.fail("Expected priors for Kingambit to be available.")
 
         self.assertEqual(priors.abilities[0]["name"], "Supreme Overlord")
         self.assertAlmostEqual(priors.abilities[0]["percentage"], 95.982, places=3)

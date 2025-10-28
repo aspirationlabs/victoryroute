@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from absl import logging
+
 from python.game.schema.object_name_normalizer import normalize_name
 
 
@@ -77,23 +79,35 @@ class PokemonStatePriorsReader:
             repo_root = module_dir.parent.parent.parent
             self.data_file = repo_root / "data" / "stats" / mode / file_name
             self._stats_lookup: Dict[str, PokemonStatePriors] = {}
+            self._data_available = False
             self._load_stats()
             self._initialized = True
 
     def _load_stats(self) -> None:
         if not self.data_file.exists():
-            raise FileNotFoundError(
-                f"Pokemon stats file not found: {self.data_file}. "
-                f"Ensure the file exists at the specified path."
+            logging.warning(
+                "Pokemon stats file not found at %s. Continuing without priors data.",
+                self.data_file,
             )
+            return
 
         try:
-            with open(self.data_file, "r") as f:
+            with open(self.data_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
         except json.JSONDecodeError as e:
-            raise ValueError(f"Invalid JSON in stats file {self.data_file}: {e}") from e
-        except IOError as e:
-            raise IOError(f"Failed to read stats file {self.data_file}: {e}") from e
+            logging.warning(
+                "Invalid JSON in stats file %s (%s). Continuing without priors data.",
+                self.data_file,
+                e,
+            )
+            return
+        except OSError as e:
+            logging.warning(
+                "Failed to read stats file %s (%s). Continuing without priors data.",
+                self.data_file,
+                e,
+            )
+            return
 
         for key, stats in data.items():
             self._stats_lookup[normalize_name(key)] = PokemonStatePriors(
@@ -105,11 +119,17 @@ class PokemonStatePriorsReader:
                 teammates=stats.get("teammates", []),
             )
 
+        self._data_available = True
+
     def get_pokemon_state_priors(
         self, pokemon_species: str
     ) -> Optional[PokemonStatePriors]:
         key = normalize_name(pokemon_species)
         return self._stats_lookup.get(key, None)
+
+    @property
+    def data_available(self) -> bool:
+        return self._data_available
 
     def get_top_usage_spread(
         self, pokemon_species: str

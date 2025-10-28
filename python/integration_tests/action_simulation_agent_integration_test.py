@@ -365,7 +365,6 @@ class ActionSimulationAgentIntegrationTest(
             our_player_id=our_player_id,
             opponent_player_id=opponent_player_id,
         )
-        breakpoint()
         self.assertEqual(expected_min_action, min_damage_action)
         self.assertEqual(expected_max_action, max_damage_action)
 
