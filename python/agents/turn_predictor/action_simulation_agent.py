@@ -61,7 +61,7 @@ class ActionSimulationAgent(BaseAgent):
         self, ctx: InvocationContext
     ) -> AsyncGenerator[Event, None]:
         """Main agent execution that simulates all action combinations."""
-        raw_state: Any = ctx.state  # type: ignore[attr-defined]
+        raw_state: Any = ctx.session.state
         state = TurnPredictorState.model_validate(raw_state)
 
         our_player_id = state.our_player_id
@@ -177,7 +177,7 @@ class ActionSimulationAgent(BaseAgent):
         else:
             setattr(raw_state, "simulation_actions", simulation_results)
         logging.info(
-            f"Action simulator found {move_move_results} move-move, {move_switch_results} move-switch, {switch_move_results} switch-move, {switch_switch_results} switch-switch results."
+            f"[Simulation Agent] Action simulator found {move_move_results} move-move, {move_switch_results} move-switch, {switch_move_results} switch-move, {switch_switch_results} switch-switch results."
         )
         yield Event(
             author="ActionSimulationAgent",

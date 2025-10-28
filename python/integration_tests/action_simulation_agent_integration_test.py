@@ -122,7 +122,7 @@ class InvocationContextStub:
     """Minimal InvocationContext substitute for driving the agent in tests."""
 
     def __init__(self, state) -> None:
-        self.state = state
+        self.session = SimpleNamespace(state=state)
 
 
 def _select_min_damage_action(
@@ -332,8 +332,10 @@ class ActionSimulationAgentIntegrationTest(
         events = [event async for event in self._agent._run_async_impl(ctx)]  # type: ignore[arg-type]
         self.assertTrue(events, msg="Agent should emit a completion event.")
 
-        self.assertIn("simulation_actions", ctx.state)
-        simulation_results: List[SimulationResult] = ctx.state["simulation_actions"]
+        self.assertIn("simulation_actions", ctx.session.state)
+        simulation_results: List[SimulationResult] = ctx.session.state[
+            "simulation_actions"
+        ]
 
         opponent_player_id = "p2" if turn_state.our_player_id == "p1" else "p1"
         self.assertEqual(

@@ -113,7 +113,7 @@ class TeamPredictorAgent:
                 return new_response
             else:
                 logging.warning(
-                    f"[TeamPredictorAgent] Could not extract JSON from model output: {text[:200]}..."
+                    f"[TeamPredictorAgent] Could not extract JSON from model output: {text}"
                 )
                 return None
 

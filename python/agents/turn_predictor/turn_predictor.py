@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import json
 from typing import Dict, Optional
 
 from absl import logging
 from google.adk.agents import BaseAgent, LlmAgent, LoopAgent, SequentialAgent
+from google.adk.models import LlmResponse
 from google.adk.models.lite_llm import LiteLlm
 from google.adk.planners import BuiltInPlanner
 from google.adk.runners import Runner
@@ -20,6 +22,7 @@ from python.agents.turn_predictor.decision_schemas import (
     DecisionCritique,
     DecisionProposal,
 )
+from python.agents.turn_predictor.json_extraction_utils import extract_json_from_text
 from python.agents.turn_predictor.team_predictor_agent import TeamPredictorAgent
 from python.agents.turn_predictor.turn_predictor_prompt_builder import (
     TurnPredictorPromptBuilder,
@@ -59,6 +62,55 @@ class TurnPredictorAgent(Agent):
         self,
         model_name: str,
     ) -> BaseAgent:
+        def _build_clean_response_callback(agent_name: str):
+            def clean_decision_output(
+                callback_context: types.CallbackContext,  # type: ignore[type-arg]
+                llm_response: LlmResponse,
+            ) -> Optional[LlmResponse]:
+                if not llm_response or not getattr(llm_response, "content", None):
+                    return None
+
+                parts = getattr(llm_response.content, "parts", None)
+                if not parts:
+                    return None
+
+                text = getattr(parts[0], "text", None)
+                if not text:
+                    return None
+
+                extracted = extract_json_from_text(text)
+                if extracted is None:
+                    logging.warning(
+                        "[TurnPredictorAgent][%s] Could not extract JSON from model output: %s",
+                        agent_name,
+                        text,
+                    )
+                    return None
+
+                clean_json = json.dumps(extracted, ensure_ascii=False)
+                if clean_json == text.strip():
+                    return None
+
+                logging.info(
+                    "[TurnPredictorAgent][%s] Cleaned model output from %d to %d characters",
+                    agent_name,
+                    len(text),
+                    len(clean_json),
+                )
+
+                new_response = LlmResponse(
+                    content=types.Content(
+                        parts=[types.Part(text=clean_json)],
+                        role=llm_response.content.role,
+                    ),
+                    grounding_metadata=getattr(
+                        llm_response, "grounding_metadata", None
+                    ),
+                )
+                return new_response
+
+            return clean_decision_output
+
         def tool_get_object_game_data(name: str) -> str:
             """Look up game data for Pokemon, Move, Ability, Item, or Nature.
             Returns detailed stats, types, effects, and descriptions. Use to check:
@@ -100,6 +152,9 @@ class TurnPredictorAgent(Agent):
             output_key="decision_proposal",
             disallow_transfer_to_parent=True,
             disallow_transfer_to_peers=True,
+            after_model_callback=_build_clean_response_callback(
+                "battle_action_planner"
+            ),
         )
         critique_agent = LlmAgent(
             model=LiteLlm(model=model_name),
@@ -117,6 +172,7 @@ class TurnPredictorAgent(Agent):
             output_key="decision_critique",
             disallow_transfer_to_parent=True,
             disallow_transfer_to_peers=True,
+            after_model_callback=_build_clean_response_callback("risk_analyst"),
         )
         final_agent = LlmAgent(
             model=LiteLlm(model=model_name),
@@ -134,6 +190,7 @@ class TurnPredictorAgent(Agent):
             output_key="decision_proposal",
             disallow_transfer_to_parent=True,
             disallow_transfer_to_peers=True,
+            after_model_callback=_build_clean_response_callback("battle_action_lead"),
         )
         decision_loop = LoopAgent(
             name="battle_action_decision_loop",
@@ -207,9 +264,10 @@ class TurnPredictorAgent(Agent):
         if final_proposal is None:
             raise ValueError("No decision proposal returned from agent workflow")
 
-        logging.debug(
-            "Final proposal for battle_room=%s: %s",
+        logging.info(
+            "[TurnPredictorAgent] Final decision for battle_room=%s, turn_number=%d: %s",
             self._battle_room,
+            state.field_state.turn_number,
             final_proposal.model_dump_json(),
         )
         logger.log_event(

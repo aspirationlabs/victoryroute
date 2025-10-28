@@ -172,7 +172,7 @@ class ActionSimulationAgentTest(absltest.TestCase, unittest.IsolatedAsyncioTestC
         ctx = Mock(spec=InvocationContext)
         session = SimpleNamespace(state=None)
         turn_state.update_session_state(session)
-        ctx.state = session.state
+        ctx.session = session
 
         # Mock the simulation methods to return placeholder results
         mock_result = Mock(spec=SimulationResult)
@@ -185,8 +185,8 @@ class ActionSimulationAgentTest(absltest.TestCase, unittest.IsolatedAsyncioTestC
         async for event in self.agent._run_async_impl(ctx):
             events.append(event)
 
-        self.assertIn("simulation_actions", ctx.state)
-        simulation_actions = ctx.state["simulation_actions"]
+        self.assertIn("simulation_actions", ctx.session.state)
+        simulation_actions = ctx.session.state["simulation_actions"]
 
         # Should have results for:
         # - 2 moves * (4 opponent moves + 1 opponent switch) = 10
@@ -226,7 +226,7 @@ class ActionSimulationAgentTest(absltest.TestCase, unittest.IsolatedAsyncioTestC
 
         session = SimpleNamespace(state=None)
         initial_state.update_session_state(session)
-        ctx.state = session.state
+        ctx.session = session
 
         mock_result = Mock(spec=SimulationResult)
         self.agent._simulate_move_vs_move = AsyncMock(return_value=mock_result)
@@ -239,8 +239,8 @@ class ActionSimulationAgentTest(absltest.TestCase, unittest.IsolatedAsyncioTestC
             events.append(event)
 
         # Check that simulation_actions was added to the state dict
-        self.assertIn("simulation_actions", ctx.state)
-        simulation_actions = ctx.state["simulation_actions"]
+        self.assertIn("simulation_actions", ctx.session.state)
+        simulation_actions = ctx.session.state["simulation_actions"]
         self.assertEqual(len(simulation_actions), 15)
         self.assertEqual(len(events), 1)
 
@@ -261,7 +261,7 @@ class ActionSimulationAgentTest(absltest.TestCase, unittest.IsolatedAsyncioTestC
         )
         session = SimpleNamespace(state=None)
         turn_state.update_session_state(session)
-        ctx.state = session.state
+        ctx.session = session
 
         events = []
         async for event in self.agent._run_async_impl(ctx):

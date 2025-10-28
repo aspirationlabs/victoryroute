@@ -37,7 +37,7 @@ You may call the following tools to support your reasoning:
 - Keep the rationale concise: mention the main signals and the game plan the opponent likely pursues.
 
 ## Output format
-Return **only** a JSON document with all known and predicted moves (totaling 4 moves), held items, ability, and tera type filled in. Schema:
+Return **only** a JSON document—no markdown blocks, bullet points, or explanatory text—with all known and predicted moves (totaling 4 moves), held items, ability, and tera type filled in. Schema:
 ```
 {
   "species": "<string>",
