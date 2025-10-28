@@ -216,11 +216,9 @@ class ActionSimulationAgent(BaseAgent):
         )
 
     def _get_usage_spread(
-        self, pokemon: PokemonState, *, use_priors: bool = True
+        self, pokemon: PokemonState
     ) -> Tuple[Optional[str], Optional[EffortValues]]:
         """Return the top usage nature and EVs for a given Pokemon species."""
-        if not use_priors:
-            return None, None
         species = pokemon.species
         if species not in self._usage_spread_cache:
             spread = self._priors_reader.get_top_usage_spread(species)
@@ -368,7 +366,7 @@ class ActionSimulationAgent(BaseAgent):
         our_sim_pokemon = self._maybe_terastallize_pokemon(our_pokemon, our_tera)
         opponent_sim_pokemon = opponent_pokemon
 
-        our_nature, our_evs = self._get_usage_spread(our_sim_pokemon, use_priors=False)
+        our_nature, our_evs = self._get_usage_spread(our_sim_pokemon)
         opponent_nature, opponent_evs = self._get_usage_spread(opponent_sim_pokemon)
 
         our_move_obj = self._get_move_from_pokemon(our_sim_pokemon, our_move)
@@ -701,7 +699,7 @@ class ActionSimulationAgent(BaseAgent):
 
         our_sim_pokemon = self._maybe_terastallize_pokemon(our_pokemon, our_tera)
         our_move_obj = self._get_move_from_pokemon(our_sim_pokemon, our_move)
-        our_nature, our_evs = self._get_usage_spread(our_sim_pokemon, use_priors=False)
+        our_nature, our_evs = self._get_usage_spread(our_sim_pokemon)
         opponent_nature, opponent_evs = self._get_usage_spread(opponent_switching_to)
 
         opponent_side_conditions = self._get_side_condition_set(opponent_team)
@@ -812,7 +810,7 @@ class ActionSimulationAgent(BaseAgent):
         opponent_move_obj = self._get_move_from_pokemon(opponent_pokemon, opponent_move)
         our_side_conditions = self._get_side_condition_set(our_team)
         opponent_nature, opponent_evs = self._get_usage_spread(opponent_pokemon)
-        our_nature, our_evs = self._get_usage_spread(our_switching_to, use_priors=False)
+        our_nature, our_evs = self._get_usage_spread(our_switching_to)
 
         estimate_kwargs = self._build_estimate_kwargs(
             attacker_nature=opponent_nature,

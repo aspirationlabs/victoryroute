@@ -426,7 +426,7 @@ class ActionSimulationAgentTest(absltest.TestCase, unittest.IsolatedAsyncioTestC
             call.args[0]
             for call in self.mock_priors_reader.get_top_usage_spread.call_args_list
         }
-        self.assertEqual({"Landorus-Therian"}, called_species)
+        self.assertEqual({"Garchomp", "Landorus-Therian"}, called_species)
         self.assertEqual(result.actions["p1"].move_name, "Earthquake")
         self.assertEqual(result.actions["p2"].move_name, "U-turn")
         self.assertEqual(result.player_move_order, ("p1", "p2"))
