@@ -348,10 +348,17 @@ class BattleSimulator:
         self,
         pokemon: PokemonState,
         level: int = 100,
-        ivs: IndividualValues = IndividualValues(31, 31, 31, 31, 31, 31),
-        evs: EffortValues = EffortValues(252, 252, 252, 252, 252, 252),
-        nature: str = "Bashful",
+        ivs: Optional[IndividualValues] = None,
+        evs: Optional[EffortValues] = None,
+        nature: Optional[str] = None,
     ) -> PokemonStats:
+        if ivs is None:
+            ivs = IndividualValues(31, 31, 31, 31, 31, 31)
+        if evs is None:
+            evs = EffortValues(252, 252, 252, 252, 252, 252)
+        if nature is None:
+            nature = "Bashful"
+
         pokemon_data = self.game_data.get_pokemon(pokemon.species)
         base_stats = pokemon_data.base_stats
         nature_multipliers = self.get_nature_boosts(nature)
@@ -483,8 +490,17 @@ class BattleSimulator:
         terrain: Optional[Terrain] = None,
         side_conditions: Optional[set] = None,
         trick_room_active: bool = False,
+        ivs: Optional[IndividualValues] = None,
+        evs: Optional[EffortValues] = None,
+        nature: Optional[str] = None,
     ) -> int:
-        speed_stat = self.get_pokemon_stats(pokemon).speed
+        speed_stat = self.get_pokemon_stats(
+            pokemon,
+            pokemon.level,
+            ivs=ivs,
+            evs=evs,
+            nature=nature,
+        ).speed
         boost_multiplier = STAT_STAGE_MULTIPLIERS.get(
             pokemon.get_stat_boost(Stat.SPE), 1.0
         )
@@ -549,6 +565,12 @@ class BattleSimulator:
         weather: Weather = Weather.NONE,
         terrain: Optional[Terrain] = None,
         trick_room_active: bool = False,
+        pokemon_1_ivs: Optional[IndividualValues] = None,
+        pokemon_1_evs: Optional[EffortValues] = None,
+        pokemon_1_nature: Optional[str] = None,
+        pokemon_2_ivs: Optional[IndividualValues] = None,
+        pokemon_2_evs: Optional[EffortValues] = None,
+        pokemon_2_nature: Optional[str] = None,
     ) -> List[MoveAction]:
         pokemon_1_data = self.game_data.get_pokemon(pokemon_1.species)
         pokemon_2_data = self.game_data.get_pokemon(pokemon_2.species)
@@ -566,6 +588,9 @@ class BattleSimulator:
             terrain,
             side_1_conditions,
             trick_room_active,
+            ivs=pokemon_1_ivs,
+            evs=pokemon_1_evs,
+            nature=pokemon_1_nature,
         )
         speed_2 = self.calculate_action_speed(
             pokemon_2,
@@ -574,6 +599,9 @@ class BattleSimulator:
             terrain,
             side_2_conditions,
             trick_room_active,
+            ivs=pokemon_2_ivs,
+            evs=pokemon_2_evs,
+            nature=pokemon_2_nature,
         )
 
         action_1 = MoveAction(
@@ -629,6 +657,9 @@ class BattleSimulator:
         pokemon: PokemonState,
         field_state: Optional[FieldState],
         side_conditions: Optional[List[SideCondition]] = None,
+        ivs: Optional[IndividualValues] = None,
+        evs: Optional[EffortValues] = None,
+        nature: Optional[str] = None,
     ) -> int:
         pokemon_data = self.game_data.get_pokemon(pokemon.species)
         base_speed = pokemon_data.base_stats["spe"]
@@ -645,6 +676,9 @@ class BattleSimulator:
             terrain,
             side_condition_set,
             trick_room_active=False,
+            ivs=ivs,
+            evs=evs,
+            nature=nature,
         )
         return max(1, effective_speed)
 
@@ -656,6 +690,12 @@ class BattleSimulator:
         defender: PokemonState,
         field_state: Optional[FieldState],
         defender_side_conditions: Optional[List[SideCondition]],
+        attacker_ivs: Optional[IndividualValues] = None,
+        attacker_evs: Optional[EffortValues] = None,
+        attacker_nature: Optional[str] = None,
+        defender_ivs: Optional[IndividualValues] = None,
+        defender_evs: Optional[EffortValues] = None,
+        defender_nature: Optional[str] = None,
     ) -> int:
         callback_type = self._get_base_power_callback_type(move_data, move.name)
         base_power = move_data.base_power
@@ -681,9 +721,20 @@ class BattleSimulator:
             return max(1, bp)
 
         if callback_type == "speed_ratio":
-            attacker_speed = self._get_effective_speed(attacker, field_state)
+            attacker_speed = self._get_effective_speed(
+                attacker,
+                field_state,
+                ivs=attacker_ivs,
+                evs=attacker_evs,
+                nature=attacker_nature,
+            )
             defender_speed = self._get_effective_speed(
-                defender, field_state, defender_side_conditions
+                defender,
+                field_state,
+                defender_side_conditions,
+                ivs=defender_ivs,
+                evs=defender_evs,
+                nature=defender_nature,
             )
             ratio = 0
             if defender_speed > 0:
@@ -692,9 +743,20 @@ class BattleSimulator:
             return [40, 60, 80, 120, 150][ratio]
 
         if callback_type == "inverse_speed_ratio":
-            attacker_speed = self._get_effective_speed(attacker, field_state)
+            attacker_speed = self._get_effective_speed(
+                attacker,
+                field_state,
+                ivs=attacker_ivs,
+                evs=attacker_evs,
+                nature=attacker_nature,
+            )
             defender_speed = self._get_effective_speed(
-                defender, field_state, defender_side_conditions
+                defender,
+                field_state,
+                defender_side_conditions,
+                ivs=defender_ivs,
+                evs=defender_evs,
+                nature=defender_nature,
             )
             if attacker_speed <= 0:
                 attacker_speed = 1
@@ -891,6 +953,12 @@ class BattleSimulator:
         move: PokemonMove,
         field_state: Optional[FieldState] = None,
         defender_side_conditions: Optional[List[SideCondition]] = None,
+        attacker_ivs: Optional[IndividualValues] = None,
+        attacker_evs: Optional[EffortValues] = None,
+        attacker_nature: Optional[str] = None,
+        defender_ivs: Optional[IndividualValues] = None,
+        defender_evs: Optional[EffortValues] = None,
+        defender_nature: Optional[str] = None,
     ) -> MoveResult:
         move_data = self.game_data.get_move(move.name)
 
@@ -912,9 +980,19 @@ class BattleSimulator:
         )
 
         attacker_stats = self.get_pokemon_stats(
-            attacking_pokemon, attacking_pokemon.level
+            attacking_pokemon,
+            attacking_pokemon.level,
+            ivs=attacker_ivs,
+            evs=attacker_evs,
+            nature=attacker_nature,
         )
-        defender_stats = self.get_pokemon_stats(target_pokemon, target_pokemon.level)
+        defender_stats = self.get_pokemon_stats(
+            target_pokemon,
+            target_pokemon.level,
+            ivs=defender_ivs,
+            evs=defender_evs,
+            nature=defender_nature,
+        )
 
         if move_data.override_offensive_stat:
             if move_data.override_offensive_stat == "def":
@@ -1006,6 +1084,12 @@ class BattleSimulator:
             target_pokemon,
             field_state,
             defender_side_conditions,
+            attacker_ivs=attacker_ivs,
+            attacker_evs=attacker_evs,
+            attacker_nature=attacker_nature,
+            defender_ivs=defender_ivs,
+            defender_evs=defender_evs,
+            defender_nature=defender_nature,
         )
 
         if attacker_ability == "technician" and base_power <= 60:

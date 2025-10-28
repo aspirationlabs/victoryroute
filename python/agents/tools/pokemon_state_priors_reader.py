@@ -2,7 +2,7 @@ import json
 import threading
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from python.game.schema.object_name_normalizer import normalize_name
 
@@ -110,3 +110,52 @@ class PokemonStatePriorsReader:
     ) -> Optional[PokemonStatePriors]:
         key = normalize_name(pokemon_species)
         return self._stats_lookup.get(key, None)
+
+    def get_top_usage_spread(
+        self, pokemon_species: str
+    ) -> Optional[Tuple[Optional[str], Tuple[int, int, int, int, int, int]]]:
+        """Return the highest-usage nature/EV spread for the given species.
+
+        Args:
+            pokemon_species: Species name to look up.
+
+        Returns:
+            Tuple of (nature, EV spread) where EV spread is a 6-tuple in the order
+            (hp, attack, defense, special_attack, special_defense, speed).
+            Returns None if no spread information is available.
+        """
+        priors = self.get_pokemon_state_priors(pokemon_species)
+        if not priors or not priors.spreads:
+            return None
+
+        top_spread = max(
+            priors.spreads, key=lambda spread: spread.get("percentage", 0.0)
+        )
+
+        stats = top_spread.get("stats")
+        if not isinstance(stats, list) or len(stats) != 6:
+            return None
+
+        try:
+            ev_values_raw = tuple(int(value) for value in stats)
+        except (TypeError, ValueError):
+            return None
+
+        if len(ev_values_raw) != 6:
+            return None
+
+        ev_values: Tuple[int, int, int, int, int, int] = (
+            ev_values_raw[0],
+            ev_values_raw[1],
+            ev_values_raw[2],
+            ev_values_raw[3],
+            ev_values_raw[4],
+            ev_values_raw[5],
+        )
+
+        nature = top_spread.get("nature")
+        nature_str = nature.strip() if isinstance(nature, str) else None
+        if nature_str == "":
+            nature_str = None
+
+        return nature_str, ev_values

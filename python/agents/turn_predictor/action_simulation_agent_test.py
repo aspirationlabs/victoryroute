@@ -13,6 +13,9 @@ from python.agents.tools.battle_simulator import (
     MoveAction,
     MoveResult,
 )
+from python.agents.tools.pokemon_state_priors_reader import (
+    PokemonStatePriorsReader,
+)
 from python.agents.turn_predictor.action_simulation_agent import (
     ActionSimulationAgent,
 )
@@ -40,9 +43,13 @@ class ActionSimulationAgentTest(absltest.TestCase, unittest.IsolatedAsyncioTestC
         self.mock_simulator.get_move_order = Mock()
         self.mock_simulator.estimate_move_result = Mock()
 
+        self.mock_priors_reader = Mock(spec=PokemonStatePriorsReader)
+        self.mock_priors_reader.get_top_usage_spread.return_value = None
+
         self.agent = ActionSimulationAgent(
             name="test_simulation_agent",
             battle_simulator=self.mock_simulator,
+            priors_reader=self.mock_priors_reader,
         )
 
         self.sample_our_pokemon = self._create_sample_pokemon(
@@ -415,6 +422,11 @@ class ActionSimulationAgentTest(absltest.TestCase, unittest.IsolatedAsyncioTestC
         )
 
         self.mock_simulator.get_move_order.assert_called_once()
+        called_species = {
+            call.args[0]
+            for call in self.mock_priors_reader.get_top_usage_spread.call_args_list
+        }
+        self.assertEqual({"Landorus-Therian"}, called_species)
         self.assertEqual(result.actions["p1"].move_name, "Earthquake")
         self.assertEqual(result.actions["p2"].move_name, "U-turn")
         self.assertEqual(result.player_move_order, ("p1", "p2"))

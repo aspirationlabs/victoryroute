@@ -610,6 +610,42 @@ class BattleSimulatorTest(parameterized.TestCase):
 
         self.assertEqual(result.knockout_probability, 1.0)
 
+    def test_calculate_action_speed_with_custom_spread(self) -> None:
+        pokemon = PokemonState(
+            species="Dragapult", level=100, current_hp=300, max_hp=300
+        )
+        base_speed = self.simulator.game_data.get_pokemon("Dragapult").base_stats["spe"]
+
+        default_speed = self.simulator.calculate_action_speed(pokemon, base_speed)
+        custom_speed = self.simulator.calculate_action_speed(
+            pokemon,
+            base_speed,
+            nature="Timid",
+            evs=EffortValues(0, 0, 0, 0, 0, 252),
+        )
+
+        self.assertGreater(custom_speed, default_speed)
+
+    def test_estimate_move_result_with_custom_spread(self) -> None:
+        attacker = PokemonState(
+            species="Landorus-Therian", level=100, current_hp=300, max_hp=300
+        )
+        defender = PokemonState(
+            species="Incineroar", level=100, current_hp=300, max_hp=300
+        )
+        move = PokemonMove(name="Earthquake", current_pp=10, max_pp=16)
+
+        default_result = self.simulator.estimate_move_result(attacker, defender, move)
+        custom_result = self.simulator.estimate_move_result(
+            attacker,
+            defender,
+            move,
+            attacker_evs=EffortValues(0, 252, 0, 0, 4, 252),
+            attacker_nature="Adamant",
+        )
+
+        self.assertGreater(custom_result.max_damage, default_result.max_damage)
+
     @parameterized.named_parameters(
         (
             "body_press",

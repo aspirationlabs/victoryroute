@@ -17,7 +17,14 @@ from google.adk.agents import BaseAgent, InvocationContext
 from google.adk.events import Event
 from google.genai.types import Content, Part
 
-from python.agents.tools.battle_simulator import BattleSimulator, MoveResult
+from python.agents.tools.battle_simulator import (
+    BattleSimulator,
+    EffortValues,
+    MoveResult,
+)
+from python.agents.tools.pokemon_state_priors_reader import (
+    PokemonStatePriorsReader,
+)
 from python.agents.turn_predictor.simulation_result import (
     PokemonOutcome,
     SimulationResult,
@@ -34,9 +41,18 @@ from python.game.schema.team_state import TeamState
 class ActionSimulationAgent(BaseAgent):
     """Computes projected outcomes for each action pair using the BattleSimulator."""
 
-    def __init__(self, name: str, battle_simulator: BattleSimulator):
+    def __init__(
+        self,
+        name: str,
+        battle_simulator: BattleSimulator,
+        priors_reader: Optional[PokemonStatePriorsReader] = None,
+    ):
         super().__init__(name=name)
         self._simulator = battle_simulator
+        self._priors_reader = priors_reader or PokemonStatePriorsReader()
+        self._usage_spread_cache: Dict[
+            str, Tuple[Optional[str], Optional[EffortValues]]
+        ] = {}
 
     async def _run_async_impl(
         self, ctx: InvocationContext
@@ -199,6 +215,26 @@ class ActionSimulationAgent(BaseAgent):
             tera_type=opponent_predicted.tera_type,
         )
 
+    def _get_usage_spread(
+        self, pokemon: PokemonState, *, use_priors: bool = True
+    ) -> Tuple[Optional[str], Optional[EffortValues]]:
+        """Return the top usage nature and EVs for a given Pokemon species."""
+        if not use_priors:
+            return None, None
+        species = pokemon.species
+        if species not in self._usage_spread_cache:
+            spread = self._priors_reader.get_top_usage_spread(species)
+            if not spread:
+                self._usage_spread_cache[species] = (None, None)
+            else:
+                nature, ev_values = spread
+                try:
+                    evs = EffortValues(*ev_values)
+                except (TypeError, ValueError):
+                    evs = None
+                self._usage_spread_cache[species] = (nature, evs)
+        return self._usage_spread_cache[species]
+
     def _get_switch_target(
         self, battle_state: BattleState, player_id: str, pokemon_name: str
     ) -> Optional[PokemonState]:
@@ -299,6 +335,9 @@ class ActionSimulationAgent(BaseAgent):
         our_sim_pokemon = self._maybe_terastallize_pokemon(our_pokemon, our_tera)
         opponent_sim_pokemon = opponent_pokemon
 
+        our_nature, our_evs = self._get_usage_spread(our_sim_pokemon, use_priors=False)
+        opponent_nature, opponent_evs = self._get_usage_spread(opponent_sim_pokemon)
+
         our_move_obj = self._get_move_from_pokemon(our_sim_pokemon, our_move)
         opponent_move_obj = self._get_move_from_pokemon(
             opponent_sim_pokemon, opponent_move
@@ -318,6 +357,10 @@ class ActionSimulationAgent(BaseAgent):
             weather=field_state.get_weather() or Weather.NONE,
             terrain=field_state.get_terrain(),
             trick_room_active=trick_room_active,
+            pokemon_1_nature=our_nature,
+            pokemon_1_evs=our_evs,
+            pokemon_2_nature=opponent_nature,
+            pokemon_2_evs=opponent_evs,
         )
 
         player_move_order: List[str] = []
@@ -348,6 +391,10 @@ class ActionSimulationAgent(BaseAgent):
                 our_move_obj,
                 field_state,
                 list(opponent_side_conditions) if opponent_side_conditions else None,
+                attacker_evs=our_evs,
+                attacker_nature=our_nature,
+                defender_evs=opponent_evs,
+                defender_nature=opponent_nature,
             )
             move_results[our_player_id] = first_result
             player_move_order.append(our_player_id)
@@ -375,6 +422,10 @@ class ActionSimulationAgent(BaseAgent):
                     opponent_move_obj,
                     field_state,
                     list(our_side_conditions) if our_side_conditions else None,
+                    attacker_evs=opponent_evs,
+                    attacker_nature=opponent_nature,
+                    defender_evs=our_evs,
+                    defender_nature=our_nature,
                 )
                 move_results[opponent_player_id] = second_result
                 player_move_order.append(opponent_player_id)
@@ -588,6 +639,8 @@ class ActionSimulationAgent(BaseAgent):
 
         our_sim_pokemon = self._maybe_terastallize_pokemon(our_pokemon, our_tera)
         our_move_obj = self._get_move_from_pokemon(our_sim_pokemon, our_move)
+        our_nature, our_evs = self._get_usage_spread(our_sim_pokemon, use_priors=False)
+        opponent_nature, opponent_evs = self._get_usage_spread(opponent_switching_to)
 
         opponent_side_conditions = self._get_side_condition_set(opponent_team)
 
@@ -597,6 +650,10 @@ class ActionSimulationAgent(BaseAgent):
             our_move_obj,
             field_state,
             list(opponent_side_conditions) if opponent_side_conditions else None,
+            attacker_evs=our_evs,
+            attacker_nature=our_nature,
+            defender_evs=opponent_evs,
+            defender_nature=opponent_nature,
         )
 
         opp_hp_min, opp_hp_max = self._hp_range_after_damage(
@@ -688,6 +745,8 @@ class ActionSimulationAgent(BaseAgent):
 
         opponent_move_obj = self._get_move_from_pokemon(opponent_pokemon, opponent_move)
         our_side_conditions = self._get_side_condition_set(our_team)
+        opponent_nature, opponent_evs = self._get_usage_spread(opponent_pokemon)
+        our_nature, our_evs = self._get_usage_spread(our_switching_to, use_priors=False)
 
         move_result = self._simulator.estimate_move_result(
             opponent_pokemon,
@@ -695,6 +754,10 @@ class ActionSimulationAgent(BaseAgent):
             opponent_move_obj,
             field_state,
             list(our_side_conditions) if our_side_conditions else None,
+            attacker_evs=opponent_evs,
+            attacker_nature=opponent_nature,
+            defender_evs=our_evs,
+            defender_nature=our_nature,
         )
 
         our_hp_min, our_hp_max = self._hp_range_after_damage(
