@@ -259,6 +259,19 @@ class ActionSimulationAgent(BaseAgent):
         return (min_hp, max_hp)
 
     @staticmethod
+    def _apply_self_inflicted_hp_changes(
+        current_hp: int, max_hp: int, recoil_damage: int, drain_heal: int
+    ) -> int:
+        """Apply recoil and drain effects to the attacker's HP."""
+        hp_after_recoil = max(0, current_hp - max(recoil_damage, 0))
+        hp_after_drain = hp_after_recoil + drain_heal
+        if hp_after_drain < 0:
+            return 0
+        if hp_after_drain > max_hp:
+            return max_hp
+        return hp_after_drain
+
+    @staticmethod
     def _clamp_probability(value: float) -> float:
         """Clamp probability values into [0.0, 1.0]."""
         if value < 0.0:
@@ -339,15 +352,26 @@ class ActionSimulationAgent(BaseAgent):
             move_results[our_player_id] = first_result
             player_move_order.append(our_player_id)
 
+            our_post_move_hp = self._apply_self_inflicted_hp_changes(
+                our_sim_pokemon.current_hp,
+                our_sim_pokemon.max_hp,
+                first_result.recoil_damage,
+                first_result.drain_heal,
+            )
+            our_self_fainted = our_post_move_hp == 0
+
             opponent_survival = self._clamp_probability(
                 1.0 - first_result.knockout_probability
             )
 
             second_result: Optional[MoveResult] = None
-            if opponent_survival > 0:
+            if opponent_survival > 0 and not our_self_fainted:
+                defender_after_self_damage = replace(
+                    our_sim_pokemon, current_hp=our_post_move_hp
+                )
                 second_result = self._simulator.estimate_move_result(
                     opponent_sim_pokemon,
-                    our_sim_pokemon,
+                    defender_after_self_damage,
                     opponent_move_obj,
                     field_state,
                     list(our_side_conditions) if our_side_conditions else None,
@@ -366,20 +390,25 @@ class ActionSimulationAgent(BaseAgent):
                 first_result.crit_max_damage,
             )
 
-            if second_result is not None:
+            if our_self_fainted:
+                our_hp_min = our_hp_max = 0
+                our_crit_min = our_crit_max = 0
+                our_faint_prob = 1.0
+                our_crit_prob = 0.0
+            elif second_result is not None:
                 our_hp_hit_min, our_hp_hit_max = self._hp_range_after_damage(
-                    our_sim_pokemon.current_hp,
+                    our_post_move_hp,
                     second_result.min_damage,
                     second_result.max_damage,
                 )
                 our_crit_hit_min, our_crit_hit_max = self._crit_hp_range_after_damage(
-                    our_sim_pokemon.current_hp,
+                    our_post_move_hp,
                     second_result.crit_min_damage,
                     second_result.crit_max_damage,
                 )
                 if opponent_survival < 1.0:
-                    our_hp_max = our_sim_pokemon.current_hp
-                    our_crit_max = our_sim_pokemon.current_hp
+                    our_hp_max = our_post_move_hp
+                    our_crit_max = our_post_move_hp
                 else:
                     our_hp_max = our_hp_hit_max
                     our_crit_max = our_crit_hit_max
@@ -392,8 +421,8 @@ class ActionSimulationAgent(BaseAgent):
                     opponent_survival * second_result.critical_hit_probability
                 )
             else:
-                our_hp_min = our_hp_max = our_sim_pokemon.current_hp
-                our_crit_min = our_crit_max = our_sim_pokemon.current_hp
+                our_hp_min = our_hp_max = our_post_move_hp
+                our_crit_min = our_crit_max = our_post_move_hp
                 our_faint_prob = 0.0
                 our_crit_prob = 0.0
 
@@ -405,7 +434,7 @@ class ActionSimulationAgent(BaseAgent):
                     our_crit_min,
                     max(our_crit_max, our_crit_min),
                 ),
-                active_pokemon_moves_probability=1.0,
+                active_pokemon_moves_probability=0.0 if our_self_fainted else 1.0,
                 active_pokemon_fainted_probability=our_faint_prob,
                 critical_hit_received_probability=our_crit_prob,
                 active_pokemon_status_probability={},
@@ -580,6 +609,13 @@ class ActionSimulationAgent(BaseAgent):
             move_result.crit_min_damage,
             move_result.crit_max_damage,
         )
+        attacker_post_move_hp = self._apply_self_inflicted_hp_changes(
+            our_sim_pokemon.current_hp,
+            our_sim_pokemon.max_hp,
+            move_result.recoil_damage,
+            move_result.drain_heal,
+        )
+        attacker_fainted = attacker_post_move_hp == 0
 
         actions = {
             our_player_id: BattleAction(
@@ -602,16 +638,16 @@ class ActionSimulationAgent(BaseAgent):
                 our_player_id: PokemonOutcome(
                     active_pokemon=our_sim_pokemon.species,
                     active_pokemon_hp_range=(
-                        our_sim_pokemon.current_hp,
-                        our_sim_pokemon.current_hp,
+                        attacker_post_move_hp,
+                        attacker_post_move_hp,
                     ),
                     active_pokemon_max_hp=our_sim_pokemon.max_hp,
                     critical_hit_received_hp_range=(
-                        our_sim_pokemon.current_hp,
-                        our_sim_pokemon.current_hp,
+                        attacker_post_move_hp,
+                        attacker_post_move_hp,
                     ),
-                    active_pokemon_moves_probability=1.0,
-                    active_pokemon_fainted_probability=0.0,
+                    active_pokemon_moves_probability=0.0 if attacker_fainted else 1.0,
+                    active_pokemon_fainted_probability=1.0 if attacker_fainted else 0.0,
                     critical_hit_received_probability=0.0,
                     active_pokemon_status_probability={},
                     active_pokemon_stat_changes={},

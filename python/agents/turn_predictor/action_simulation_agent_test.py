@@ -430,6 +430,80 @@ class ActionSimulationAgentTest(absltest.TestCase, unittest.IsolatedAsyncioTestC
         self.assertEqual(opp_outcome.active_pokemon_hp_range, (180, 200))
         self.assertEqual(opp_outcome.critical_hit_received_hp_range, (140, 160))
 
+    async def test_simulate_move_vs_move_applies_recoil_before_retaliation(self):
+        """Ensure recoil adjusts our HP before potential counterattacks."""
+        self.mock_simulator.reset_mock()
+
+        our_move_obj = next(
+            move for move in self.sample_our_pokemon.moves if move.name == "Earthquake"
+        )
+        opponent_move_obj = next(
+            move for move in self.sample_opponent_pokemon.moves if move.name == "U-turn"
+        )
+
+        self.mock_simulator.get_move_order.return_value = [
+            MoveAction(
+                pokemon=self.sample_our_pokemon,
+                move=our_move_obj,
+                priority=0,
+                fractional_priority=0.0,
+                speed=120,
+            ),
+            MoveAction(
+                pokemon=self.sample_opponent_pokemon,
+                move=opponent_move_obj,
+                priority=0,
+                fractional_priority=0.0,
+                speed=100,
+            ),
+        ]
+
+        our_result = MoveResult(
+            min_damage=50,
+            max_damage=70,
+            knockout_probability=0.2,
+            critical_hit_probability=0.1,
+            crit_min_damage=90,
+            crit_max_damage=110,
+            status_effects={},
+            additional_effects=[],
+            recoil_damage=50,
+        )
+        opponent_result = MoveResult(
+            min_damage=40,
+            max_damage=60,
+            knockout_probability=0.1,
+            critical_hit_probability=0.05,
+            crit_min_damage=80,
+            crit_max_damage=100,
+            status_effects={},
+            additional_effects=[],
+        )
+        self.mock_simulator.estimate_move_result.side_effect = [
+            our_result,
+            opponent_result,
+        ]
+
+        result = await self.agent._simulate_move_vs_move(
+            battle_state=self.sample_battle_state,
+            our_pokemon=self.sample_our_pokemon,
+            our_move="Earthquake",
+            our_tera=False,
+            opponent_pokemon=self.sample_opponent_pokemon,
+            opponent_move="U-turn",
+            field_state=self.sample_battle_state.field_state,
+            our_player_id="p1",
+            opponent_player_id="p2",
+        )
+
+        second_call_args = self.mock_simulator.estimate_move_result.call_args_list[1][0]
+        self.assertEqual(second_call_args[1].current_hp, 250)
+        our_outcome = result.player_outcomes["p1"]
+        self.assertEqual(our_outcome.active_pokemon_hp_range, (190, 250))
+        self.assertEqual(our_outcome.critical_hit_received_hp_range, (150, 250))
+        self.assertAlmostEqual(our_outcome.active_pokemon_fainted_probability, 0.08)
+        self.assertAlmostEqual(our_outcome.active_pokemon_moves_probability, 1.0)
+
     async def test_simulate_move_vs_switch(self):
         """Verify move-vs-switch simulation applies damage to incoming Pokemon."""
         self.mock_simulator.reset_mock()
@@ -467,6 +541,40 @@ class ActionSimulationAgentTest(absltest.TestCase, unittest.IsolatedAsyncioTestC
         self.assertEqual(opponent_outcome.active_pokemon_hp_range, (170, 190))
         self.assertAlmostEqual(opponent_outcome.active_pokemon_fainted_probability, 0.3)
         self.assertAlmostEqual(opponent_outcome.critical_hit_received_probability, 0.15)
+
+    async def test_simulate_move_vs_switch_recoil_updates_attacker_hp(self):
+        """Recoil should be reflected in our outcome when opponent switches."""
+        self.mock_simulator.reset_mock()
+
+        recoil_result = MoveResult(
+            min_damage=60,
+            max_damage=80,
+            knockout_probability=0.3,
+            critical_hit_probability=0.15,
+            crit_min_damage=90,
+            crit_max_damage=110,
+            status_effects={},
+            additional_effects=[],
+            recoil_damage=320,
+        )
+        self.mock_simulator.estimate_move_result.return_value = recoil_result
+
+        result = await self.agent._simulate_move_vs_switch(
+            battle_state=self.sample_battle_state,
+            our_pokemon=self.sample_our_pokemon,
+            our_move="Earthquake",
+            our_tera=False,
+            opponent_switching_to=self.sample_opponent_pokemon,
+            field_state=self.sample_battle_state.field_state,
+            our_player_id="p1",
+            opponent_player_id="p2",
+        )
+
+        our_outcome = result.player_outcomes["p1"]
+        self.assertEqual(our_outcome.active_pokemon_hp_range, (0, 0))
+        self.assertEqual(our_outcome.critical_hit_received_hp_range, (0, 0))
+        self.assertAlmostEqual(our_outcome.active_pokemon_moves_probability, 0.0)
+        self.assertAlmostEqual(our_outcome.active_pokemon_fainted_probability, 1.0)
 
     async def test_simulate_switch_vs_move(self):
         """Verify switch-vs-move applies damage to the incoming Pokemon."""
