@@ -235,6 +235,39 @@ class ActionSimulationAgent(BaseAgent):
                 self._usage_spread_cache[species] = (nature, evs)
         return self._usage_spread_cache[species]
 
+    def _build_move_order_kwargs(
+        self,
+        *,
+        prefix: str,
+        nature: Optional[str],
+        evs: Optional[EffortValues],
+    ) -> Dict[str, Any]:
+        kwargs: Dict[str, Any] = {}
+        if nature is not None:
+            kwargs[f"{prefix}_nature"] = nature
+        if evs is not None:
+            kwargs[f"{prefix}_evs"] = evs
+        return kwargs
+
+    def _build_estimate_kwargs(
+        self,
+        *,
+        attacker_nature: Optional[str],
+        attacker_evs: Optional[EffortValues],
+        defender_nature: Optional[str],
+        defender_evs: Optional[EffortValues],
+    ) -> Dict[str, Any]:
+        kwargs: Dict[str, Any] = {}
+        if attacker_nature is not None:
+            kwargs["attacker_nature"] = attacker_nature
+        if attacker_evs is not None:
+            kwargs["attacker_evs"] = attacker_evs
+        if defender_nature is not None:
+            kwargs["defender_nature"] = defender_nature
+        if defender_evs is not None:
+            kwargs["defender_evs"] = defender_evs
+        return kwargs
+
     def _get_switch_target(
         self, battle_state: BattleState, player_id: str, pokemon_name: str
     ) -> Optional[PokemonState]:
@@ -347,6 +380,18 @@ class ActionSimulationAgent(BaseAgent):
         opponent_side_conditions = self._get_side_condition_set(opponent_team)
         trick_room_active = FieldEffect.TRICK_ROOM in field_state.get_field_effects()
 
+        move_order_kwargs: Dict[str, Any] = {}
+        move_order_kwargs.update(
+            self._build_move_order_kwargs(
+                prefix="pokemon_1", nature=our_nature, evs=our_evs
+            )
+        )
+        move_order_kwargs.update(
+            self._build_move_order_kwargs(
+                prefix="pokemon_2", nature=opponent_nature, evs=opponent_evs
+            )
+        )
+
         move_order = self._simulator.get_move_order(
             our_sim_pokemon,
             our_move_obj,
@@ -357,10 +402,7 @@ class ActionSimulationAgent(BaseAgent):
             weather=field_state.get_weather() or Weather.NONE,
             terrain=field_state.get_terrain(),
             trick_room_active=trick_room_active,
-            pokemon_1_nature=our_nature,
-            pokemon_1_evs=our_evs,
-            pokemon_2_nature=opponent_nature,
-            pokemon_2_evs=opponent_evs,
+            **move_order_kwargs,
         )
 
         player_move_order: List[str] = []
@@ -385,16 +427,19 @@ class ActionSimulationAgent(BaseAgent):
         }
 
         if first_player == our_player_id:
+            first_estimate_kwargs = self._build_estimate_kwargs(
+                attacker_nature=our_nature,
+                attacker_evs=our_evs,
+                defender_nature=opponent_nature,
+                defender_evs=opponent_evs,
+            )
             first_result = self._simulator.estimate_move_result(
                 our_sim_pokemon,
                 opponent_sim_pokemon,
                 our_move_obj,
                 field_state,
                 list(opponent_side_conditions) if opponent_side_conditions else None,
-                attacker_evs=our_evs,
-                attacker_nature=our_nature,
-                defender_evs=opponent_evs,
-                defender_nature=opponent_nature,
+                **first_estimate_kwargs,
             )
             move_results[our_player_id] = first_result
             player_move_order.append(our_player_id)
@@ -416,16 +461,19 @@ class ActionSimulationAgent(BaseAgent):
                 defender_after_self_damage = replace(
                     our_sim_pokemon, current_hp=our_post_move_hp
                 )
+                second_estimate_kwargs = self._build_estimate_kwargs(
+                    attacker_nature=opponent_nature,
+                    attacker_evs=opponent_evs,
+                    defender_nature=our_nature,
+                    defender_evs=our_evs,
+                )
                 second_result = self._simulator.estimate_move_result(
                     opponent_sim_pokemon,
                     defender_after_self_damage,
                     opponent_move_obj,
                     field_state,
                     list(our_side_conditions) if our_side_conditions else None,
-                    attacker_evs=opponent_evs,
-                    attacker_nature=opponent_nature,
-                    defender_evs=our_evs,
-                    defender_nature=our_nature,
+                    **second_estimate_kwargs,
                 )
                 move_results[opponent_player_id] = second_result
                 player_move_order.append(opponent_player_id)
@@ -510,12 +558,19 @@ class ActionSimulationAgent(BaseAgent):
                 active_pokemon_stat_changes={},
             )
         else:
+            first_estimate_kwargs = self._build_estimate_kwargs(
+                attacker_nature=opponent_nature,
+                attacker_evs=opponent_evs,
+                defender_nature=our_nature,
+                defender_evs=our_evs,
+            )
             first_result = self._simulator.estimate_move_result(
                 opponent_sim_pokemon,
                 our_sim_pokemon,
                 opponent_move_obj,
                 field_state,
                 list(our_side_conditions) if our_side_conditions else None,
+                **first_estimate_kwargs,
             )
             move_results[opponent_player_id] = first_result
             player_move_order.append(opponent_player_id)
@@ -526,6 +581,12 @@ class ActionSimulationAgent(BaseAgent):
 
             second_result = None
             if our_survival > 0:
+                second_estimate_kwargs = self._build_estimate_kwargs(
+                    attacker_nature=our_nature,
+                    attacker_evs=our_evs,
+                    defender_nature=opponent_nature,
+                    defender_evs=opponent_evs,
+                )
                 second_result = self._simulator.estimate_move_result(
                     our_sim_pokemon,
                     opponent_sim_pokemon,
@@ -534,6 +595,7 @@ class ActionSimulationAgent(BaseAgent):
                     list(opponent_side_conditions)
                     if opponent_side_conditions
                     else None,
+                    **second_estimate_kwargs,
                 )
                 move_results[our_player_id] = second_result
                 player_move_order.append(our_player_id)
@@ -644,16 +706,20 @@ class ActionSimulationAgent(BaseAgent):
 
         opponent_side_conditions = self._get_side_condition_set(opponent_team)
 
+        estimate_kwargs = self._build_estimate_kwargs(
+            attacker_nature=our_nature,
+            attacker_evs=our_evs,
+            defender_nature=opponent_nature,
+            defender_evs=opponent_evs,
+        )
+
         move_result = self._simulator.estimate_move_result(
             our_sim_pokemon,
             opponent_switching_to,
             our_move_obj,
             field_state,
             list(opponent_side_conditions) if opponent_side_conditions else None,
-            attacker_evs=our_evs,
-            attacker_nature=our_nature,
-            defender_evs=opponent_evs,
-            defender_nature=opponent_nature,
+            **estimate_kwargs,
         )
 
         opp_hp_min, opp_hp_max = self._hp_range_after_damage(
@@ -748,16 +814,20 @@ class ActionSimulationAgent(BaseAgent):
         opponent_nature, opponent_evs = self._get_usage_spread(opponent_pokemon)
         our_nature, our_evs = self._get_usage_spread(our_switching_to, use_priors=False)
 
+        estimate_kwargs = self._build_estimate_kwargs(
+            attacker_nature=opponent_nature,
+            attacker_evs=opponent_evs,
+            defender_nature=our_nature,
+            defender_evs=our_evs,
+        )
+
         move_result = self._simulator.estimate_move_result(
             opponent_pokemon,
             our_switching_to,
             opponent_move_obj,
             field_state,
             list(our_side_conditions) if our_side_conditions else None,
-            attacker_evs=opponent_evs,
-            attacker_nature=opponent_nature,
-            defender_evs=our_evs,
-            defender_nature=our_nature,
+            **estimate_kwargs,
         )
 
         our_hp_min, our_hp_max = self._hp_range_after_damage(

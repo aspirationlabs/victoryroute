@@ -140,6 +140,12 @@ class MoveResult:
 class BattleSimulator:
     """Simulator for calculating Pokemon stats and battle scenarios."""
 
+    DEFAULT_INDIVIDUAL_VALUES: IndividualValues = IndividualValues(
+        31, 31, 31, 31, 31, 31
+    )
+    DEFAULT_EFFORT_VALUES: EffortValues = EffortValues(252, 252, 252, 252, 252, 252)
+    DEFAULT_NATURE: str = "Bashful"
+
     TYPE_BOOST_ITEMS: Dict[str, str] = {
         "blackbelt": "Fighting",
         "fistplate": "Fighting",
@@ -348,17 +354,10 @@ class BattleSimulator:
         self,
         pokemon: PokemonState,
         level: int = 100,
-        ivs: Optional[IndividualValues] = None,
-        evs: Optional[EffortValues] = None,
-        nature: Optional[str] = None,
+        ivs: IndividualValues = DEFAULT_INDIVIDUAL_VALUES,
+        evs: EffortValues = DEFAULT_EFFORT_VALUES,
+        nature: str = DEFAULT_NATURE,
     ) -> PokemonStats:
-        if ivs is None:
-            ivs = IndividualValues(31, 31, 31, 31, 31, 31)
-        if evs is None:
-            evs = EffortValues(252, 252, 252, 252, 252, 252)
-        if nature is None:
-            nature = "Bashful"
-
         pokemon_data = self.game_data.get_pokemon(pokemon.species)
         base_stats = pokemon_data.base_stats
         nature_multipliers = self.get_nature_boosts(nature)
@@ -490,16 +489,12 @@ class BattleSimulator:
         terrain: Optional[Terrain] = None,
         side_conditions: Optional[set] = None,
         trick_room_active: bool = False,
-        ivs: Optional[IndividualValues] = None,
-        evs: Optional[EffortValues] = None,
-        nature: Optional[str] = None,
+        ivs: IndividualValues = DEFAULT_INDIVIDUAL_VALUES,
+        evs: EffortValues = DEFAULT_EFFORT_VALUES,
+        nature: str = DEFAULT_NATURE,
     ) -> int:
         speed_stat = self.get_pokemon_stats(
-            pokemon,
-            pokemon.level,
-            ivs=ivs,
-            evs=evs,
-            nature=nature,
+            pokemon, pokemon.level, ivs=ivs, evs=evs, nature=nature
         ).speed
         boost_multiplier = STAT_STAGE_MULTIPLIERS.get(
             pokemon.get_stat_boost(Stat.SPE), 1.0
@@ -565,12 +560,12 @@ class BattleSimulator:
         weather: Weather = Weather.NONE,
         terrain: Optional[Terrain] = None,
         trick_room_active: bool = False,
-        pokemon_1_ivs: Optional[IndividualValues] = None,
-        pokemon_1_evs: Optional[EffortValues] = None,
-        pokemon_1_nature: Optional[str] = None,
-        pokemon_2_ivs: Optional[IndividualValues] = None,
-        pokemon_2_evs: Optional[EffortValues] = None,
-        pokemon_2_nature: Optional[str] = None,
+        pokemon_1_ivs: IndividualValues = DEFAULT_INDIVIDUAL_VALUES,
+        pokemon_1_evs: EffortValues = DEFAULT_EFFORT_VALUES,
+        pokemon_1_nature: str = DEFAULT_NATURE,
+        pokemon_2_ivs: IndividualValues = DEFAULT_INDIVIDUAL_VALUES,
+        pokemon_2_evs: EffortValues = DEFAULT_EFFORT_VALUES,
+        pokemon_2_nature: str = DEFAULT_NATURE,
     ) -> List[MoveAction]:
         pokemon_1_data = self.game_data.get_pokemon(pokemon_1.species)
         pokemon_2_data = self.game_data.get_pokemon(pokemon_2.species)
@@ -657,9 +652,9 @@ class BattleSimulator:
         pokemon: PokemonState,
         field_state: Optional[FieldState],
         side_conditions: Optional[List[SideCondition]] = None,
-        ivs: Optional[IndividualValues] = None,
-        evs: Optional[EffortValues] = None,
-        nature: Optional[str] = None,
+        ivs: IndividualValues = DEFAULT_INDIVIDUAL_VALUES,
+        evs: EffortValues = DEFAULT_EFFORT_VALUES,
+        nature: str = DEFAULT_NATURE,
     ) -> int:
         pokemon_data = self.game_data.get_pokemon(pokemon.species)
         base_speed = pokemon_data.base_stats["spe"]
@@ -690,12 +685,12 @@ class BattleSimulator:
         defender: PokemonState,
         field_state: Optional[FieldState],
         defender_side_conditions: Optional[List[SideCondition]],
-        attacker_ivs: Optional[IndividualValues] = None,
-        attacker_evs: Optional[EffortValues] = None,
-        attacker_nature: Optional[str] = None,
-        defender_ivs: Optional[IndividualValues] = None,
-        defender_evs: Optional[EffortValues] = None,
-        defender_nature: Optional[str] = None,
+        attacker_ivs: IndividualValues = DEFAULT_INDIVIDUAL_VALUES,
+        attacker_evs: EffortValues = DEFAULT_EFFORT_VALUES,
+        attacker_nature: str = DEFAULT_NATURE,
+        defender_ivs: IndividualValues = DEFAULT_INDIVIDUAL_VALUES,
+        defender_evs: EffortValues = DEFAULT_EFFORT_VALUES,
+        defender_nature: str = DEFAULT_NATURE,
     ) -> int:
         callback_type = self._get_base_power_callback_type(move_data, move.name)
         base_power = move_data.base_power
@@ -953,12 +948,12 @@ class BattleSimulator:
         move: PokemonMove,
         field_state: Optional[FieldState] = None,
         defender_side_conditions: Optional[List[SideCondition]] = None,
-        attacker_ivs: Optional[IndividualValues] = None,
-        attacker_evs: Optional[EffortValues] = None,
-        attacker_nature: Optional[str] = None,
-        defender_ivs: Optional[IndividualValues] = None,
-        defender_evs: Optional[EffortValues] = None,
-        defender_nature: Optional[str] = None,
+        attacker_ivs: IndividualValues = DEFAULT_INDIVIDUAL_VALUES,
+        attacker_evs: EffortValues = DEFAULT_EFFORT_VALUES,
+        attacker_nature: str = DEFAULT_NATURE,
+        defender_ivs: IndividualValues = DEFAULT_INDIVIDUAL_VALUES,
+        defender_evs: EffortValues = DEFAULT_EFFORT_VALUES,
+        defender_nature: str = DEFAULT_NATURE,
     ) -> MoveResult:
         move_data = self.game_data.get_move(move.name)
 
