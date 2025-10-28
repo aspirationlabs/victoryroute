@@ -1,6 +1,15 @@
 """Agent for simulating all possible action pairs in a Pokemon battle turn."""
 
-from typing import Any, AsyncGenerator, List, Optional
+from typing import (
+    Any,
+    AsyncGenerator,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Protocol,
+    runtime_checkable,
+)
 from dataclasses import replace
 
 from absl import logging
@@ -8,17 +17,18 @@ from google.adk.agents import BaseAgent, InvocationContext
 from google.adk.events import Event
 from google.genai.types import Content, Part
 
-from python.agents.tools.battle_simulator import BattleSimulator
+from python.agents.tools.battle_simulator import BattleSimulator, MoveResult
 from python.agents.turn_predictor.simulation_result import (
+    PokemonOutcome,
     SimulationResult,
 )
-from python.agents.turn_predictor.turn_predictor_state import (
-    OpponentPokemonPrediction,
-)
-from python.game.interface.battle_action import ActionType
+from python.agents.turn_predictor.turn_predictor_state import OpponentPokemonPrediction
+from python.game.interface.battle_action import ActionType, BattleAction
 from python.game.schema.battle_state import BattleState
+from python.game.schema.enums import FieldEffect, SideCondition, Weather
 from python.game.schema.field_state import FieldState
 from python.game.schema.pokemon_state import PokemonMove, PokemonState
+from python.game.schema.team_state import TeamState
 
 
 class ActionSimulationAgent(BaseAgent):
@@ -32,7 +42,6 @@ class ActionSimulationAgent(BaseAgent):
         self, ctx: InvocationContext
     ) -> AsyncGenerator[Event, None]:
         """Main agent execution that simulates all action combinations."""
-        # InvocationContext.state is dynamically added in ADK framework
         state: Any = ctx.state  # type: ignore[attr-defined]
         our_player_id = state.our_player_id
         opponent_player_id = "p2" if our_player_id == "p1" else "p1"
@@ -82,6 +91,7 @@ class ActionSimulationAgent(BaseAgent):
             if our_action.action_type == ActionType.MOVE:
                 for move_prediction in state.opponent_predicted_active_pokemon.moves:
                     result = await self._simulate_move_vs_move(
+                        battle_state=battle_state,
                         our_pokemon=our_active_pokemon,
                         our_move=our_action.move_name,
                         our_tera=our_action.tera,
@@ -95,6 +105,7 @@ class ActionSimulationAgent(BaseAgent):
                     move_move_results += 1
                 for switch_target in opponent_switches:
                     result = await self._simulate_move_vs_switch(
+                        battle_state=battle_state,
                         our_pokemon=our_active_pokemon,
                         our_move=our_action.move_name,
                         our_tera=our_action.tera,
@@ -113,6 +124,7 @@ class ActionSimulationAgent(BaseAgent):
                     continue
                 for move_prediction in state.opponent_predicted_active_pokemon.moves:
                     result = await self._simulate_switch_vs_move(
+                        battle_state=battle_state,
                         our_switching_to=our_switch_target,
                         opponent_pokemon=opponent_active_pokemon,
                         opponent_move=move_prediction.name,
@@ -124,6 +136,7 @@ class ActionSimulationAgent(BaseAgent):
                     simulation_results.append(result)
                 for switch_target in opponent_switches:
                     result = await self._simulate_switch_vs_switch(
+                        battle_state=battle_state,
                         our_switching_to=our_switch_target,
                         opponent_switching_to=switch_target,
                         our_player_id=our_player_id,
@@ -131,7 +144,7 @@ class ActionSimulationAgent(BaseAgent):
                     )
                     switch_switch_results += 1
                     simulation_results.append(result)
-        ctx.state["simulation_actions"] = simulation_results  # type: ignore[attr-defined]
+        state["simulation_actions"] = simulation_results  # type: ignore[index]
         logging.info(
             f"Action simulator found {move_move_results} move-move, {move_switch_results} move-switch, {switch_move_results} switch-move, {switch_switch_results} switch-switch results."
         )
@@ -197,68 +210,587 @@ class ActionSimulationAgent(BaseAgent):
                 return pokemon
         return None
 
+    def _maybe_terastallize_pokemon(
+        self, pokemon: PokemonState, use_tera: bool
+    ) -> PokemonState:
+        """Return a PokemonState reflecting terastallization if requested."""
+        if not use_tera:
+            return pokemon
+        if pokemon.has_terastallized:
+            return pokemon
+        return replace(pokemon, has_terastallized=True)
+
+    def _get_move_from_pokemon(
+        self, pokemon: PokemonState, move_name: str
+    ) -> PokemonMove:
+        """Get a PokemonMove by name, creating a placeholder if unseen."""
+        for move in pokemon.moves:
+            if move.name.lower() == move_name.lower():
+                return move
+        # Fallback: create a placeholder move with nominal PP to allow simulation.
+        return PokemonMove(name=move_name, current_pp=5, max_pp=5)
+
+    def _get_side_condition_set(self, team: TeamState) -> Optional[set[SideCondition]]:
+        """Return the active side conditions for a team as a set."""
+        if not team.side_conditions:
+            return None
+        return set(team.side_conditions.keys())
+
+    @staticmethod
+    def _hp_range_after_damage(
+        current_hp: int, min_damage: int, max_damage: int
+    ) -> Tuple[int, int]:
+        """Compute HP range after taking damage between min_damage and max_damage."""
+        min_hp = max(0, current_hp - max_damage)
+        max_hp = max(0, current_hp - min_damage)
+        if max_hp < min_hp:
+            max_hp = min_hp
+        return (min_hp, max_hp)
+
+    @staticmethod
+    def _crit_hp_range_after_damage(
+        current_hp: int, crit_min_damage: int, crit_max_damage: int
+    ) -> Tuple[int, int]:
+        """Compute HP range after taking critical damage."""
+        min_hp = max(0, current_hp - crit_max_damage)
+        max_hp = max(0, current_hp - crit_min_damage)
+        if max_hp < min_hp:
+            max_hp = min_hp
+        return (min_hp, max_hp)
+
+    @staticmethod
+    def _clamp_probability(value: float) -> float:
+        """Clamp probability values into [0.0, 1.0]."""
+        if value < 0.0:
+            return 0.0
+        if value > 1.0:
+            return 1.0
+        return value
+
     async def _simulate_move_vs_move(
         self,
-        our_pokemon: PokemonState,  # noqa: ARG002
-        our_move: str,  # noqa: ARG002
-        our_tera: bool,  # noqa: ARG002
-        opponent_pokemon: PokemonState,  # noqa: ARG002
-        opponent_move: str,  # noqa: ARG002
-        field_state: FieldState,  # noqa: ARG002
-        our_player_id: str,  # noqa: ARG002
-        opponent_player_id: str,  # noqa: ARG002
+        battle_state: BattleState,
+        our_pokemon: PokemonState,
+        our_move: str,
+        our_tera: bool,
+        opponent_pokemon: PokemonState,
+        opponent_move: str,
+        field_state: FieldState,
+        our_player_id: str,
+        opponent_player_id: str,
     ) -> SimulationResult:
         """Simulate both Pokemon using moves."""
-        # TODO: Implement full simulation logic
-        # 1. Determine move order using self._simulator.get_move_order
-        # 2. Simulate first move using self._simulator.estimate_move_result
-        # 3. Check if target faints (knockout_probability)
-        # 4. If not, simulate second move
-        # 5. Calculate final outcomes and create PokemonOutcome for each player
-        raise NotImplementedError("_simulate_move_vs_move not yet implemented")
+        our_team = battle_state.get_team(our_player_id)
+        opponent_team = battle_state.get_team(opponent_player_id)
+
+        our_sim_pokemon = self._maybe_terastallize_pokemon(our_pokemon, our_tera)
+        opponent_sim_pokemon = opponent_pokemon
+
+        our_move_obj = self._get_move_from_pokemon(our_sim_pokemon, our_move)
+        opponent_move_obj = self._get_move_from_pokemon(
+            opponent_sim_pokemon, opponent_move
+        )
+
+        our_side_conditions = self._get_side_condition_set(our_team)
+        opponent_side_conditions = self._get_side_condition_set(opponent_team)
+        trick_room_active = FieldEffect.TRICK_ROOM in field_state.get_field_effects()
+
+        move_order = self._simulator.get_move_order(
+            our_sim_pokemon,
+            our_move_obj,
+            opponent_sim_pokemon,
+            opponent_move_obj,
+            side_1_conditions=our_side_conditions,
+            side_2_conditions=opponent_side_conditions,
+            weather=field_state.get_weather() or Weather.NONE,
+            terrain=field_state.get_terrain(),
+            trick_room_active=trick_room_active,
+        )
+
+        player_move_order: List[str] = []
+        move_results: Dict[str, Optional[MoveResult]] = {
+            our_player_id: None,
+            opponent_player_id: None,
+        }
+
+        first_player = (
+            our_player_id
+            if move_order[0].pokemon is our_sim_pokemon
+            else opponent_player_id
+        )
+
+        actions = {
+            our_player_id: BattleAction(
+                action_type=ActionType.MOVE, move_name=our_move, tera=our_tera
+            ),
+            opponent_player_id: BattleAction(
+                action_type=ActionType.MOVE, move_name=opponent_move
+            ),
+        }
+
+        if first_player == our_player_id:
+            first_result = self._simulator.estimate_move_result(
+                our_sim_pokemon,
+                opponent_sim_pokemon,
+                our_move_obj,
+                field_state,
+                list(opponent_side_conditions) if opponent_side_conditions else None,
+            )
+            move_results[our_player_id] = first_result
+            player_move_order.append(our_player_id)
+
+            opponent_survival = self._clamp_probability(
+                1.0 - first_result.knockout_probability
+            )
+
+            second_result: Optional[MoveResult] = None
+            if opponent_survival > 0:
+                second_result = self._simulator.estimate_move_result(
+                    opponent_sim_pokemon,
+                    our_sim_pokemon,
+                    opponent_move_obj,
+                    field_state,
+                    list(our_side_conditions) if our_side_conditions else None,
+                )
+                move_results[opponent_player_id] = second_result
+                player_move_order.append(opponent_player_id)
+
+            opp_hp_min, opp_hp_max = self._hp_range_after_damage(
+                opponent_sim_pokemon.current_hp,
+                first_result.min_damage,
+                first_result.max_damage,
+            )
+            opp_crit_min, opp_crit_max = self._crit_hp_range_after_damage(
+                opponent_sim_pokemon.current_hp,
+                first_result.crit_min_damage,
+                first_result.crit_max_damage,
+            )
+
+            if second_result is not None:
+                our_hp_hit_min, our_hp_hit_max = self._hp_range_after_damage(
+                    our_sim_pokemon.current_hp,
+                    second_result.min_damage,
+                    second_result.max_damage,
+                )
+                our_crit_hit_min, our_crit_hit_max = self._crit_hp_range_after_damage(
+                    our_sim_pokemon.current_hp,
+                    second_result.crit_min_damage,
+                    second_result.crit_max_damage,
+                )
+                if opponent_survival < 1.0:
+                    our_hp_max = our_sim_pokemon.current_hp
+                    our_crit_max = our_sim_pokemon.current_hp
+                else:
+                    our_hp_max = our_hp_hit_max
+                    our_crit_max = our_crit_hit_max
+                our_hp_min = our_hp_hit_min
+                our_crit_min = our_crit_hit_min
+                our_faint_prob = self._clamp_probability(
+                    opponent_survival * second_result.knockout_probability
+                )
+                our_crit_prob = self._clamp_probability(
+                    opponent_survival * second_result.critical_hit_probability
+                )
+            else:
+                our_hp_min = our_hp_max = our_sim_pokemon.current_hp
+                our_crit_min = our_crit_max = our_sim_pokemon.current_hp
+                our_faint_prob = 0.0
+                our_crit_prob = 0.0
+
+            our_outcome = PokemonOutcome(
+                active_pokemon=our_sim_pokemon.species,
+                active_pokemon_hp_range=(our_hp_min, max(our_hp_max, our_hp_min)),
+                active_pokemon_max_hp=our_sim_pokemon.max_hp,
+                critical_hit_received_hp_range=(
+                    our_crit_min,
+                    max(our_crit_max, our_crit_min),
+                ),
+                active_pokemon_moves_probability=1.0,
+                active_pokemon_fainted_probability=our_faint_prob,
+                critical_hit_received_probability=our_crit_prob,
+                active_pokemon_status_probability={},
+                active_pokemon_stat_changes={},
+            )
+            opponent_outcome = PokemonOutcome(
+                active_pokemon=opponent_sim_pokemon.species,
+                active_pokemon_hp_range=(opp_hp_min, max(opp_hp_max, opp_hp_min)),
+                active_pokemon_max_hp=opponent_sim_pokemon.max_hp,
+                critical_hit_received_hp_range=(
+                    opp_crit_min,
+                    max(opp_crit_max, opp_crit_min),
+                ),
+                active_pokemon_moves_probability=opponent_survival,
+                active_pokemon_fainted_probability=self._clamp_probability(
+                    first_result.knockout_probability
+                ),
+                critical_hit_received_probability=self._clamp_probability(
+                    first_result.critical_hit_probability
+                ),
+                active_pokemon_status_probability={},
+                active_pokemon_stat_changes={},
+            )
+        else:
+            first_result = self._simulator.estimate_move_result(
+                opponent_sim_pokemon,
+                our_sim_pokemon,
+                opponent_move_obj,
+                field_state,
+                list(our_side_conditions) if our_side_conditions else None,
+            )
+            move_results[opponent_player_id] = first_result
+            player_move_order.append(opponent_player_id)
+
+            our_survival = self._clamp_probability(
+                1.0 - first_result.knockout_probability
+            )
+
+            second_result = None
+            if our_survival > 0:
+                second_result = self._simulator.estimate_move_result(
+                    our_sim_pokemon,
+                    opponent_sim_pokemon,
+                    our_move_obj,
+                    field_state,
+                    list(opponent_side_conditions)
+                    if opponent_side_conditions
+                    else None,
+                )
+                move_results[our_player_id] = second_result
+                player_move_order.append(our_player_id)
+
+            our_hp_min, our_hp_max = self._hp_range_after_damage(
+                our_sim_pokemon.current_hp,
+                first_result.min_damage,
+                first_result.max_damage,
+            )
+            our_crit_min, our_crit_max = self._crit_hp_range_after_damage(
+                our_sim_pokemon.current_hp,
+                first_result.crit_min_damage,
+                first_result.crit_max_damage,
+            )
+
+            if second_result is not None:
+                opp_hp_hit_min, opp_hp_hit_max = self._hp_range_after_damage(
+                    opponent_sim_pokemon.current_hp,
+                    second_result.min_damage,
+                    second_result.max_damage,
+                )
+                opp_crit_hit_min, opp_crit_hit_max = self._crit_hp_range_after_damage(
+                    opponent_sim_pokemon.current_hp,
+                    second_result.crit_min_damage,
+                    second_result.crit_max_damage,
+                )
+                if our_survival < 1.0:
+                    opp_hp_max = opponent_sim_pokemon.current_hp
+                    opp_crit_max = opponent_sim_pokemon.current_hp
+                else:
+                    opp_hp_max = opp_hp_hit_max
+                    opp_crit_max = opp_crit_hit_max
+                opp_hp_min = opp_hp_hit_min
+                opp_crit_min = opp_crit_hit_min
+                opp_faint_prob = self._clamp_probability(
+                    our_survival * second_result.knockout_probability
+                )
+                opp_crit_prob = self._clamp_probability(
+                    our_survival * second_result.critical_hit_probability
+                )
+            else:
+                opp_hp_min = opp_hp_max = opponent_sim_pokemon.current_hp
+                opp_crit_min = opp_crit_max = opponent_sim_pokemon.current_hp
+                opp_faint_prob = 0.0
+                opp_crit_prob = 0.0
+
+            our_outcome = PokemonOutcome(
+                active_pokemon=our_sim_pokemon.species,
+                active_pokemon_hp_range=(our_hp_min, max(our_hp_max, our_hp_min)),
+                active_pokemon_max_hp=our_sim_pokemon.max_hp,
+                critical_hit_received_hp_range=(
+                    our_crit_min,
+                    max(our_crit_max, our_crit_min),
+                ),
+                active_pokemon_moves_probability=our_survival,
+                active_pokemon_fainted_probability=self._clamp_probability(
+                    first_result.knockout_probability
+                ),
+                critical_hit_received_probability=self._clamp_probability(
+                    first_result.critical_hit_probability
+                ),
+                active_pokemon_status_probability={},
+                active_pokemon_stat_changes={},
+            )
+            opponent_outcome = PokemonOutcome(
+                active_pokemon=opponent_sim_pokemon.species,
+                active_pokemon_hp_range=(opp_hp_min, max(opp_hp_max, opp_hp_min)),
+                active_pokemon_max_hp=opponent_sim_pokemon.max_hp,
+                critical_hit_received_hp_range=(
+                    opp_crit_min,
+                    max(opp_crit_max, opp_crit_min),
+                ),
+                active_pokemon_moves_probability=1.0,
+                active_pokemon_fainted_probability=opp_faint_prob,
+                critical_hit_received_probability=opp_crit_prob,
+                active_pokemon_status_probability={},
+                active_pokemon_stat_changes={},
+            )
+
+        return SimulationResult(
+            actions=actions,
+            player_move_order=tuple(player_move_order),
+            move_results=move_results,
+            player_outcomes={
+                our_player_id: our_outcome,
+                opponent_player_id: opponent_outcome,
+            },
+        )
 
     async def _simulate_move_vs_switch(
         self,
-        our_pokemon: PokemonState,  # noqa: ARG002
-        our_move: str,  # noqa: ARG002
-        our_tera: bool,  # noqa: ARG002
-        opponent_switching_to: PokemonState,  # noqa: ARG002
-        field_state: FieldState,  # noqa: ARG002
-        our_player_id: str,  # noqa: ARG002
-        opponent_player_id: str,  # noqa: ARG002
+        battle_state: BattleState,
+        our_pokemon: PokemonState,
+        our_move: str,
+        our_tera: bool,
+        opponent_switching_to: PokemonState,
+        field_state: FieldState,
+        our_player_id: str,
+        opponent_player_id: str,
     ) -> SimulationResult:
         """Simulate our move while opponent switches."""
-        # TODO: Implement simulation logic
-        # 1. Opponent switches first (no damage)
-        # 2. Our move targets the new Pokemon
-        # 3. Calculate outcomes
-        raise NotImplementedError("_simulate_move_vs_switch not yet implemented")
+        opponent_team = battle_state.get_team(opponent_player_id)
+
+        our_sim_pokemon = self._maybe_terastallize_pokemon(our_pokemon, our_tera)
+        our_move_obj = self._get_move_from_pokemon(our_sim_pokemon, our_move)
+
+        opponent_side_conditions = self._get_side_condition_set(opponent_team)
+
+        move_result = self._simulator.estimate_move_result(
+            our_sim_pokemon,
+            opponent_switching_to,
+            our_move_obj,
+            field_state,
+            list(opponent_side_conditions) if opponent_side_conditions else None,
+        )
+
+        opp_hp_min, opp_hp_max = self._hp_range_after_damage(
+            opponent_switching_to.current_hp,
+            move_result.min_damage,
+            move_result.max_damage,
+        )
+        opp_crit_min, opp_crit_max = self._crit_hp_range_after_damage(
+            opponent_switching_to.current_hp,
+            move_result.crit_min_damage,
+            move_result.crit_max_damage,
+        )
+
+        actions = {
+            our_player_id: BattleAction(
+                action_type=ActionType.MOVE, move_name=our_move, tera=our_tera
+            ),
+            opponent_player_id: BattleAction(
+                action_type=ActionType.SWITCH,
+                switch_pokemon_name=opponent_switching_to.species,
+            ),
+        }
+
+        return SimulationResult(
+            actions=actions,
+            player_move_order=(opponent_player_id, our_player_id),
+            move_results={
+                our_player_id: move_result,
+                opponent_player_id: None,
+            },
+            player_outcomes={
+                our_player_id: PokemonOutcome(
+                    active_pokemon=our_sim_pokemon.species,
+                    active_pokemon_hp_range=(
+                        our_sim_pokemon.current_hp,
+                        our_sim_pokemon.current_hp,
+                    ),
+                    active_pokemon_max_hp=our_sim_pokemon.max_hp,
+                    critical_hit_received_hp_range=(
+                        our_sim_pokemon.current_hp,
+                        our_sim_pokemon.current_hp,
+                    ),
+                    active_pokemon_moves_probability=1.0,
+                    active_pokemon_fainted_probability=0.0,
+                    critical_hit_received_probability=0.0,
+                    active_pokemon_status_probability={},
+                    active_pokemon_stat_changes={},
+                ),
+                opponent_player_id: PokemonOutcome(
+                    active_pokemon=opponent_switching_to.species,
+                    active_pokemon_hp_range=(opp_hp_min, max(opp_hp_max, opp_hp_min)),
+                    active_pokemon_max_hp=opponent_switching_to.max_hp,
+                    critical_hit_received_hp_range=(
+                        opp_crit_min,
+                        max(opp_crit_max, opp_crit_min),
+                    ),
+                    active_pokemon_moves_probability=0.0,
+                    active_pokemon_fainted_probability=self._clamp_probability(
+                        move_result.knockout_probability
+                    ),
+                    critical_hit_received_probability=self._clamp_probability(
+                        move_result.critical_hit_probability
+                    ),
+                    active_pokemon_status_probability={},
+                    active_pokemon_stat_changes={},
+                ),
+            },
+        )
 
     async def _simulate_switch_vs_move(
         self,
-        our_switching_to: PokemonState,  # noqa: ARG002
-        opponent_pokemon: PokemonState,  # noqa: ARG002
-        opponent_move: str,  # noqa: ARG002
-        field_state: FieldState,  # noqa: ARG002
-        our_player_id: str,  # noqa: ARG002
-        opponent_player_id: str,  # noqa: ARG002
+        battle_state: BattleState,
+        our_switching_to: PokemonState,
+        opponent_pokemon: PokemonState,
+        opponent_move: str,
+        field_state: FieldState,
+        our_player_id: str,
+        opponent_player_id: str,
     ) -> SimulationResult:
         """Simulate us switching while opponent uses move."""
-        # TODO: Implement simulation logic
-        # 1. We switch first (no damage)
-        # 2. Opponent's move targets our new Pokemon
-        # 3. Calculate outcomes
-        raise NotImplementedError("_simulate_switch_vs_move not yet implemented")
+        our_team = battle_state.get_team(our_player_id)
+
+        opponent_move_obj = self._get_move_from_pokemon(opponent_pokemon, opponent_move)
+        our_side_conditions = self._get_side_condition_set(our_team)
+
+        move_result = self._simulator.estimate_move_result(
+            opponent_pokemon,
+            our_switching_to,
+            opponent_move_obj,
+            field_state,
+            list(our_side_conditions) if our_side_conditions else None,
+        )
+
+        our_hp_min, our_hp_max = self._hp_range_after_damage(
+            our_switching_to.current_hp,
+            move_result.min_damage,
+            move_result.max_damage,
+        )
+        our_crit_min, our_crit_max = self._crit_hp_range_after_damage(
+            our_switching_to.current_hp,
+            move_result.crit_min_damage,
+            move_result.crit_max_damage,
+        )
+
+        actions = {
+            our_player_id: BattleAction(
+                action_type=ActionType.SWITCH,
+                switch_pokemon_name=our_switching_to.species,
+            ),
+            opponent_player_id: BattleAction(
+                action_type=ActionType.MOVE, move_name=opponent_move
+            ),
+        }
+
+        return SimulationResult(
+            actions=actions,
+            player_move_order=(our_player_id, opponent_player_id),
+            move_results={
+                our_player_id: None,
+                opponent_player_id: move_result,
+            },
+            player_outcomes={
+                our_player_id: PokemonOutcome(
+                    active_pokemon=our_switching_to.species,
+                    active_pokemon_hp_range=(our_hp_min, max(our_hp_max, our_hp_min)),
+                    active_pokemon_max_hp=our_switching_to.max_hp,
+                    critical_hit_received_hp_range=(
+                        our_crit_min,
+                        max(our_crit_max, our_crit_min),
+                    ),
+                    active_pokemon_moves_probability=0.0,
+                    active_pokemon_fainted_probability=self._clamp_probability(
+                        move_result.knockout_probability
+                    ),
+                    critical_hit_received_probability=self._clamp_probability(
+                        move_result.critical_hit_probability
+                    ),
+                    active_pokemon_status_probability={},
+                    active_pokemon_stat_changes={},
+                ),
+                opponent_player_id: PokemonOutcome(
+                    active_pokemon=opponent_pokemon.species,
+                    active_pokemon_hp_range=(
+                        opponent_pokemon.current_hp,
+                        opponent_pokemon.current_hp,
+                    ),
+                    active_pokemon_max_hp=opponent_pokemon.max_hp,
+                    critical_hit_received_hp_range=(
+                        opponent_pokemon.current_hp,
+                        opponent_pokemon.current_hp,
+                    ),
+                    active_pokemon_moves_probability=1.0,
+                    active_pokemon_fainted_probability=0.0,
+                    critical_hit_received_probability=0.0,
+                    active_pokemon_status_probability={},
+                    active_pokemon_stat_changes={},
+                ),
+            },
+        )
 
     async def _simulate_switch_vs_switch(
         self,
-        our_switching_to: PokemonState,  # noqa: ARG002
-        opponent_switching_to: PokemonState,  # noqa: ARG002
-        our_player_id: str,  # noqa: ARG002
-        opponent_player_id: str,  # noqa: ARG002
+        battle_state: BattleState,
+        our_switching_to: PokemonState,
+        opponent_switching_to: PokemonState,
+        our_player_id: str,
+        opponent_player_id: str,
     ) -> SimulationResult:
         """Simulate both players switching."""
-        # TODO: Implement simulation logic
-        # 1. Both players switch (no damage exchanged)
-        # 2. Create outcomes with no damage
-        raise NotImplementedError("_simulate_switch_vs_switch not yet implemented")
+        actions = {
+            our_player_id: BattleAction(
+                action_type=ActionType.SWITCH,
+                switch_pokemon_name=our_switching_to.species,
+            ),
+            opponent_player_id: BattleAction(
+                action_type=ActionType.SWITCH,
+                switch_pokemon_name=opponent_switching_to.species,
+            ),
+        }
+
+        return SimulationResult(
+            actions=actions,
+            player_move_order=(our_player_id, opponent_player_id),
+            move_results={our_player_id: None, opponent_player_id: None},
+            player_outcomes={
+                our_player_id: PokemonOutcome(
+                    active_pokemon=our_switching_to.species,
+                    active_pokemon_hp_range=(
+                        our_switching_to.current_hp,
+                        our_switching_to.current_hp,
+                    ),
+                    active_pokemon_max_hp=our_switching_to.max_hp,
+                    critical_hit_received_hp_range=(
+                        our_switching_to.current_hp,
+                        our_switching_to.current_hp,
+                    ),
+                    active_pokemon_moves_probability=0.0,
+                    active_pokemon_fainted_probability=0.0,
+                    critical_hit_received_probability=0.0,
+                    active_pokemon_status_probability={},
+                    active_pokemon_stat_changes={},
+                ),
+                opponent_player_id: PokemonOutcome(
+                    active_pokemon=opponent_switching_to.species,
+                    active_pokemon_hp_range=(
+                        opponent_switching_to.current_hp,
+                        opponent_switching_to.current_hp,
+                    ),
+                    active_pokemon_max_hp=opponent_switching_to.max_hp,
+                    critical_hit_received_hp_range=(
+                        opponent_switching_to.current_hp,
+                        opponent_switching_to.current_hp,
+                    ),
+                    active_pokemon_moves_probability=0.0,
+                    active_pokemon_fainted_probability=0.0,
+                    critical_hit_received_probability=0.0,
+                    active_pokemon_status_probability={},
+                    active_pokemon_stat_changes={},
+                ),
+            },
+        )
+
+
+@runtime_checkable
+class _StatefulContext(Protocol):
+    state: Any

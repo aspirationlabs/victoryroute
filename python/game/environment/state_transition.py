@@ -11,6 +11,7 @@ from typing import Tuple
 
 from absl import logging
 
+from python.agents.tools.battle_simulator import BattleSimulator
 from python.game.data.game_data import GameData
 from python.game.events.battle_event import (
     AbilityEvent,
@@ -98,6 +99,7 @@ class StateTransition:
     # Shared game data instance for looking up move PP
     # Initialize eagerly to catch any initialization errors early
     _game_data: GameData = GameData()
+    _battle_simulator: BattleSimulator = BattleSimulator(_game_data)
 
     @staticmethod
     def _calculate_max_pp(move_name: str) -> int:
@@ -111,6 +113,31 @@ class StateTransition:
         """
         move = StateTransition._game_data.get_move(move_name)
         return int(move.pp * 8 / 5)
+
+    @staticmethod
+    def _calculate_actual_hp_from_percentage(
+        species: str, level: int, hp_percentage: int
+    ) -> Tuple[int, int]:
+        """Calculate actual HP values from percentage for opponent Pokemon.
+
+        Uses BattleSimulator to calculate max HP based on species base stats
+        with max IVs/EVs (default values).
+
+        Args:
+            species: Pokemon species name
+            level: Pokemon level
+            hp_percentage: Current HP as percentage (0-100)
+
+        Returns:
+            Tuple of (current_hp, max_hp) as actual values
+        """
+        placeholder_pokemon = PokemonState(species=species, level=level)
+        stats = StateTransition._battle_simulator.get_pokemon_stats(
+            placeholder_pokemon, level
+        )
+        max_hp = stats.hp
+        current_hp = int((max_hp * hp_percentage) / 100)
+        return (current_hp, max_hp)
 
     @staticmethod
     def apply(state: BattleState, event: BattleEvent) -> BattleState:
@@ -430,10 +457,20 @@ class StateTransition:
         if event.status is not None:
             status = StateTransition._parse_status(event.status)
 
+        # HP events use percentage (out of 100) or actual values
+        if event.hp_max == 100:
+            # Percentage-based HP event
+            current_hp = int((pokemon.max_hp * event.hp_current) / 100)
+            max_hp = pokemon.max_hp
+        else:
+            # Actual HP values
+            current_hp = event.hp_current
+            max_hp = event.hp_max
+
         new_pokemon = replace(
             pokemon,
-            current_hp=event.hp_current,
-            max_hp=event.hp_max,
+            current_hp=current_hp,
+            max_hp=max_hp,
             status=status,
         )
 
@@ -459,11 +496,23 @@ class StateTransition:
         if event.status is not None:
             status = StateTransition._parse_status(event.status)
 
-        new_hp = min(event.hp_current, event.hp_max)
+        # HP events use percentage (out of 100) or actual values
+        if event.hp_max == 100:
+            # Percentage-based HP event
+            current_hp = min(
+                int((pokemon.max_hp * event.hp_current) / 100),
+                pokemon.max_hp,
+            )
+            max_hp = pokemon.max_hp
+        else:
+            # Actual HP values
+            current_hp = min(event.hp_current, event.hp_max)
+            max_hp = event.hp_max
+
         new_pokemon = replace(
             pokemon,
-            current_hp=new_hp,
-            max_hp=event.hp_max,
+            current_hp=current_hp,
+            max_hp=max_hp,
             status=status,
         )
 
@@ -489,10 +538,20 @@ class StateTransition:
         if event.status is not None:
             status = StateTransition._parse_status(event.status)
 
+        # HP events use percentage (out of 100) or actual values
+        if event.hp_max == 100:
+            # Percentage-based HP event
+            current_hp = int((pokemon.max_hp * event.hp_current) / 100)
+            max_hp = pokemon.max_hp
+        else:
+            # Actual HP values
+            current_hp = event.hp_current
+            max_hp = event.hp_max
+
         new_pokemon = replace(
             pokemon,
-            current_hp=event.hp_current,
-            max_hp=event.hp_max,
+            current_hp=current_hp,
+            max_hp=max_hp,
             status=status,
         )
 
@@ -529,15 +588,18 @@ class StateTransition:
                 # Already exists, don't add duplicate
                 return state
 
-        # Create placeholder Pokemon
+        current_hp, max_hp = StateTransition._calculate_actual_hp_from_percentage(
+            species, 100, 100
+        )
+
         new_pokemon = PokemonState(
             species=species,
             gender=event.gender,
             shiny=event.shiny,
             item=event.item,
-            level=100,  # Default level
-            current_hp=100,  # Placeholder HP
-            max_hp=100,  # Placeholder HP
+            level=100,
+            current_hp=current_hp,
+            max_hp=max_hp,
             status=Status.NONE,
             is_active=False,
         )
@@ -619,6 +681,14 @@ class StateTransition:
         if event.status is not None:
             status = StateTransition._parse_status(event.status)
 
+        if event.hp_max == 100:
+            current_hp, max_hp = StateTransition._calculate_actual_hp_from_percentage(
+                event.species, event.level, event.hp_current
+            )
+        else:
+            current_hp = event.hp_current
+            max_hp = event.hp_max
+
         # Create new Pokemon state, preserving learned moves/ability from existing Pokemon
         if existing_pokemon and pokemon_index is not None:
             # Preserve persistent attributes (moves, item, ability, tera type)
@@ -632,8 +702,8 @@ class StateTransition:
                 nickname=event.pokemon_name
                 if event.pokemon_name != event.species
                 else None,
-                current_hp=event.hp_current,
-                max_hp=event.hp_max,
+                current_hp=current_hp,
+                max_hp=max_hp,
                 status=status,
                 stat_boosts={},
                 volatile_conditions={},
@@ -650,8 +720,8 @@ class StateTransition:
                 nickname=event.pokemon_name
                 if event.pokemon_name != event.species
                 else None,
-                current_hp=event.hp_current,
-                max_hp=event.hp_max,
+                current_hp=current_hp,
+                max_hp=max_hp,
                 status=status,
                 is_active=True,
             )
