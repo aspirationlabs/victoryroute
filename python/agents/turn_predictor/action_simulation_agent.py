@@ -1,6 +1,15 @@
 """Agent for simulating all possible action pairs in a Pokemon battle turn."""
 
-from typing import Any, AsyncGenerator, Dict, List, Optional, Tuple
+from typing import (
+    Any,
+    AsyncGenerator,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Protocol,
+    runtime_checkable,
+)
 from dataclasses import replace
 
 from absl import logging
@@ -13,9 +22,7 @@ from python.agents.turn_predictor.simulation_result import (
     PokemonOutcome,
     SimulationResult,
 )
-from python.agents.turn_predictor.turn_predictor_state import (
-    OpponentPokemonPrediction,
-)
+from python.agents.turn_predictor.turn_predictor_state import OpponentPokemonPrediction
 from python.game.interface.battle_action import ActionType, BattleAction
 from python.game.schema.battle_state import BattleState
 from python.game.schema.enums import FieldEffect, SideCondition, Weather
@@ -35,7 +42,6 @@ class ActionSimulationAgent(BaseAgent):
         self, ctx: InvocationContext
     ) -> AsyncGenerator[Event, None]:
         """Main agent execution that simulates all action combinations."""
-        # InvocationContext.state is dynamically added in ADK framework
         state: Any = ctx.state  # type: ignore[attr-defined]
         our_player_id = state.our_player_id
         opponent_player_id = "p2" if our_player_id == "p1" else "p1"
@@ -138,7 +144,7 @@ class ActionSimulationAgent(BaseAgent):
                     )
                     switch_switch_results += 1
                     simulation_results.append(result)
-        ctx.state["simulation_actions"] = simulation_results  # type: ignore[attr-defined]
+        state["simulation_actions"] = simulation_results  # type: ignore[index]
         logging.info(
             f"Action simulator found {move_move_results} move-move, {move_switch_results} move-switch, {switch_move_results} switch-move, {switch_switch_results} switch-switch results."
         )
@@ -783,3 +789,8 @@ class ActionSimulationAgent(BaseAgent):
                 ),
             },
         )
+
+
+@runtime_checkable
+class _StatefulContext(Protocol):
+    state: Any

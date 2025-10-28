@@ -3,6 +3,7 @@
 import unittest
 
 from absl.testing import parameterized
+from typing import Never
 
 from python.game.environment.state_transition import StateTransition
 from python.game.events.battle_event import (
@@ -38,14 +39,7 @@ from python.game.schema.team_state import TeamState
 class StateTransitionTest(parameterized.TestCase):
     """Test state transition handlers."""
 
-    def _get_active_pokemon_safe(self, team: TeamState) -> PokemonState:
-        """Get active pokemon with type assertion for tests."""
-        pokemon = team.get_active_pokemon()
-        self.assertIsNotNone(pokemon, "Active pokemon should not be None")
-        assert pokemon is not None  # For type checking
-        return pokemon
-
-    def setUp(self) -> None:
+    def setUp(self) -> Never:
         """Set up test fixtures."""
         self.pikachu = PokemonState(
             species="Pikachu",
@@ -57,6 +51,7 @@ class StateTransitionTest(parameterized.TestCase):
         )
         self.p1_team = TeamState(pokemon=[self.pikachu], active_pokemon_index=0)
         self.initial_state = BattleState(teams={"p1": self.p1_team, "p2": TeamState()})
+        return
 
     @parameterized.parameters(
         (100, 80, 80, None, Status.NONE),
@@ -129,6 +124,7 @@ class StateTransitionTest(parameterized.TestCase):
         new_state = StateTransition.apply(state, event)
 
         new_pokemon = new_state.teams["p1"].get_active_pokemon()
+        self.assertIsNotNone(new_pokemon)
         self.assertEqual(new_pokemon.current_hp, 50)
         self.assertEqual(new_pokemon.status, Status.BURN)
 
@@ -173,9 +169,12 @@ class StateTransitionTest(parameterized.TestCase):
 
         new_state = StateTransition.apply(state, event)
 
-        self.assertEqual(state.teams["p1"].get_active_pokemon().current_hp, initial_hp)
+        original_active = state.teams["p1"].get_active_pokemon()
+        self.assertIsNotNone(original_active)
+        self.assertEqual(original_active.current_hp, initial_hp)
 
         new_pokemon = new_state.teams["p1"].get_active_pokemon()
+        self.assertIsNotNone(new_pokemon)
         self.assertEqual(new_pokemon.current_hp, expected_hp)
         self.assertEqual(new_pokemon.status, expected_status)
 
@@ -214,10 +213,12 @@ class StateTransitionTest(parameterized.TestCase):
         )
 
         new_state = StateTransition.apply(state, event)
-        original_active = self._get_active_pokemon_safe(state.teams["p1"])
+        original_active = state.teams["p1"].get_active_pokemon()
+        self.assertIsNotNone(original_active)
         self.assertEqual(original_active.current_hp, initial_hp)
 
         new_pokemon = new_state.teams["p1"].get_active_pokemon()
+        self.assertIsNotNone(new_pokemon)
         self.assertEqual(new_pokemon.current_hp, expected_hp)
         self.assertEqual(new_pokemon.status, expected_status)
 
@@ -233,18 +234,22 @@ class StateTransitionTest(parameterized.TestCase):
             status=None,
         )
 
-        original_hp = self.initial_state.teams["p1"].get_active_pokemon().current_hp
+        original_active = self.initial_state.teams["p1"].get_active_pokemon()
+        self.assertIsNotNone(original_active)
+        original_hp = original_active.current_hp
         original_id = id(self.initial_state)
 
         new_state = StateTransition.apply(self.initial_state, event)
 
-        self.assertEqual(
-            self.initial_state.teams["p1"].get_active_pokemon().current_hp, original_hp
-        )
+        current_active = self.initial_state.teams["p1"].get_active_pokemon()
+        self.assertIsNotNone(current_active)
+        self.assertEqual(current_active.current_hp, original_hp)
         self.assertEqual(id(self.initial_state), original_id)
 
         self.assertNotEqual(id(new_state), original_id)
-        self.assertEqual(new_state.teams["p1"].get_active_pokemon().current_hp, 50)
+        updated_active = new_state.teams["p1"].get_active_pokemon()
+        self.assertIsNotNone(updated_active)
+        self.assertEqual(updated_active.current_hp, 50)
 
     def test_player_id_routing(self) -> None:
         """Verify events are routed to correct player."""
@@ -267,8 +272,12 @@ class StateTransitionTest(parameterized.TestCase):
 
         new_state = StateTransition.apply(state, event)
 
-        self.assertEqual(new_state.teams["p1"].get_active_pokemon().current_hp, 100)
-        self.assertEqual(new_state.teams["p2"].get_active_pokemon().current_hp, 60)
+        p1_active = new_state.teams["p1"].get_active_pokemon()
+        p2_active = new_state.teams["p2"].get_active_pokemon()
+        self.assertIsNotNone(p1_active)
+        self.assertIsNotNone(p2_active)
+        self.assertEqual(p1_active.current_hp, 100)
+        self.assertEqual(p2_active.current_hp, 60)
 
     @parameterized.parameters(
         # (species, level, gender, hp_current, hp_max, status, expected_current_hp, expected_max_hp, expected_volatiles_cleared)
@@ -306,6 +315,7 @@ class StateTransitionTest(parameterized.TestCase):
         new_state = StateTransition.apply(self.initial_state, event)
 
         active = new_state.teams["p1"].get_active_pokemon()
+        self.assertIsNotNone(active)
         self.assertEqual(active.species, species)
         self.assertEqual(active.level, level)
         self.assertEqual(active.gender, gender)
@@ -334,6 +344,7 @@ class StateTransitionTest(parameterized.TestCase):
         new_state = StateTransition.apply(self.initial_state, event)
 
         active = new_state.teams["p1"].get_active_pokemon()
+        self.assertIsNotNone(active)
         self.assertEqual(active.species, "Garchomp")
         self.assertEqual(active.current_hp, 378)  # 90% of Garchomp's max HP (420)
         self.assertEqual(active.volatile_conditions, {})
@@ -350,6 +361,7 @@ class StateTransitionTest(parameterized.TestCase):
         new_state = StateTransition.apply(self.initial_state, event)
 
         active = new_state.teams["p1"].get_active_pokemon()
+        self.assertIsNotNone(active)
         self.assertEqual(active.current_hp, 0)
         self.assertFalse(active.is_alive())
 
@@ -379,6 +391,7 @@ class StateTransitionTest(parameterized.TestCase):
         new_state = StateTransition.apply(self.initial_state, event)
 
         active = new_state.teams["p1"].get_active_pokemon()
+        self.assertIsNotNone(active)
         self.assertEqual(active.species, new_species)
         self.assertEqual(active.current_hp, new_hp)
 
@@ -411,6 +424,7 @@ class StateTransitionTest(parameterized.TestCase):
         new_state = StateTransition.apply(state, event)
 
         active = new_state.teams["p1"].get_active_pokemon()
+        self.assertIsNotNone(active)
         self.assertEqual(active.species, "Zoroark")
         self.assertEqual(active.current_hp, 80)
         self.assertEqual(active.status, Status.PARALYSIS)
@@ -438,6 +452,7 @@ class StateTransitionTest(parameterized.TestCase):
         new_state = StateTransition.apply(self.initial_state, event)
 
         active = new_state.teams["p1"].get_active_pokemon()
+        self.assertIsNotNone(active)
         self.assertEqual(active.species, expected_species)
         self.assertEqual(active.level, expected_level)
 
@@ -470,6 +485,7 @@ class StateTransitionTest(parameterized.TestCase):
         new_state = StateTransition.apply(state, event)
 
         active = new_state.teams["p1"].get_active_pokemon()
+        self.assertIsNotNone(active)
         self.assertEqual(active.volatile_conditions, {})
 
     @parameterized.parameters(
@@ -494,6 +510,7 @@ class StateTransitionTest(parameterized.TestCase):
 
         new_state = StateTransition.apply(self.initial_state, event)
         active = new_state.teams["p1"].get_active_pokemon()
+        self.assertIsNotNone(active)
 
         stat_enum = StateTransition._parse_stat(stat_name)
         self.assertEqual(active.stat_boosts.get(stat_enum, 0), expected_stage)
@@ -518,6 +535,7 @@ class StateTransitionTest(parameterized.TestCase):
 
         new_state = StateTransition.apply(self.initial_state, event)
         active = new_state.teams["p1"].get_active_pokemon()
+        self.assertIsNotNone(active)
 
         stat_enum = StateTransition._parse_stat(stat_name)
         self.assertEqual(active.stat_boosts.get(stat_enum, 0), expected_stage)
@@ -535,6 +553,7 @@ class StateTransitionTest(parameterized.TestCase):
 
         new_state = StateTransition.apply(self.initial_state, event)
         active = new_state.teams["p1"].get_active_pokemon()
+        self.assertIsNotNone(active)
         self.assertEqual(active.stat_boosts.get(Stat.ATK, 0), 3)
 
     def test_apply_clearboost(self) -> None:
@@ -558,6 +577,7 @@ class StateTransitionTest(parameterized.TestCase):
 
         new_state = StateTransition.apply(state, event)
         active = new_state.teams["p1"].get_active_pokemon()
+        self.assertIsNotNone(active)
         self.assertEqual(active.stat_boosts, {})
 
     def test_apply_clearallboost(self) -> None:
@@ -588,8 +608,12 @@ class StateTransitionTest(parameterized.TestCase):
 
         new_state = StateTransition.apply(state, event)
 
-        self.assertEqual(new_state.teams["p1"].get_active_pokemon().stat_boosts, {})
-        self.assertEqual(new_state.teams["p2"].get_active_pokemon().stat_boosts, {})
+        p1_active = new_state.teams["p1"].get_active_pokemon()
+        p2_active = new_state.teams["p2"].get_active_pokemon()
+        self.assertIsNotNone(p1_active)
+        self.assertIsNotNone(p2_active)
+        self.assertEqual(p1_active.stat_boosts, {})
+        self.assertEqual(p2_active.stat_boosts, {})
 
     def test_apply_clearnegativeboost(self) -> None:
         """Test clearing only negative boosts."""
@@ -612,6 +636,7 @@ class StateTransitionTest(parameterized.TestCase):
 
         new_state = StateTransition.apply(state, event)
         active = new_state.teams["p1"].get_active_pokemon()
+        self.assertIsNotNone(active)
 
         self.assertEqual(active.stat_boosts, {Stat.ATK: 2})
 
@@ -635,6 +660,7 @@ class StateTransitionTest(parameterized.TestCase):
 
         new_state = StateTransition.apply(self.initial_state, event)
         active = new_state.teams["p1"].get_active_pokemon()
+        self.assertIsNotNone(active)
         self.assertEqual(active.status, expected_status)
 
     def test_apply_curestatus(self) -> None:
@@ -659,6 +685,7 @@ class StateTransitionTest(parameterized.TestCase):
 
         new_state = StateTransition.apply(state, event)
         active = new_state.teams["p1"].get_active_pokemon()
+        self.assertIsNotNone(active)
         self.assertEqual(active.status, Status.NONE)
 
     def test_apply_switch_preserves_tera_type(self) -> None:
@@ -699,6 +726,7 @@ class StateTransitionTest(parameterized.TestCase):
 
         new_state = StateTransition.apply(state, event)
         active = new_state.teams["p1"].get_active_pokemon()
+        self.assertIsNotNone(active)
 
         self.assertEqual(active.tera_type, "Electric")
         self.assertTrue(active.has_terastallized)
@@ -830,6 +858,7 @@ class StateTransitionTest(parameterized.TestCase):
 
         new_state = StateTransition.apply(state, event)
         updated_pokemon = new_state.teams["p2"].get_active_pokemon()
+        self.assertIsNotNone(updated_pokemon)
 
         # Max HP should remain 384, not be overwritten to 100
         self.assertEqual(384, updated_pokemon.max_hp)
@@ -860,6 +889,7 @@ class StateTransitionTest(parameterized.TestCase):
 
         new_state = StateTransition.apply(state, event)
         updated_pokemon = new_state.teams["p2"].get_active_pokemon()
+        self.assertIsNotNone(updated_pokemon)
 
         # Max HP should remain 384
         self.assertEqual(384, updated_pokemon.max_hp)
@@ -890,6 +920,7 @@ class StateTransitionTest(parameterized.TestCase):
 
         new_state = StateTransition.apply(state, event)
         updated_pokemon = new_state.teams["p2"].get_active_pokemon()
+        self.assertIsNotNone(updated_pokemon)
 
         # Max HP should remain 384
         self.assertEqual(384, updated_pokemon.max_hp)
@@ -920,6 +951,7 @@ class StateTransitionTest(parameterized.TestCase):
 
         new_state = StateTransition.apply(state, event)
         updated_pokemon = new_state.teams["p1"].get_active_pokemon()
+        self.assertIsNotNone(updated_pokemon)
 
         # Should use values directly
         self.assertEqual(283, updated_pokemon.max_hp)

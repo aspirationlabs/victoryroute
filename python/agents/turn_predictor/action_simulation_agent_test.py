@@ -199,6 +199,59 @@ class ActionSimulationAgentTest(absltest.TestCase, unittest.IsolatedAsyncioTestC
         self.assertIsNotNone(events[0].content.parts)  # type: ignore[union-attr]
         self.assertIn(str(len(simulation_actions)), events[0].content.parts[0].text)  # type: ignore[union-attr]
 
+    async def test_agent_with_turn_predictor_state(self):
+        """Test agent execution with a TurnPredictorState converted to StateDict."""
+        ctx = Mock(spec=InvocationContext)
+
+        # Create a TurnPredictorState with all necessary fields
+        initial_state = TurnPredictorState(
+            our_player_id="p1",
+            turn_number=1,
+            opponent_active_pokemon=self.sample_opponent_pokemon,
+            past_battle_event_logs="",
+            past_player_actions="",
+            battle_state=self.sample_battle_state,
+            available_actions=[
+                BattleAction(action_type=ActionType.MOVE, move_name="Earthquake"),
+                BattleAction(
+                    action_type=ActionType.MOVE, move_name="Dragon Claw", tera=True
+                ),
+                BattleAction(
+                    action_type=ActionType.SWITCH, switch_pokemon_name="Rotom-Wash"
+                ),
+            ],
+            opponent_predicted_active_pokemon=self.sample_opponent_prediction,
+        )
+
+        # Create a dict-like state from the TurnPredictorState
+        class StateDict(dict):
+            def __init__(self, state: TurnPredictorState):
+                super().__init__()
+                self.our_player_id = state.our_player_id
+                self.available_actions = state.available_actions
+                self.opponent_predicted_active_pokemon = (
+                    state.opponent_predicted_active_pokemon
+                )
+                self.battle_state = state.battle_state
+
+        ctx.state = StateDict(initial_state)
+
+        mock_result = Mock(spec=SimulationResult)
+        self.agent._simulate_move_vs_move = AsyncMock(return_value=mock_result)
+        self.agent._simulate_move_vs_switch = AsyncMock(return_value=mock_result)
+        self.agent._simulate_switch_vs_move = AsyncMock(return_value=mock_result)
+        self.agent._simulate_switch_vs_switch = AsyncMock(return_value=mock_result)
+
+        events: List[Event] = []
+        async for event in self.agent._run_async_impl(ctx):
+            events.append(event)
+
+        # Check that simulation_actions was added to the state dict
+        self.assertIn("simulation_actions", ctx.state)
+        simulation_actions = ctx.state["simulation_actions"]
+        self.assertEqual(len(simulation_actions), 15)
+        self.assertEqual(len(events), 1)
+
     async def test_agent_handles_no_opponent_prediction(self):
         """Test that agent handles case when no opponent prediction is available."""
         mock_state = Mock()
