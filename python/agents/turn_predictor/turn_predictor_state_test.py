@@ -7,6 +7,7 @@ from types import SimpleNamespace
 from python.agents.turn_predictor.turn_predictor_state import (
     MovePrediction,
     OpponentPokemonPrediction,
+    TurnPredictorSessionState,
     TurnPredictorState,
 )
 from python.game.interface.battle_action import ActionType, BattleAction
@@ -107,16 +108,18 @@ class TurnPredictorStateTest(unittest.TestCase):
         result = TurnPredictorState.from_session(session)
         self.assertEqual(result, self.state)
 
-    def test_update_session_state_serializes_fields(self) -> None:
-        """update_session_state writes JSON-ready payload into session.state."""
-        session = SimpleNamespace(state={})
+    def test_update_session_state_creates_session_wrapper(self) -> None:
+        """update_session_state writes an attribute-enabled payload into session.state."""
+        session = SimpleNamespace(state=None)
         self.state.update_session_state(session)
 
-        expected = self.state.model_dump(mode="json")
-        self.assertEqual(session.state, expected)
-        # Spot-check nested serialization
-        self.assertIn("opponent_active_pokemon", session.state)
-        self.assertIsInstance(session.state["opponent_active_pokemon"], dict)
+        self.assertIsInstance(session.state, TurnPredictorSessionState)
+        self.assertEqual(session.state["our_player_id"], self.state.our_player_id)
+        self.assertEqual(session.state.our_player_id, self.state.our_player_id)
+        self.assertIs(session.state["battle_state"], self.battle_state)
+        self.assertEqual(session.state["available_actions"], self.available_actions)
+        self.assertIsNone(session.state.decision_proposal)
+        self.assertIsNone(session.state.decision_critique)
 
     def test_string_representation_is_json(self) -> None:
         """__str__ returns JSON containing key fields."""

@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Dict, Iterable, List, Optional, Sequence, Never
 
 from absl.testing import absltest, parameterized
@@ -107,32 +108,20 @@ def _collect_turn_states(
 def _state_dict_from_turn_state(
     state: TurnPredictorState,
     opponent_prediction: OpponentPokemonPrediction,
-) -> "StateDict":
+):
     """Create a mutable InvocationContext-like state container."""
-    return StateDict(
-        our_player_id=state.our_player_id,
-        turn_number=state.turn_number,
-        available_actions=list(state.available_actions),
-        battle_state=state.battle_state,
-        past_battle_event_logs=state.past_battle_event_logs,
-        past_player_actions=state.past_player_actions,
-        opponent_predicted_active_pokemon=opponent_prediction,
+    state_with_prediction = state.model_copy(
+        update={"opponent_predicted_active_pokemon": opponent_prediction}
     )
-
-
-class StateDict(dict):
-    """Dict subclass exposing selected items as attributes for the agent."""
-
-    def __init__(self, **kwargs: object) -> None:
-        super().__init__()
-        for key, value in kwargs.items():
-            setattr(self, key, value)
+    session = SimpleNamespace(state=None)
+    state_with_prediction.update_session_state(session)
+    return session.state
 
 
 class InvocationContextStub:
     """Minimal InvocationContext substitute for driving the agent in tests."""
 
-    def __init__(self, state: StateDict) -> None:
+    def __init__(self, state) -> None:
         self.state = state
 
 

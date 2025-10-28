@@ -11,7 +11,6 @@ from google.adk.sessions import BaseSessionService, InMemorySessionService, Sess
 from google.genai import types
 
 from python.agents.agent_interface import Agent
-from python.agents.battle_action_generator import BattleActionGenerator
 from python.agents.tools.battle_simulator import BattleSimulator
 from python.agents.tools.get_object_game_data import get_object_game_data
 from python.agents.tools.llm_event_logger import LlmEventLogger
@@ -51,7 +50,6 @@ class TurnPredictorAgent(Agent):
         self._max_retries: int = max_retries
         self._battle_room_to_logger: Dict[str, LlmEventLogger] = {}
         self._battle_room_to_session: Dict[str, Session] = {}
-        self._battle_room_to_action_generator: Dict[str, BattleActionGenerator] = {}
         self._prompt_builder: TurnPredictorPromptBuilder = TurnPredictorPromptBuilder(
             battle_stream_store, mode=mode
         )
@@ -151,16 +149,6 @@ class TurnPredictorAgent(Agent):
     def get_adk_agent(self) -> BaseAgent:
         return self._agent
 
-    def _get_action_generator(
-        self,
-        battle_room: str,
-    ) -> BattleActionGenerator:
-        if battle_room not in self._battle_room_to_action_generator:
-            raise ValueError(
-                f"No action generator found for battle_room: {battle_room}"
-            )
-        return self._battle_room_to_action_generator[battle_room]
-
     async def _get_or_create_session(self, battle_room: str) -> Session:
         session = self._battle_room_to_session.get(battle_room)
         if session is None:
@@ -183,13 +171,21 @@ class TurnPredictorAgent(Agent):
 
         turn_state = self._prompt_builder.get_new_turn_state_prompt(state)
         turn_state.update_session_state(session)
-        runner = Runner(agent=self._agent, session_service=self._session_service)
+
+        runner = Runner(
+            agent=self._agent,
+            app_name=self._app_name,
+            session_service=self._session_service,
+        )
 
         query_text = "Choose the best battle action for this turn."
         user_query = types.Content(
             parts=[types.Part(text=query_text)],
             role="user",
         )
+
+        logger = self._battle_room_to_logger[self._battle_room]
+        logger.log_user_query(state.field_state.turn_number, query_text)
 
         events = runner.run(
             user_id=self._battle_room,
@@ -215,6 +211,13 @@ class TurnPredictorAgent(Agent):
             "Final proposal for battle_room=%s: %s",
             self._battle_room,
             final_proposal.model_dump_json(),
+        )
+        logger.log_event(
+            state.field_state.turn_number,
+            {
+                "event_number": "final_decision",
+                "decision_proposal": final_proposal.model_dump(),
+            },
         )
 
         action = self._convert_proposal_to_action(final_proposal)
@@ -259,5 +262,3 @@ class TurnPredictorAgent(Agent):
                 user_id=battle_room,
                 session_id=session.id,
             )
-        if battle_room in self._battle_room_to_action_generator:
-            del self._battle_room_to_action_generator[battle_room]

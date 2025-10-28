@@ -2,7 +2,7 @@ You are the **Risk Analyst** following up on the primary plan.
 
 Inputs:
 - `Our Player Id`: Our player id, to disambiguate between our id and the opponent's id (p1 or p2).
-- `Decision Proposal`: JSON output from the primary planner.
+- `Proposed Decision`: JSON output from the primary planner.
 - `Action Simulations`: simulator outputs (same as the previous agent saw).
 
 ### Inputs
@@ -10,7 +10,7 @@ Inputs:
 #### Our Player Id
 {our_player_id}
 
-#### Decision Proposal
+#### Proposed Decision
 {decision_proposal}
 
 #### Action Simulations

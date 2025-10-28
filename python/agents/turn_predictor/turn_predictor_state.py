@@ -1,16 +1,30 @@
 from __future__ import annotations
 
 import json
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from python.agents.turn_predictor.simulation_result import SimulationResult
-from python.game.schema.pokemon_state import PokemonState
-from python.game.schema.battle_state import BattleState
 from python.game.interface.battle_action import BattleAction
 from python.game.schema.battle_state import BattleState
 from python.game.schema.pokemon_state import PokemonState
+
+
+class TurnPredictorSessionState(dict):
+    """Mutable session state wrapper with both attribute and item access."""
+
+    def __getattr__(self, item: str) -> Any:
+        try:
+            return self[item]
+        except KeyError as exc:  # pragma: no cover - defensive guard
+            raise AttributeError(item) from exc
+
+    def __setattr__(self, key: str, value: Any) -> None:
+        self[key] = value
+
+    def copy(self) -> "TurnPredictorSessionState":
+        return TurnPredictorSessionState(super().copy())
 
 
 class MovePrediction(BaseModel):
@@ -44,6 +58,8 @@ class TurnPredictorState(BaseModel):
     available_actions: List[BattleAction]
     opponent_predicted_active_pokemon: Optional[OpponentPokemonPrediction] = None
     simulation_actions: Optional[List[SimulationResult]] = None
+    decision_proposal: Optional[Any] = None
+    decision_critique: Optional[Any] = None
 
     @classmethod
     def from_session(cls, session: Any) -> "TurnPredictorState":
@@ -72,6 +88,9 @@ class TurnPredictorState(BaseModel):
             opponent_predicted_active_pokemon=state_data.get(
                 "opponent_predicted_active_pokemon", None
             ),
+            simulation_actions=state_data.get("simulation_actions"),
+            decision_proposal=state_data.get("decision_proposal"),
+            decision_critique=state_data.get("decision_critique"),
         )
 
     def validate_input_state(self) -> None:
@@ -91,7 +110,20 @@ class TurnPredictorState(BaseModel):
             raise ValueError("available_actions is required")
 
     def update_session_state(self, session: Any) -> None:
-        session.state.update(self.model_dump(mode="json"))
+        state_payload: Dict[str, Any] = {
+            "our_player_id": self.our_player_id,
+            "turn_number": self.turn_number,
+            "opponent_active_pokemon": self.opponent_active_pokemon,
+            "past_battle_event_logs": self.past_battle_event_logs,
+            "past_player_actions": self.past_player_actions,
+            "battle_state": self.battle_state,
+            "available_actions": self.available_actions,
+            "opponent_predicted_active_pokemon": self.opponent_predicted_active_pokemon,
+            "simulation_actions": self.simulation_actions,
+            "decision_proposal": self.decision_proposal,
+            "decision_critique": self.decision_critique,
+        }
+        session.state = TurnPredictorSessionState(state_payload)
 
     def __str__(self) -> str:
         return json.dumps(self.model_dump(mode="json"))

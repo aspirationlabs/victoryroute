@@ -61,7 +61,7 @@ class TeamPredictorAgent:
             callback_context: CallbackContext,
         ) -> Optional[types.Content]:
             state = _coerce_turn_predictor_state(callback_context.state)
-            logging.info(
+            logging.debug(
                 f"[TeamPredictorAgent] Turn {state.turn_number}, state: {state}"
             )
             state.validate_input_state()

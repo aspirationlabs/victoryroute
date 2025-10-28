@@ -172,7 +172,10 @@ class ActionSimulationAgent(BaseAgent):
                     )
                     switch_switch_results += 1
                     simulation_results.append(result)
-        raw_state["simulation_actions"] = simulation_results  # type: ignore[index]
+        if isinstance(raw_state, dict):
+            raw_state["simulation_actions"] = simulation_results  # type: ignore[index]
+        else:
+            setattr(raw_state, "simulation_actions", simulation_results)
         logging.info(
             f"Action simulator found {move_move_results} move-move, {move_switch_results} move-switch, {switch_move_results} switch-move, {switch_switch_results} switch-switch results."
         )

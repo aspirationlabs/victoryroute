@@ -4,6 +4,7 @@ from dataclasses import asdict
 from enum import Enum
 from typing import Optional
 
+from python.game.interface.battle_action import ActionType, BattleAction
 from python.game.schema.battle_state import BattleState
 from python.agents.turn_predictor.turn_predictor_state import TurnPredictorState
 from python.game.environment.battle_stream_store import BattleStreamStore
@@ -137,8 +138,6 @@ class TurnPredictorPromptBuilder:
             raise ValueError("Opponent active pokemon is required")
 
         # Convert available moves and switches to BattleAction objects
-        from python.game.interface.battle_action import ActionType, BattleAction
-
         available_actions = []
 
         # Add move actions
