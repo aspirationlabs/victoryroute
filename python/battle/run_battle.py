@@ -105,13 +105,12 @@ def generate_default_username(agent_name: str) -> str:
 
 async def run_battle() -> None:
     """Main function to continuously run battles with the specified agent."""
-    logging.info("Creating agent: %s", FLAGS.agent)
-    try:
-        agent = AgentRegistry.create_agent(FLAGS.agent)
-        logging.info("Agent created successfully: %s", type(agent).__name__)
-    except ValueError as e:
-        logging.error("%s", e)
+    logging.info("Validating agent type: %s", FLAGS.agent)
+    if not AgentRegistry.has_agent(FLAGS.agent):
+        available = ", ".join(AgentRegistry.get_available_agents())
+        logging.error(f"Unknown agent: '{FLAGS.agent}'. Available agents: {available}")
         return
+    logging.info("Agent type validated: %s", FLAGS.agent)
     username = FLAGS.username or generate_default_username(FLAGS.agent)
     client = ShowdownClient()
     stats_tracker = OpponentStatsTracker()
@@ -162,8 +161,14 @@ async def run_battle() -> None:
             )
 
             state = await env.reset()
+
+            agent = AgentRegistry.create_agent(
+                FLAGS.agent,
+                battle_room=battle_room,
+                battle_stream_store=env.get_battle_stream_store(),
+            )
             logging.info(
-                f"Battle {battle_room} started! Agent is ready to make decisions."
+                f"Battle {battle_room} started with {type(agent).__name__}! Agent is ready to make decisions."
             )
 
             turn_count = 0
@@ -182,9 +187,7 @@ async def run_battle() -> None:
                         f"Battle {battle_room} - Turn {turn_count} - Agent choosing action..."
                     )
 
-                action = await agent.choose_action(
-                    state, battle_room, env.get_battle_stream_store()
-                )
+                action = await agent.choose_action(state)
                 logging.info(f"Action selected: {action}")
 
                 if FLAGS.move_delay > 0:
@@ -200,10 +203,7 @@ async def run_battle() -> None:
                             f"Server error on turn {turn_count}: {e.error_text}"
                         )
                         retry_action = await agent.retry_action_on_server_error(
-                            error_text=e.error_text,
-                            state=state,
-                            battle_room=battle_room,
-                            battle_stream_store=env.get_battle_stream_store(),
+                            error_text=e.error_text, state=state
                         )
 
                         if retry_action is None:

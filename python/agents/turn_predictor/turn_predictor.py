@@ -8,6 +8,9 @@ from google.adk.sessions import BaseSessionService, InMemorySessionService, Sess
 from python.agents.agent_interface import Agent
 from python.agents.battle_action_generator import BattleActionGenerator
 from python.agents.tools.llm_event_logger import LlmEventLogger
+from python.agents.turn_predictor.turn_predictor_prompt_builder import (
+    TurnPredictorPromptBuilder,
+)
 from python.game.data.game_data import GameData
 from python.game.environment.battle_stream_store import BattleStreamStore
 from python.game.interface.battle_action import BattleAction
@@ -17,12 +20,15 @@ from python.game.schema.battle_state import BattleState
 class TurnPredictorAgent(Agent):
     def __init__(
         self,
+        battle_room: str,
+        battle_stream_store: BattleStreamStore,
         session_service: BaseSessionService = InMemorySessionService(),
         model_name: str = "openrouter/google/gemini-2.5-flash-lite-preview-09-2025",
         mode: str = "gen9ou",
         past_actions_count: int = 5,
         max_retries: int = 3,
     ):
+        super().__init__(battle_room, battle_stream_store)
         self._session_service: BaseSessionService = session_service
         self._model_name: str = model_name
         self._mode: str = mode
@@ -32,6 +38,9 @@ class TurnPredictorAgent(Agent):
         self._battle_room_to_logger: Dict[str, LlmEventLogger] = {}
         self._battle_room_to_session: Dict[str, Session] = {}
         self._battle_room_to_action_generator: Dict[str, BattleActionGenerator] = {}
+        self._prompt_builder: TurnPredictorPromptBuilder = TurnPredictorPromptBuilder(
+            battle_stream_store, mode=mode
+        )
 
     def _create_agent(self, model_name, app_name, system_instructions) -> BaseAgent:
         # User query will provide:
@@ -98,20 +107,11 @@ class TurnPredictorAgent(Agent):
             self._battle_room_to_session[battle_room] = session
         return session
 
-    async def choose_action(
-        self,
-        state: BattleState,
-        battle_room: str,
-        battle_stream_store: Optional[BattleStreamStore] = None,
-    ) -> BattleAction:
+    async def choose_action(self, state: BattleState) -> BattleAction:
         raise NotImplementedError("choose_action not implemented")
 
     async def retry_action_on_server_error(
-        self,
-        error_text: str,
-        state: BattleState,
-        battle_room: str,
-        battle_stream_store: Optional[BattleStreamStore] = None,
+        self, error_text: str, state: BattleState
     ) -> Optional[BattleAction]:
         raise NotImplementedError("retry_action_on_server_error not implemented")
 

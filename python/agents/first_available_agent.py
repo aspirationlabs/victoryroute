@@ -1,9 +1,6 @@
 """First available move agent that always picks the first valid action."""
 
-from typing import Optional
-
 from python.agents.agent_interface import Agent
-from python.game.environment.battle_stream_store import BattleStreamStore
 from python.game.interface.battle_action import ActionType, BattleAction
 from python.game.schema.battle_state import BattleState
 
@@ -25,13 +22,15 @@ class FirstAvailableAgent(Agent):
 
     Example Usage:
         ```python
-        agent = FirstAvailableAgent()
         env = BattleEnvironment(client)
-        game_data = GameData()
+        agent = FirstAvailableAgent(
+            battle_room=env.get_battle_room(),
+            battle_stream_store=env.get_battle_stream_store(),
+        )
 
         state = await env.reset()
         while not env.is_battle_over():
-            action = await agent.choose_action(state, game_data)
+            action = await agent.choose_action(state)
             state = await env.step(action)
         ```
 
@@ -39,12 +38,7 @@ class FirstAvailableAgent(Agent):
         None - this agent has no configurable state
     """
 
-    async def choose_action(
-        self,
-        state: BattleState,
-        battle_room: str,
-        battle_stream_store: Optional[BattleStreamStore] = None,
-    ) -> BattleAction:
+    async def choose_action(self, state: BattleState) -> BattleAction:
         """Choose the first available action from moves or switches.
 
         Decision logic:
@@ -54,8 +48,6 @@ class FirstAvailableAgent(Agent):
 
         Args:
             state: Current battle state with available actions
-            battle_room: Battle room identifier (unused by this agent)
-            battle_stream_store: Battle stream store (unused by this agent)
 
         Returns:
             BattleAction with first available move or switch
@@ -66,7 +58,7 @@ class FirstAvailableAgent(Agent):
         Examples:
             First move selection:
             >>> state = BattleState(available_moves=["move1", "move2", "move3"])
-            >>> action = await agent.choose_action(state, game_data)
+            >>> action = await agent.choose_action(state)
             >>> action.action_type
             ActionType.MOVE
             >>> action.move_index
@@ -74,7 +66,7 @@ class FirstAvailableAgent(Agent):
 
             First switch when no moves:
             >>> state = BattleState(available_switches=[2, 3, 4])
-            >>> action = await agent.choose_action(state, game_data)
+            >>> action = await agent.choose_action(state)
             >>> action.action_type
             ActionType.SWITCH
             >>> action.switch_index
@@ -82,7 +74,7 @@ class FirstAvailableAgent(Agent):
 
             Forced switch:
             >>> state = BattleState(available_switches=[0, 2, 4], force_switch=True)
-            >>> action = await agent.choose_action(state, game_data)
+            >>> action = await agent.choose_action(state)
             >>> action.action_type
             ActionType.SWITCH
             >>> action.switch_index
