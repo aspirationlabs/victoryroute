@@ -108,6 +108,7 @@ class ActionSimulationAgent(BaseAgent):
 
         field_state = battle_state.field_state
         simulation_results = []
+        simulation_id_counter = 1
         move_move_results = 0
         move_switch_results = 0
         switch_move_results = 0
@@ -120,6 +121,7 @@ class ActionSimulationAgent(BaseAgent):
                     )
                 for move_prediction in opponent_move_predictions:
                     result = await self._simulate_move_vs_move(
+                        simulation_id=simulation_id_counter,
                         battle_state=battle_state,
                         our_pokemon=our_active_pokemon,
                         our_move=our_action.move_name,
@@ -131,9 +133,11 @@ class ActionSimulationAgent(BaseAgent):
                         opponent_player_id=opponent_player_id,
                     )
                     simulation_results.append(result)
+                    simulation_id_counter += 1
                     move_move_results += 1
                 for switch_target in opponent_switches:
                     result = await self._simulate_move_vs_switch(
+                        simulation_id=simulation_id_counter,
                         battle_state=battle_state,
                         our_pokemon=our_active_pokemon,
                         our_move=our_action.move_name,
@@ -144,6 +148,7 @@ class ActionSimulationAgent(BaseAgent):
                         opponent_player_id=opponent_player_id,
                     )
                     simulation_results.append(result)
+                    simulation_id_counter += 1
                     move_switch_results += 1
             elif our_action.action_type == ActionType.SWITCH:
                 if not our_action.switch_pokemon_name:
@@ -159,6 +164,7 @@ class ActionSimulationAgent(BaseAgent):
                     )
                 for move_prediction in opponent_move_predictions:
                     result = await self._simulate_switch_vs_move(
+                        simulation_id=simulation_id_counter,
                         battle_state=battle_state,
                         our_switching_to=our_switch_target,
                         opponent_pokemon=opponent_active_pokemon,
@@ -167,18 +173,21 @@ class ActionSimulationAgent(BaseAgent):
                         our_player_id=our_player_id,
                         opponent_player_id=opponent_player_id,
                     )
-                    switch_move_results += 1
                     simulation_results.append(result)
+                    simulation_id_counter += 1
+                    switch_move_results += 1
                 for switch_target in opponent_switches:
                     result = await self._simulate_switch_vs_switch(
+                        simulation_id=simulation_id_counter,
                         battle_state=battle_state,
                         our_switching_to=our_switch_target,
                         opponent_switching_to=switch_target,
                         our_player_id=our_player_id,
                         opponent_player_id=opponent_player_id,
                     )
-                    switch_switch_results += 1
                     simulation_results.append(result)
+                    simulation_id_counter += 1
+                    switch_switch_results += 1
         if isinstance(raw_state, dict):
             raw_state["simulation_actions"] = simulation_results  # type: ignore[index]
         else:
@@ -389,6 +398,7 @@ class ActionSimulationAgent(BaseAgent):
 
     async def _simulate_move_vs_move(
         self,
+        simulation_id: int,
         battle_state: BattleState,
         our_pokemon: PokemonState,
         our_move: str,
@@ -714,6 +724,7 @@ class ActionSimulationAgent(BaseAgent):
             )
 
         return SimulationResult(
+            simulation_id=simulation_id,
             actions=actions,
             player_move_order=tuple(player_move_order),
             move_results=move_results,
@@ -725,6 +736,7 @@ class ActionSimulationAgent(BaseAgent):
 
     async def _simulate_move_vs_switch(
         self,
+        simulation_id: int,
         battle_state: BattleState,
         our_pokemon: PokemonState,
         our_move: str,
@@ -789,6 +801,7 @@ class ActionSimulationAgent(BaseAgent):
         }
 
         return SimulationResult(
+            simulation_id=simulation_id,
             actions=actions,
             player_move_order=(opponent_player_id, our_player_id),
             move_results={
@@ -836,6 +849,7 @@ class ActionSimulationAgent(BaseAgent):
 
     async def _simulate_switch_vs_move(
         self,
+        simulation_id: int,
         battle_state: BattleState,
         our_switching_to: PokemonState,
         opponent_pokemon: PokemonState,
@@ -890,6 +904,7 @@ class ActionSimulationAgent(BaseAgent):
         }
 
         return SimulationResult(
+            simulation_id=simulation_id,
             actions=actions,
             player_move_order=(our_player_id, opponent_player_id),
             move_results={
@@ -937,6 +952,7 @@ class ActionSimulationAgent(BaseAgent):
 
     async def _simulate_switch_vs_switch(
         self,
+        simulation_id: int,
         battle_state: BattleState,
         our_switching_to: PokemonState,
         opponent_switching_to: PokemonState,
@@ -956,6 +972,7 @@ class ActionSimulationAgent(BaseAgent):
         }
 
         return SimulationResult(
+            simulation_id=simulation_id,
             actions=actions,
             player_move_order=(our_player_id, opponent_player_id),
             move_results={our_player_id: None, opponent_player_id: None},
