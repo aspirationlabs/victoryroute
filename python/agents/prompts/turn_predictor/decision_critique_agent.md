@@ -21,6 +21,7 @@ Inputs:
 2. Highlight scenarios (specific simulation IDs or logical branches) where the proposed decision might fail.
 3. If the initial recommendation seems unsafe, propose an alternative set of simulations that may lead to a better decision.
 4. If there are no good alternate simulations, then you can indicate so in issues found and return no overlooked simulations.
+5. When the primary plan keeps a frail win-condition exposed to a likely knockout, insist on the simulation branch where the safest teammate pivots in and survives; cite the simulations that demonstrate that protection before allowing a greedy line.
 
 ### Output JSON
 ```
@@ -35,3 +36,4 @@ Guidance:
 - When pointing out overlooked simulations, provide simulations that lead to actions which can provide an alternative to the primary plan.
 - Only fill `overlooked_simulations` when you truly prefer a different action; otherwise leave it `null`.
 - If `Simulation Actions` is empty (e.g., team preview), evaluate whether the proposal handles team ordering or other non-damage choices correctly before suggesting changes.
+- Demand hard numbers when survival is at risk: call out projected HP ranges for the threatened Pokemon and its potential switch-ins against the opponent's most probable move, and cite the simulations that justify choosing the safer defender.

@@ -170,6 +170,7 @@ class ActionSimulationAgentTest(absltest.TestCase, unittest.IsolatedAsyncioTestC
         )
 
         ctx = Mock(spec=InvocationContext)
+        ctx.invocation_id = "test-invocation"
         session = SimpleNamespace(state=None)
         turn_state.update_session_state(session)
         ctx.session = session
@@ -203,6 +204,7 @@ class ActionSimulationAgentTest(absltest.TestCase, unittest.IsolatedAsyncioTestC
     async def test_agent_with_turn_predictor_state(self):
         """Test agent execution with a TurnPredictorState converted to StateDict."""
         ctx = Mock(spec=InvocationContext)
+        ctx.invocation_id = "test-invocation"
 
         # Create a TurnPredictorState with all necessary fields
         initial_state = TurnPredictorState(
@@ -247,6 +249,7 @@ class ActionSimulationAgentTest(absltest.TestCase, unittest.IsolatedAsyncioTestC
     async def test_agent_handles_no_opponent_prediction(self):
         """Test that agent handles case when no opponent prediction is available."""
         ctx = Mock(spec=InvocationContext)
+        ctx.invocation_id = "test-invocation"
         turn_state = TurnPredictorState(
             our_player_id="p1",
             turn_number=2,
@@ -310,7 +313,7 @@ class ActionSimulationAgentTest(absltest.TestCase, unittest.IsolatedAsyncioTestC
 
     def test_build_opponent_pokemon_state(self):
         """Test building opponent Pokemon state with predicted attributes."""
-        updated_pokemon = self.agent._build_opponent_pokemon_state(
+        updated_pokemon, move_predictions = self.agent._build_opponent_pokemon_state(
             self.sample_battle_state,
             self.sample_opponent_prediction,
             "p2",
@@ -325,6 +328,7 @@ class ActionSimulationAgentTest(absltest.TestCase, unittest.IsolatedAsyncioTestC
         move_names = [move.name for move in updated_pokemon.moves]
         self.assertIn("U-turn", move_names)
         self.assertIn("Earthquake", move_names)
+        self.assertListEqual(move_names, [move.name for move in move_predictions])
 
         # Check that other attributes are preserved
         self.assertEqual(updated_pokemon.current_hp, 250)

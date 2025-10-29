@@ -30,9 +30,11 @@ from python.agents.turn_predictor.simulation_result import (
     SimulationResult,
 )
 from python.agents.turn_predictor.turn_predictor_state import (
+    MovePrediction,
     OpponentPokemonPrediction,
     TurnPredictorState,
 )
+from python.game.data.game_data import GameData
 from python.game.interface.battle_action import ActionType, BattleAction
 from python.game.schema.battle_state import BattleState
 from python.game.schema.enums import FieldEffect, SideCondition, Weather
@@ -52,6 +54,8 @@ class ActionSimulationAgent(BaseAgent):
     ):
         super().__init__(name=name)
         self._simulator = battle_simulator
+        simulator_game_data = getattr(battle_simulator, "game_data", None)
+        self._game_data = simulator_game_data or GameData()
         self._priors_reader = priors_reader or PokemonStatePriorsReader()
         self._usage_spread_cache: Dict[
             str, Tuple[Optional[str], Optional[EffortValues]]
@@ -93,10 +97,13 @@ class ActionSimulationAgent(BaseAgent):
             battle_state, opponent_player_id
         )
 
-        opponent_active_pokemon = self._build_opponent_pokemon_state(
-            battle_state,
-            state.opponent_predicted_active_pokemon,
-            opponent_player_id,
+        opponent_prediction = state.opponent_predicted_active_pokemon
+        opponent_active_pokemon, opponent_move_predictions = (
+            self._build_opponent_pokemon_state(
+                battle_state,
+                opponent_prediction,
+                opponent_player_id,
+            )
         )
 
         field_state = battle_state.field_state
@@ -111,7 +118,7 @@ class ActionSimulationAgent(BaseAgent):
                     raise ValueError(
                         "Action type is MOVE, but move_name unset: {our_action}"
                     )
-                for move_prediction in state.opponent_predicted_active_pokemon.moves:
+                for move_prediction in opponent_move_predictions:
                     result = await self._simulate_move_vs_move(
                         battle_state=battle_state,
                         our_pokemon=our_active_pokemon,
@@ -150,7 +157,7 @@ class ActionSimulationAgent(BaseAgent):
                     raise ValueError(
                         "No switch target found for our action: {our_action}"
                     )
-                for move_prediction in state.opponent_predicted_active_pokemon.moves:
+                for move_prediction in opponent_move_predictions:
                     result = await self._simulate_switch_vs_move(
                         battle_state=battle_state,
                         our_switching_to=our_switch_target,
@@ -181,6 +188,7 @@ class ActionSimulationAgent(BaseAgent):
         )
         yield Event(
             author="ActionSimulationAgent",
+            invocation_id=ctx.invocation_id,
             content=Content(
                 role="model",
                 parts=[
@@ -205,28 +213,45 @@ class ActionSimulationAgent(BaseAgent):
 
         return switches
 
+    def _ensure_move_known(self, move_name: str) -> None:
+        try:
+            self._game_data.get_move(move_name)
+        except ValueError as exc:
+            raise ValueError(f"Unknown move predicted by LLM: {move_name}") from exc
+
     def _build_opponent_pokemon_state(
         self,
         battle_state: BattleState,
         opponent_predicted: OpponentPokemonPrediction,
         opponent_player_id: str,
-    ) -> PokemonState:
+    ) -> Tuple[PokemonState, List[MovePrediction]]:
         current_active: Optional[PokemonState] = battle_state.get_active_pokemon(
             opponent_player_id
         )
         if not current_active:
             raise ValueError("No active Pokemon for opponent")
+        if not opponent_predicted.moves:
+            raise ValueError("Opponent prediction did not include any moves.")
+
+        move_predictions = []
+        for move_prediction in opponent_predicted.moves:
+            self._ensure_move_known(move_prediction.name)
+            move_predictions.append(move_prediction)
+
         predicted_moves = [
-            # TODO: Get max pp from game data
             PokemonMove(name=move.name, current_pp=5, max_pp=5)
-            for move in opponent_predicted.moves
+            for move in move_predictions
         ]
-        return replace(
-            current_active,
-            moves=predicted_moves,
-            item=opponent_predicted.item,
-            ability=opponent_predicted.ability,
-            tera_type=opponent_predicted.tera_type,
+
+        return (
+            replace(
+                current_active,
+                moves=predicted_moves,
+                item=opponent_predicted.item,
+                ability=opponent_predicted.ability,
+                tera_type=opponent_predicted.tera_type,
+            ),
+            move_predictions,
         )
 
     def _get_usage_spread(
@@ -304,12 +329,13 @@ class ActionSimulationAgent(BaseAgent):
     def _get_move_from_pokemon(
         self, pokemon: PokemonState, move_name: str
     ) -> PokemonMove:
-        """Get a PokemonMove by name, creating a placeholder if unseen."""
+        """Get a PokemonMove by name, raising if it does not exist."""
         for move in pokemon.moves:
             if move.name.lower() == move_name.lower():
                 return move
-        # Fallback: create a placeholder move with nominal PP to allow simulation.
-        return PokemonMove(name=move_name, current_pp=5, max_pp=5)
+        raise ValueError(
+            f"Move '{move_name}' not found for pokemon '{pokemon.species}'."
+        )
 
     def _get_side_condition_set(self, team: TeamState) -> Optional[set[SideCondition]]:
         """Return the active side conditions for a team as a set."""

@@ -121,8 +121,9 @@ def _state_dict_from_turn_state(
 class InvocationContextStub:
     """Minimal InvocationContext substitute for driving the agent in tests."""
 
-    def __init__(self, state) -> None:
+    def __init__(self, state, invocation_id: str = "test-invocation") -> None:
         self.session = SimpleNamespace(state=state)
+        self.invocation_id = invocation_id
 
 
 def _select_min_damage_action(
