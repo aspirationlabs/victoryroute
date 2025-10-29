@@ -1,8 +1,12 @@
-"""Tests for JSON extraction logic inside JsonLlmAgent."""
+"""Tests for JsonLlmAgent utilities and prompt formatting."""
 
 from typing import Any, Dict, cast
 import unittest
 
+from google.adk.agents import LlmAgent
+from google.adk.models.lite_llm import LiteLlm
+
+from python.agents.battle_action_generator import BattleActionResponse
 from python.agents.turn_predictor.json_llm_agent import JsonLlmAgent
 
 
@@ -135,6 +139,61 @@ class TestJsonExtraction(unittest.TestCase):
         """Test that empty string returns None."""
         result = JsonLlmAgent._extract_json_from_text("")
         self.assertIsNone(result)
+
+
+class TestJsonLlmAgentPrompt(unittest.TestCase):
+    def test_coercion_instruction_includes_placeholder_and_schema(self):
+        base_agent = LlmAgent(
+            model=LiteLlm(model="test-model"),
+            name="base_agent",
+            instruction="Base instruction.",
+            output_key="battle_action_response_draft",
+        )
+        wrapper = JsonLlmAgent[BattleActionResponse](
+            base_agent=base_agent,
+            output_schema=BattleActionResponse,
+            data_input_key="battle_action_response_draft",
+            json_output_key="battle_action_response",
+            model=LiteLlm(model="test-model"),
+        )
+        coercion_agent = cast(LlmAgent, wrapper.sub_agents[1])
+        instruction = coercion_agent.instruction
+        self.assertIsInstance(instruction, str)
+
+        self.assertIn("# Draft", instruction)
+        self.assertIn("{battle_action_response_draft}", instruction)
+        self.assertIn("## Output Structure", instruction)
+        self.assertIn("markdown sections with JSON keys in parentheses", instruction)
+        self.assertIn("## Section Name (json_key)", instruction)
+        expected_structure_lines = [
+            "- action_type (str): Type of action: 'move', 'switch', or 'team_order'",
+            "- move_name (Optional[str]): Name of the move to use (required for 'move' actions)",
+            "- switch_pokemon_name (Optional[str]): Name of Pokemon to switch to (required for 'switch' actions)",
+            "- team_order (Optional[str]): Team order as 6 digits, e.g. '123456' (required for 'team_order' actions)",
+            "- mega (bool): Whether to Mega Evolve (only with 'move' actions)",
+            "- tera (bool): Whether to Terastallize (only with 'move' actions)",
+            "- reasoning (str): Explanation of why this action was chosen",
+        ]
+        for line in expected_structure_lines:
+            self.assertIn(line, instruction)
+        self.assertIn("## Example", instruction)
+
+        formatted_instruction = instruction.format(
+            battle_action_response_draft="test_output_value"
+        )
+        self.assertIn("test_output_value", formatted_instruction)
+        expected_example = """```json
+{
+  "action_type": "",
+  "move_name": null,
+  "switch_pokemon_name": null,
+  "team_order": null,
+  "mega": false,
+  "tera": false,
+  "reasoning": ""
+}
+```"""
+        self.assertIn(expected_example, formatted_instruction)
 
 
 if __name__ == "__main__":

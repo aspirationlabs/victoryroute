@@ -30,22 +30,86 @@ You can also use the tool `tool_get_object_game_data` to retrieve game data on c
 ### Action Simulations
 {simulation_actions}
 
-## Output format
-Respond with JSON matching:
+### Output format
+Provide a brief 2-3 sentence summary of your strategic thinking, then structure your decision using the following markdown sections with JSON keys in parentheses:
+
 ```
-{
-  "reason": "<comprehensive rationale (2-4 sentences) that names the expected opponent move and our surviving HP range>",
-  "action_type": "<move|switch|team_order>",
-  "move_name": "<string or null>",
-  "switch_pokemon_name": "<string or null>",
-  "team_order": "<string or null>",
-  "mega": <boolean>,
-  "tera": <boolean>,
-  "upside": ["<bullet>", "..."],
-  "risks": ["<bullet>", "..."],
-  "simulation_actions_considered": ["Simulation #X: <brief description>", "..."]
-}
+## Battle Action Rationale (reasoning)
+<comprehensive rationale (2-4 sentences) that names the expected opponent move and our surviving HP range>
+
+## Action Type (action_type)
+<move|switch|team_order>
+
+## Move Name, if Action Type is Move (move_name)
+<move name or null>
+
+## Switch Target Pokemon, if Action Type is Switch (switch_pokemon_name)
+<pokemon name or null>
+
+## Team Order, if Action Type is Team Order (team_order)
+<comma-separated pokemon names or null>
+
+## Mega Evolution (mega)
+<true|false>
+
+## Terastallization (tera)
+<true|false>
+
+## Key Benefits (upside)
+- <benefit 1>
+- <benefit 2>
+- <benefit 3>
+
+## Potential Risks (risks)
+- <risk 1>
+- <risk 2>
+- <risk 3>
+
+## Simulations Considered (simulation_actions_considered)
+- <simulation 1>
+- <simulation 2>
+- <simulation 3>
 ```
+
+**Example Output:**
+
+The opponent's Garchomp threatens a KO with Earthquake. Our best option is to use Ice Beam for a likely OHKO, maintaining offensive pressure while removing their physical sweeper.
+
+## Battle Action Rationale (reasoning)
+Simulations show Ice Beam deals 95-112% to Garchomp, securing the KO. Even if they switch, we force out their sweeper and gain momentum. Our Greninja survives at 78% HP after potential Earthquake chip from earlier.
+
+## Action Type (action_type)
+move
+
+## Move Name, if Action Type is Move (move_name)
+Ice Beam
+
+## Switch Target Pokemon, if Action Type is Switch (switch_pokemon_name)
+null
+
+## Team Order, if Action Type is Team Order (team_order)
+null
+
+## Mega Evolution (mega)
+false
+
+## Terastallization (tera)
+false
+
+## Key Benefits (upside)
+- Likely KO on Garchomp removes primary physical threat
+- Maintains offensive momentum
+- Preserves our switch options for later
+
+## Potential Risks (risks)
+- Opponent could predict and switch to a special wall
+- Priority move from unexpected Pokemon could threaten
+- Locking into Ice Beam limits coverage next turn
+
+## Simulations Considered (simulation_actions_considered)
+- greninja_ice_beam_vs_garchomp_earthquake
+- greninja_ice_beam_vs_garchomp_switch_toxapex
+- greninja_hydro_pump_vs_garchomp_earthquake
 
 Constraints:
 - Ensure the recommended action is legal (must exist in `Available Actions`).

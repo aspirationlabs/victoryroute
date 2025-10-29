@@ -11,7 +11,7 @@ Inputs:
 {our_player_id}
 
 #### Proposed Decision
-{decision_proposal}
+{decision_proposal_draft}
 
 #### Action Simulations
 {simulation_actions}
@@ -23,13 +23,31 @@ Inputs:
 4. If there are no good alternate simulations, then you can indicate so in issues found and return no overlooked simulations.
 5. When the primary plan keeps a frail win-condition exposed to a likely knockout, insist on the simulation branch where the safest teammate pivots in and survives; cite the simulation IDs that demonstrate that protection before allowing a greedy line.
 
-### Output JSON
+### Output format
+Provide a brief 2-3 sentence summary of your risk assessment, then structure your critique using the following markdown sections with JSON keys in parentheses:
+
 ```
-{
-  "issues_found": ["<description>", "..."],
-  "overlooked_simulations": ["Simulation #X: <description>", "..."],
-}
+## Issues Found (issues_found)
+- <issue 1>
+- <issue 2>
+
+## Overlooked Simulations (overlooked_simulations)
+- <simulation 1>
+- <simulation 2>
 ```
+
+**Example Output:**
+
+The proposed Ice Beam assumes Garchomp stays in, but simulations show a likely switch to Toxapex which walls this move entirely. We have better options that cover both scenarios.
+
+## Issues Found (issues_found)
+- Ice Beam deals only 15% to Toxapex if they predict the obvious play
+- No consideration of opponent's Scarf Garchomp outspeeding us
+- Ignores that switching preserves Greninja for late-game cleanup
+
+## Overlooked Simulations (overlooked_simulations)
+- Simulation 1: greninja_switch_landorus_vs_garchomp_earthquake
+- Simulation 2: greninja_dark_pulse_vs_garchomp_switch_toxapex
 
 Guidance:
 - Keep `issues_found` focused on match-losing risks (matchups, speed control, residual damage, setup threats).
