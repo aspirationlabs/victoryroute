@@ -34,6 +34,7 @@ from python.agents.turn_predictor.turn_predictor_state import (
     OpponentPokemonPrediction,
     TurnPredictorState,
 )
+from python.game.data.game_data import GameData
 from python.game.interface.battle_action import ActionType, BattleAction
 from python.game.schema.battle_state import BattleState
 from python.game.schema.enums import FieldEffect, SideCondition, Weather
@@ -53,6 +54,8 @@ class ActionSimulationAgent(BaseAgent):
     ):
         super().__init__(name=name)
         self._simulator = battle_simulator
+        simulator_game_data = getattr(battle_simulator, "game_data", None)
+        self._game_data = simulator_game_data or GameData()
         self._priors_reader = priors_reader or PokemonStatePriorsReader()
         self._usage_spread_cache: Dict[
             str, Tuple[Optional[str], Optional[EffortValues]]
@@ -210,12 +213,11 @@ class ActionSimulationAgent(BaseAgent):
 
         return switches
 
-    def _move_is_unknown(self, move_name: str) -> bool:
+    def _ensure_move_known(self, move_name: str) -> None:
         try:
-            self._simulator.game_data.get_move(move_name)
-            return False
-        except ValueError:
-            return True
+            self._game_data.get_move(move_name)
+        except ValueError as exc:
+            raise ValueError(f"Unknown move predicted by LLM: {move_name}") from exc
 
     def _build_opponent_pokemon_state(
         self,
@@ -228,40 +230,18 @@ class ActionSimulationAgent(BaseAgent):
         )
         if not current_active:
             raise ValueError("No active Pokemon for opponent")
-        valid_move_predictions = []
-        invalid_move_names = []
+        if not opponent_predicted.moves:
+            raise ValueError("Opponent prediction did not include any moves.")
+
+        move_predictions = []
         for move_prediction in opponent_predicted.moves:
-            if self._move_is_unknown(move_prediction.name):
-                invalid_move_names.append(move_prediction.name)
-                continue
-            valid_move_predictions.append(move_prediction)
+            self._ensure_move_known(move_prediction.name)
+            move_predictions.append(move_prediction)
 
-        if invalid_move_names:
-            logging.warning(
-                "[ActionSimulationAgent] Filtering unknown opponent moves: %s",
-                ", ".join(invalid_move_names),
-            )
-
-        if valid_move_predictions:
-            predicted_moves = [
-                PokemonMove(name=move.name, current_pp=5, max_pp=5)
-                for move in valid_move_predictions
-            ]
-            move_predictions = valid_move_predictions
-        else:
-            logging.warning(
-                "[ActionSimulationAgent] No valid move predictions; falling back to observed moves."
-            )
-            predicted_moves = [
-                PokemonMove(
-                    name=move.name, current_pp=move.current_pp, max_pp=move.max_pp
-                )
-                for move in current_active.moves
-            ]
-            move_predictions = [
-                MovePrediction(name=move.name, confidence=1.0)
-                for move in current_active.moves
-            ]
+        predicted_moves = [
+            PokemonMove(name=move.name, current_pp=5, max_pp=5)
+            for move in move_predictions
+        ]
 
         return (
             replace(
@@ -349,12 +329,13 @@ class ActionSimulationAgent(BaseAgent):
     def _get_move_from_pokemon(
         self, pokemon: PokemonState, move_name: str
     ) -> PokemonMove:
-        """Get a PokemonMove by name, creating a placeholder if unseen."""
+        """Get a PokemonMove by name, raising if it does not exist."""
         for move in pokemon.moves:
             if move.name.lower() == move_name.lower():
                 return move
-        # Fallback: create a placeholder move with nominal PP to allow simulation.
-        return PokemonMove(name=move_name, current_pp=5, max_pp=5)
+        raise ValueError(
+            f"Move '{move_name}' not found for pokemon '{pokemon.species}'."
+        )
 
     def _get_side_condition_set(self, team: TeamState) -> Optional[set[SideCondition]]:
         """Return the active side conditions for a team as a set."""

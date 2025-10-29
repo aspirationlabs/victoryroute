@@ -81,7 +81,6 @@ class TeamPredictorAgent:
         self._agent = JsonLlmAgent(
             model=LiteLlm(
                 model=model_name,
-                response_format=OpponentPokemonPrediction,
             ),
             name="opponent_pokemon_predictor",
             instruction=prompt_builder.get_team_predictor_system_prompt(),

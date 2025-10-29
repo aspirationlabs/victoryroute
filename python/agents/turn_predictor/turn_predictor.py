@@ -88,7 +88,6 @@ class TurnPredictorAgent(Agent):
         primary_agent = JsonLlmAgent(
             model=LiteLlm(
                 model=model_name,
-                response_format=DecisionProposal,
             ),
             name="battle_action_planner",
             instruction=initial_decision_prompt,
@@ -108,7 +107,6 @@ class TurnPredictorAgent(Agent):
         critique_agent = JsonLlmAgent(
             model=LiteLlm(
                 model=model_name,
-                response_format=DecisionCritique,
             ),
             name="risk_analyst",
             instruction=critique_prompt,
@@ -128,7 +126,6 @@ class TurnPredictorAgent(Agent):
         final_agent = JsonLlmAgent(
             model=LiteLlm(
                 model=model_name,
-                response_format=DecisionProposal,
             ),
             name="battle_action_lead",
             instruction=final_decision_prompt,
