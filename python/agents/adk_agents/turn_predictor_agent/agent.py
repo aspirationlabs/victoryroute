@@ -9,7 +9,7 @@ _turn_predictor_agent = TurnPredictorAgent(
     battle_room="test_battle_room",
     battle_stream_store=BattleStreamStore(),
     session_service=InMemorySessionService(),
-    model_name="openai/gpt-5-nano",
+    model_name="gemini/gemini-2.5-flash-lite-preview-09-2025",
     mode="gen9ou",
 )
 root_agent = _turn_predictor_agent.get_adk_agent
