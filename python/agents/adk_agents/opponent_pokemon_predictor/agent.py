@@ -12,7 +12,7 @@ _team_predictor = TeamPredictorAgent(
     priors_reader=PokemonStatePriorsReader(),
     prompt_builder=TurnPredictorPromptBuilder(battle_stream_store=BattleStreamStore()),
     game_data=GameData(),
-    model_name="openrouter/google/gemini-2.5-flash-lite-preview-09-2025",
+    model_name="openai/gpt-5-nano",
 )
 
 root_agent = _team_predictor.get_adk_agent

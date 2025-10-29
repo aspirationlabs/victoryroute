@@ -30,6 +30,7 @@ from python.agents.turn_predictor.simulation_result import (
     SimulationResult,
 )
 from python.agents.turn_predictor.turn_predictor_state import (
+    MovePrediction,
     OpponentPokemonPrediction,
     TurnPredictorState,
 )
@@ -93,10 +94,13 @@ class ActionSimulationAgent(BaseAgent):
             battle_state, opponent_player_id
         )
 
-        opponent_active_pokemon = self._build_opponent_pokemon_state(
-            battle_state,
-            state.opponent_predicted_active_pokemon,
-            opponent_player_id,
+        opponent_prediction = state.opponent_predicted_active_pokemon
+        opponent_active_pokemon, opponent_move_predictions = (
+            self._build_opponent_pokemon_state(
+                battle_state,
+                opponent_prediction,
+                opponent_player_id,
+            )
         )
 
         field_state = battle_state.field_state
@@ -111,7 +115,7 @@ class ActionSimulationAgent(BaseAgent):
                     raise ValueError(
                         "Action type is MOVE, but move_name unset: {our_action}"
                     )
-                for move_prediction in state.opponent_predicted_active_pokemon.moves:
+                for move_prediction in opponent_move_predictions:
                     result = await self._simulate_move_vs_move(
                         battle_state=battle_state,
                         our_pokemon=our_active_pokemon,
@@ -150,7 +154,7 @@ class ActionSimulationAgent(BaseAgent):
                     raise ValueError(
                         "No switch target found for our action: {our_action}"
                     )
-                for move_prediction in state.opponent_predicted_active_pokemon.moves:
+                for move_prediction in opponent_move_predictions:
                     result = await self._simulate_switch_vs_move(
                         battle_state=battle_state,
                         our_switching_to=our_switch_target,
@@ -181,6 +185,7 @@ class ActionSimulationAgent(BaseAgent):
         )
         yield Event(
             author="ActionSimulationAgent",
+            invocation_id=ctx.invocation_id,
             content=Content(
                 role="model",
                 parts=[
@@ -205,28 +210,68 @@ class ActionSimulationAgent(BaseAgent):
 
         return switches
 
+    def _move_is_unknown(self, move_name: str) -> bool:
+        try:
+            self._simulator.game_data.get_move(move_name)
+            return False
+        except ValueError:
+            return True
+
     def _build_opponent_pokemon_state(
         self,
         battle_state: BattleState,
         opponent_predicted: OpponentPokemonPrediction,
         opponent_player_id: str,
-    ) -> PokemonState:
+    ) -> Tuple[PokemonState, List[MovePrediction]]:
         current_active: Optional[PokemonState] = battle_state.get_active_pokemon(
             opponent_player_id
         )
         if not current_active:
             raise ValueError("No active Pokemon for opponent")
-        predicted_moves = [
-            # TODO: Get max pp from game data
-            PokemonMove(name=move.name, current_pp=5, max_pp=5)
-            for move in opponent_predicted.moves
-        ]
-        return replace(
-            current_active,
-            moves=predicted_moves,
-            item=opponent_predicted.item,
-            ability=opponent_predicted.ability,
-            tera_type=opponent_predicted.tera_type,
+        valid_move_predictions = []
+        invalid_move_names = []
+        for move_prediction in opponent_predicted.moves:
+            if self._move_is_unknown(move_prediction.name):
+                invalid_move_names.append(move_prediction.name)
+                continue
+            valid_move_predictions.append(move_prediction)
+
+        if invalid_move_names:
+            logging.warning(
+                "[ActionSimulationAgent] Filtering unknown opponent moves: %s",
+                ", ".join(invalid_move_names),
+            )
+
+        if valid_move_predictions:
+            predicted_moves = [
+                PokemonMove(name=move.name, current_pp=5, max_pp=5)
+                for move in valid_move_predictions
+            ]
+            move_predictions = valid_move_predictions
+        else:
+            logging.warning(
+                "[ActionSimulationAgent] No valid move predictions; falling back to observed moves."
+            )
+            predicted_moves = [
+                PokemonMove(
+                    name=move.name, current_pp=move.current_pp, max_pp=move.max_pp
+                )
+                for move in current_active.moves
+            ]
+            move_predictions = [
+                MovePrediction(name=move.name, confidence=1.0)
+                for move in current_active.moves
+            ]
+
+        return (
+            replace(
+                current_active,
+                moves=predicted_moves,
+                item=opponent_predicted.item,
+                ability=opponent_predicted.ability,
+                tera_type=opponent_predicted.tera_type,
+            ),
+            move_predictions,
         )
 
     def _get_usage_spread(
