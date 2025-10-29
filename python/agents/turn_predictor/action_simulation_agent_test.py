@@ -404,6 +404,7 @@ class ActionSimulationAgentTest(absltest.TestCase, unittest.IsolatedAsyncioTestC
         ]
 
         result = await self.agent._simulate_move_vs_move(
+            simulation_id=1,
             battle_state=self.sample_battle_state,
             our_pokemon=self.sample_our_pokemon,
             our_move="Earthquake",
@@ -491,6 +492,7 @@ class ActionSimulationAgentTest(absltest.TestCase, unittest.IsolatedAsyncioTestC
         ]
 
         result = await self.agent._simulate_move_vs_move(
+            simulation_id=2,
             battle_state=self.sample_battle_state,
             our_pokemon=self.sample_our_pokemon,
             our_move="Earthquake",
@@ -527,6 +529,7 @@ class ActionSimulationAgentTest(absltest.TestCase, unittest.IsolatedAsyncioTestC
         self.mock_simulator.estimate_move_result.return_value = our_move_result
 
         result = await self.agent._simulate_move_vs_switch(
+            simulation_id=3,
             battle_state=self.sample_battle_state,
             our_pokemon=self.sample_our_pokemon,
             our_move="Earthquake",
@@ -566,6 +569,7 @@ class ActionSimulationAgentTest(absltest.TestCase, unittest.IsolatedAsyncioTestC
         self.mock_simulator.estimate_move_result.return_value = recoil_result
 
         result = await self.agent._simulate_move_vs_switch(
+            simulation_id=4,
             battle_state=self.sample_battle_state,
             our_pokemon=self.sample_our_pokemon,
             our_move="Earthquake",
@@ -599,6 +603,7 @@ class ActionSimulationAgentTest(absltest.TestCase, unittest.IsolatedAsyncioTestC
         self.mock_simulator.estimate_move_result.return_value = opponent_move_result
 
         result = await self.agent._simulate_switch_vs_move(
+            simulation_id=5,
             battle_state=self.sample_battle_state,
             our_switching_to=self.sample_our_pokemon,
             opponent_pokemon=self.sample_opponent_pokemon,
@@ -624,6 +629,7 @@ class ActionSimulationAgentTest(absltest.TestCase, unittest.IsolatedAsyncioTestC
         self.mock_simulator.reset_mock()
 
         result = await self.agent._simulate_switch_vs_switch(
+            simulation_id=6,
             battle_state=self.sample_battle_state,
             our_switching_to=self.sample_our_pokemon,
             opponent_switching_to=self.sample_opponent_pokemon,

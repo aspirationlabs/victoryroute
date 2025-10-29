@@ -36,7 +36,8 @@ class PokemonOutcome:
 class SimulationResult:
     """Represents the simulated outcome of an action pair between two players."""
 
-    # Action inputs
+    simulation_id: int
+
     actions: Dict[str, BattleAction]  # {"p1": BattleAction, "p2": BattleAction}
 
     # Execution order

@@ -44,7 +44,7 @@ Respond with JSON matching:
   "tera": <boolean>,
   "upside": ["<bullet>", "..."],
   "risks": ["<bullet>", "..."],
-  "simulation_actions_considered": ["..."]
+  "simulation_actions_considered": ["Simulation #X: <brief description>", "..."]
 }
 ```
 
@@ -53,4 +53,4 @@ Guidance:
 - Prioritize survival when our side is frail or behind—respect priority moves, speed control, and trapping.
 - If two options are close, choose the one with broader coverage against un-simulated possibilities; explain that rationale.
 - When `Action Simulations` is empty (such as during team preview), focus on legal non-combat options like `team_order` and explain the ordering logic.
-- Explicitly mention the expected opponent move and the HP ranges our choice leaves on key Pokemon, backing the decision with the simulations that show why the selected line preserves our win plan.
+- Explicitly mention the expected opponent move and the HP ranges our choice leaves on key Pokemon, backing the decision with the simulation IDs (e.g., "Simulation #5") that show why the selected line preserves our win plan.
