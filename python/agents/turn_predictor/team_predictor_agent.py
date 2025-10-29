@@ -28,7 +28,7 @@ class TeamPredictorAgent:
         priors_reader: PokemonStatePriorsReader,
         prompt_builder: TurnPredictorPromptBuilder,
         game_data: GameData,
-        model_name: str = "openrouter/google/gemini-2.5-flash-lite-preview-09-2025",
+        model_name: str = "gemini/gemini-2.5-flash-lite-preview-09-2025",
         max_retries: int = 3,
     ):
         self._game_data: GameData = game_data

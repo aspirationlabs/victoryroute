@@ -80,7 +80,7 @@ class ZeroShotAgent(Agent):
         battle_room: str,
         battle_stream_store: BattleStreamStore,
         session_service: BaseSessionService = InMemorySessionService(),
-        model_name: str = "openrouter/google/gemini-2.5-flash-lite-preview-09-2025",
+        model_name: str = "gemini/gemini-2.5-flash-lite-preview-09-2025",
         mode: str = "gen9ou",
         past_actions_count: int = 5,
         max_retries: int = 3,

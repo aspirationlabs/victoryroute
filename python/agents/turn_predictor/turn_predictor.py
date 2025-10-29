@@ -26,7 +26,6 @@ from python.game.data.game_data import GameData
 from python.game.environment.battle_stream_store import BattleStreamStore
 from python.game.interface.battle_action import ActionType, BattleAction
 from python.game.schema.battle_state import BattleState
-from python.agents.turn_predictor.json_llm_agent import JsonLlmAgent
 
 
 class TurnPredictorAgent(Agent):
@@ -35,7 +34,7 @@ class TurnPredictorAgent(Agent):
         battle_room: str,
         battle_stream_store: BattleStreamStore,
         session_service: BaseSessionService = InMemorySessionService(),
-        model_name: str = "openrouter/google/gemini-2.5-flash-lite-preview-09-2025",
+        model_name: str = "gemini/gemini-2.5-flash-lite-preview-09-2025",
         mode: str = "gen9ou",
         past_actions_count: int = 5,
         max_retries: int = 3,
@@ -81,18 +80,12 @@ class TurnPredictorAgent(Agent):
             battle_simulator=BattleSimulator(game_data=self._game_data),
         )
 
-        battle_action_loop = BattleActionLoopAgent(
+        battle_action_agent = BattleActionLoopAgent(
             model_name=model_name,
             prompt_builder=self._prompt_builder,
             tools=[tool_get_object_game_data],
-        )
-        battle_action_agent = JsonLlmAgent(
-            base_agent=battle_action_loop,
-            output_schema=BattleActionResponse,
-            data_input_key="decision_proposal_draft",
-            json_output_key="decision_proposal",
-            model=model_name,
-        )
+        ).get_adk_agent
+
         return SequentialAgent(
             name="turn_predictor_workflow",
             sub_agents=[opponent_agent, simulation_agent, battle_action_agent],

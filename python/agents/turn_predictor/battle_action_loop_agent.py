@@ -2,21 +2,20 @@ from __future__ import annotations
 
 from typing import Callable, Sequence
 
-from google.adk.agents import LlmAgent, LoopAgent, SequentialAgent
+from google.adk.agents import BaseAgent, LlmAgent, LoopAgent, SequentialAgent
 from google.adk.models.lite_llm import LiteLlm
 from google.adk.planners import BuiltInPlanner
 from google.genai import types
 
+from python.agents.battle_action_generator import BattleActionResponse
+from python.agents.turn_predictor.json_llm_agent import JsonLlmAgent
 from python.agents.turn_predictor.turn_predictor_prompt_builder import (
     TurnPredictorPromptBuilder,
 )
 
 
-class BattleActionLoopAgent(SequentialAgent):
+class BattleActionLoopAgent:
     """Runs the proposal → critique/refinement workflow for battle actions."""
-
-    _PROPOSAL_KEY = "decision_proposal_draft"
-    _CRITIQUE_KEY = "decision_critique"
 
     def __init__(
         self,
@@ -35,14 +34,14 @@ class BattleActionLoopAgent(SequentialAgent):
 
         shared_tools = list(tools)
 
-        self._proposal_agent = LlmAgent(
+        proposal_agent = LlmAgent(
             model=LiteLlm(model=model_name),
             name="battle_action_planner",
             instruction=prompt_builder.get_initial_decision_prompt(),
             planner=planner,
             include_contents="none",
             tools=shared_tools,
-            output_key=self._PROPOSAL_KEY,
+            output_key="decision_proposal_draft",
             disallow_transfer_to_parent=True,
             disallow_transfer_to_peers=True,
         )
@@ -54,7 +53,7 @@ class BattleActionLoopAgent(SequentialAgent):
             planner=planner,
             include_contents="none",
             tools=shared_tools,
-            output_key=self._CRITIQUE_KEY,
+            output_key="decision_critique",
             disallow_transfer_to_parent=True,
             disallow_transfer_to_peers=True,
         )
@@ -66,22 +65,30 @@ class BattleActionLoopAgent(SequentialAgent):
             planner=planner,
             include_contents="none",
             tools=shared_tools,
-            output_key=self._PROPOSAL_KEY,
+            output_key="decision_proposal_draft",
             disallow_transfer_to_parent=True,
             disallow_transfer_to_peers=True,
         )
 
-        self._critique_and_refinement_loop = LoopAgent(
+        loop_agent = LoopAgent(
             name="battle_action_review_loop",
             sub_agents=[critique_agent, refinement_agent],
             max_iterations=max_iterations,
         )
 
-        super().__init__(
+        sequential_agent = SequentialAgent(
             name="battle_action_decision_sequence",
-            sub_agents=[self._proposal_agent, self._critique_and_refinement_loop],
+            sub_agents=[proposal_agent, loop_agent],
+        )
+
+        self._agent: JsonLlmAgent[BattleActionResponse] = JsonLlmAgent(
+            base_agent=sequential_agent,
+            output_schema=BattleActionResponse,
+            data_input_key="decision_proposal_draft",
+            json_output_key="decision_proposal",
+            model=LiteLlm(model=model_name),
         )
 
     @property
-    def proposal_output_key(self) -> str:
-        return self._PROPOSAL_KEY
+    def get_adk_agent(self) -> BaseAgent:
+        return self._agent
