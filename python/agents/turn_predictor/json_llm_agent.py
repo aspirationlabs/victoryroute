@@ -225,10 +225,11 @@ class JsonLlmAgent(SequentialAgent, Generic[ModelT]):
             return None
 
         logging.info(
-            "[%s] Cleaned model output from %d to %d characters",
+            "[%s] Cleaned model output from %d to %d characters: %s",
             self._coercion_agent_name,
             len(raw_text),
             len(clean_json),
+            clean_json,
         )
 
         return LlmResponse(

@@ -11,6 +11,7 @@ from typing import List
 from absl import app, flags, logging
 
 from python.agents.agent_registry import AgentRegistry
+from python.agents.turn_predictor.turn_predictor import TurnPredictorAgent
 from python.agents.zero_shot.zero_shot_agent import ZeroShotAgent
 from python.battle.opponent_stats_tracker import OpponentStatsTracker
 from python.game.environment.battle_environment import BattleEnvironment
@@ -225,7 +226,7 @@ async def run_battle() -> None:
                             raise
 
             logging.info(f"Battle {battle_room} ended after {turn_count} turns")
-            if isinstance(agent, ZeroShotAgent):
+            if isinstance(agent, (ZeroShotAgent, TurnPredictorAgent)):
                 await agent.cleanup_battle(battle_room)
 
             opponent_username = None
