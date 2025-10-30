@@ -406,9 +406,7 @@ class ActionSimulationAgentIntegrationTest(
 
     async def test_force_switch_turn_generates_switch_only_results(self) -> None:
         """Forced switch states should yield one simulation per available switch."""
-        log_path = Path(
-            "/tmp/logs/TPFlashLite_abyssal4276_battle-gen9ou-837_1761786763.txt"
-        ).resolve()
+        log_path = Path("python/integration_tests/testdata/live_battle_5.txt").resolve()
         self.assertTrue(
             log_path.exists(),
             msg="Expected battle log for forced switch scenario is missing.",
