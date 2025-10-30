@@ -22,6 +22,7 @@ from python.agents.turn_predictor.team_predictor_agent import TeamPredictorAgent
 from python.agents.turn_predictor.turn_predictor_prompt_builder import (
     TurnPredictorPromptBuilder,
 )
+from python.agents.zero_shot.zero_shot_agent import ZeroShotAgent
 from python.game.data.game_data import GameData
 from python.game.environment.battle_stream_store import BattleStreamStore
 from python.game.interface.battle_action import ActionType, BattleAction
@@ -50,6 +51,15 @@ class TurnPredictorAgent(Agent):
         self._battle_room_to_session: Dict[str, Session] = {}
         self._prompt_builder: TurnPredictorPromptBuilder = TurnPredictorPromptBuilder(
             battle_stream_store, mode=mode
+        )
+        self._zero_shot_agent: ZeroShotAgent = ZeroShotAgent(
+            battle_room=battle_room,
+            battle_stream_store=battle_stream_store,
+            session_service=self._session_service,
+            model_name=model_name,
+            mode=mode,
+            past_actions_count=past_actions_count,
+            max_retries=self._max_retries,
         )
         self._agent = self._create_agent(model_name)
         self._battle_action_output_key: str = ""
@@ -96,16 +106,31 @@ class TurnPredictorAgent(Agent):
         return self._agent
 
     async def _get_or_create_session(self, battle_room: str) -> Session:
-        session = self._battle_room_to_session.get(battle_room)
-        if session is None:
-            session = await self._session_service.create_session(
+        cached_session = self._battle_room_to_session.get(battle_room)
+        if cached_session is not None:
+            session = await self._session_service.get_session(
                 app_name=self._app_name,
                 user_id=battle_room,
+                session_id=cached_session.id,
             )
-            self._battle_room_to_session[battle_room] = session
+            if session is not None:
+                self._battle_room_to_session[battle_room] = session
+                return session
+
+        session = await self._session_service.create_session(
+            app_name=self._app_name,
+            user_id=battle_room,
+        )
+        self._battle_room_to_session[battle_room] = session
         return session
 
     async def choose_action(self, state: BattleState) -> BattleAction:
+        if state.team_preview:
+            logging.info(
+                "[TurnPredictorAgent] Team preview detected; delegating to ZeroShotAgent"
+            )
+            return await self._zero_shot_agent.choose_action(state)
+
         session = await self._get_or_create_session(self._battle_room)
 
         if self._battle_room not in self._battle_room_to_logger:
@@ -117,6 +142,7 @@ class TurnPredictorAgent(Agent):
 
         turn_state = self._prompt_builder.get_new_turn_state_prompt(state)
         turn_state.update_session_state(session)
+        state_delta = dict(session.state)
 
         runner = Runner(
             agent=self._agent,
@@ -133,22 +159,39 @@ class TurnPredictorAgent(Agent):
         logger = self._battle_room_to_logger[self._battle_room]
         logger.log_user_query(state.field_state.turn_number, query_text)
 
-        events = runner.run(
+        events = []
+        async for event in runner.run_async(
             user_id=self._battle_room,
             session_id=session.id,
             new_message=user_query,
+            state_delta=state_delta,
+        ):
+            events.append(event)
+
+        updated_session = await self._session_service.get_session(
+            app_name=self._app_name,
+            user_id=self._battle_room,
+            session_id=session.id,
         )
+        if updated_session is None:
+            raise ValueError("Session not found after runner execution")
+        self._battle_room_to_session[self._battle_room] = updated_session
 
         final_response: Optional[BattleActionResponse] = None
-        for event in events:
-            if event.is_final_response():
-                if "decision_proposal" in session.state:
-                    response_data = session.state["decision_proposal"]
-                    final_response = self._coerce_battle_action_response(response_data)
+        response_data = updated_session.state.get("decision_proposal")
+        if response_data is not None:
+            final_response = self._coerce_battle_action_response(response_data)
+        else:
+            for event in events:
+                if event.is_final_response():
+                    logging.error(
+                        "[TurnPredictorAgent] Final event missing decision_proposal"
+                    )
                     break
-
         if final_response is None:
-            raise ValueError("No battle action response returned from agent workflow")
+            raise ValueError(
+                "No battle action response returned from agent workflow (missing decision_proposal)"
+            )
 
         logging.info(
             "[TurnPredictorAgent] Final decision for battle_room=%s, turn_number=%d: %s",
@@ -168,8 +211,10 @@ class TurnPredictorAgent(Agent):
         return action
 
     def _coerce_battle_action_response(
-        self, raw_response: Union[str, dict, BattleActionResponse]
+        self, raw_response: Union[str, dict, BattleActionResponse, None]
     ) -> Optional[BattleActionResponse]:
+        if raw_response is None:
+            return None
         if isinstance(raw_response, BattleActionResponse):
             return raw_response
         if isinstance(raw_response, dict):
