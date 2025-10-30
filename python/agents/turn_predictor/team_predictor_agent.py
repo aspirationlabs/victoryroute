@@ -5,21 +5,21 @@ from typing import Any, Optional
 from absl import logging
 from google.adk.agents import BaseAgent, LlmAgent
 from google.adk.agents.callback_context import CallbackContext
-from google.adk.models.lite_llm import LiteLlm
 from google.adk.planners import BuiltInPlanner
 from google.genai import types
 
 from python.agents.tools.get_object_game_data import get_object_game_data
+from python.agents.tools.pokemon_state_priors_reader import PokemonStatePriorsReader
+from python.agents.turn_predictor.json_llm_agent import JsonLlmAgent
+from python.agents.turn_predictor.llm_model_factory import get_llm_model
+from python.agents.turn_predictor.turn_predictor_prompt_builder import (
+    TurnPredictorPromptBuilder,
+)
 from python.agents.turn_predictor.turn_predictor_state import (
     OpponentPokemonPrediction,
     TurnPredictorState,
 )
-from python.agents.turn_predictor.turn_predictor_prompt_builder import (
-    TurnPredictorPromptBuilder,
-)
-from python.agents.tools.pokemon_state_priors_reader import PokemonStatePriorsReader
 from python.game.data.game_data import GameData
-from python.agents.turn_predictor.json_llm_agent import JsonLlmAgent
 
 
 class TeamPredictorAgent:
@@ -78,9 +78,7 @@ class TeamPredictorAgent:
 
         self._model_name: str = model_name
         self._max_retries: int = max_retries
-        predictor_model = LiteLlm(
-            model=model_name,
-        )
+        predictor_model = get_llm_model(model_name)
         predictor_llm_agent = LlmAgent(
             model=predictor_model,
             name="opponent_pokemon_predictor",

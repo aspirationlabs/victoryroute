@@ -276,6 +276,75 @@ class ActionSimulationAgentTest(absltest.TestCase, unittest.IsolatedAsyncioTestC
         self.assertIsNotNone(events[0].content.parts)  # type: ignore[union-attr]
         self.assertIn("opponent prediction", events[0].content.parts[0].text)  # type: ignore[union-attr]
 
+    async def test_force_switch_only_generates_switch_results(self):
+        """Force-switch scenarios should only simulate our available switches."""
+        from dataclasses import replace
+
+        fainted_active = replace(self.sample_our_pokemon, current_hp=0)
+        rotom_switch_target = self.sample_battle_state.teams["p1"].pokemon[1]
+        extra_switch_target = self._create_sample_pokemon(
+            "Heatran",
+            300,
+            300,
+            ["Magma Storm", "Earth Power", "Flash Cannon", "Taunt"],
+        )
+
+        updated_team = replace(
+            self.sample_battle_state.teams["p1"],
+            pokemon=[fainted_active, rotom_switch_target, extra_switch_target],
+            active_pokemon_index=0,
+        )
+        forced_battle_state = replace(
+            self.sample_battle_state,
+            teams={
+                "p1": updated_team,
+                "p2": self.sample_battle_state.teams["p2"],
+            },
+            force_switch=True,
+            available_moves=[],
+            available_switches=[1, 2],
+        )
+
+        available_actions = [
+            BattleAction(
+                action_type=ActionType.SWITCH, switch_pokemon_name=pokemon.species
+            )
+            for pokemon in updated_team.pokemon[1:]
+        ]
+
+        turn_state = TurnPredictorState(
+            our_player_id="p1",
+            turn_number=3,
+            opponent_active_pokemon=self.sample_opponent_pokemon,
+            past_battle_event_logs="<logs/>",
+            past_player_actions="<actions/>",
+            battle_state=forced_battle_state,
+            available_actions=available_actions,
+            opponent_predicted_active_pokemon=self.sample_opponent_prediction,
+        )
+
+        ctx = Mock(spec=InvocationContext)
+        ctx.invocation_id = "force-switch-invocation"
+        session = SimpleNamespace(state=None)
+        turn_state.update_session_state(session)
+        ctx.session = session
+
+        events = [event async for event in self.agent._run_async_impl(ctx)]
+        self.assertTrue(events, msg="Agent should emit at least one event.")
+
+        simulation_actions = ctx.session.state["simulation_actions"]
+        self.assertEqual(len(simulation_actions), len(available_actions))
+
+        self.mock_simulator.get_move_order.assert_not_called()
+        self.mock_simulator.estimate_move_result.assert_not_called()
+
+        for result in simulation_actions:
+            self.assertEqual(result.player_move_order, ("p1",))
+            self.assertEqual(result.actions["p1"].action_type, ActionType.SWITCH)
+            self.assertEqual(result.actions["p2"].action_type, ActionType.UNKNOWN_MOVE)
+            self.assertIsNone(result.move_results["p1"])
+            self.assertIsNone(result.move_results["p2"])
+
     async def test_get_opponent_switches(self):
         """Test getting valid switch targets for opponent."""
         switches = self.agent._get_opponent_switches(self.sample_battle_state, "p2")

@@ -3,12 +3,12 @@ from __future__ import annotations
 from typing import Callable, Sequence
 
 from google.adk.agents import BaseAgent, LlmAgent, LoopAgent, SequentialAgent
-from google.adk.models.lite_llm import LiteLlm
 from google.adk.planners import BuiltInPlanner
 from google.genai import types
 
 from python.agents.battle_action_generator import BattleActionResponse
 from python.agents.turn_predictor.json_llm_agent import JsonLlmAgent
+from python.agents.turn_predictor.llm_model_factory import get_llm_model
 from python.agents.turn_predictor.turn_predictor_prompt_builder import (
     TurnPredictorPromptBuilder,
 )
@@ -35,7 +35,7 @@ class BattleActionLoopAgent:
         shared_tools = list(tools)
 
         proposal_agent = LlmAgent(
-            model=LiteLlm(model=model_name),
+            model=get_llm_model(model_name),
             name="battle_action_planner",
             instruction=prompt_builder.get_initial_decision_prompt(),
             planner=planner,
@@ -47,7 +47,7 @@ class BattleActionLoopAgent:
         )
 
         critique_agent = LlmAgent(
-            model=LiteLlm(model=model_name),
+            model=get_llm_model(model_name),
             name="risk_analyst",
             instruction=prompt_builder.get_decision_critique_prompt(),
             planner=planner,
@@ -59,7 +59,7 @@ class BattleActionLoopAgent:
         )
 
         refinement_agent = LlmAgent(
-            model=LiteLlm(model=model_name),
+            model=get_llm_model(model_name),
             name="battle_action_refiner",
             instruction=prompt_builder.get_final_decision_prompt(),
             planner=planner,
@@ -86,7 +86,7 @@ class BattleActionLoopAgent:
             output_schema=BattleActionResponse,
             data_input_key="decision_proposal_draft",
             json_output_key="decision_proposal",
-            model=LiteLlm(model=model_name),
+            model=get_llm_model(model_name),
         )
 
     @property
