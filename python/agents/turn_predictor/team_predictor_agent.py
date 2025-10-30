@@ -3,7 +3,7 @@ from dataclasses import asdict
 from typing import Any, Optional
 
 from absl import logging
-from google.adk.agents import BaseAgent
+from google.adk.agents import BaseAgent, LlmAgent
 from google.adk.agents.callback_context import CallbackContext
 from google.adk.models.lite_llm import LiteLlm
 from google.adk.planners import BuiltInPlanner
@@ -28,7 +28,7 @@ class TeamPredictorAgent:
         priors_reader: PokemonStatePriorsReader,
         prompt_builder: TurnPredictorPromptBuilder,
         game_data: GameData,
-        model_name: str = "openrouter/google/gemini-2.5-flash-lite-preview-09-2025",
+        model_name: str = "gemini/gemini-2.5-flash-lite-preview-09-2025",
         max_retries: int = 3,
     ):
         self._game_data: GameData = game_data
@@ -78,10 +78,11 @@ class TeamPredictorAgent:
 
         self._model_name: str = model_name
         self._max_retries: int = max_retries
-        self._agent = JsonLlmAgent(
-            model=LiteLlm(
-                model=model_name,
-            ),
+        predictor_model = LiteLlm(
+            model=model_name,
+        )
+        predictor_llm_agent = LlmAgent(
+            model=predictor_model,
             name="opponent_pokemon_predictor",
             instruction=prompt_builder.get_team_predictor_system_prompt(),
             planner=BuiltInPlanner(
@@ -92,12 +93,18 @@ class TeamPredictorAgent:
             ),
             include_contents="none",
             tools=[tool_get_object_game_data, tool_get_pokemon_usage_stats],
-            output_schema=OpponentPokemonPrediction,
-            output_key="opponent_predicted_active_pokemon",
+            output_key="opponent_predicted_active_pokemon_draft",
             disallow_transfer_to_parent=True,
             disallow_transfer_to_peers=True,
             before_agent_callback=log_and_validate_input_state,
             after_agent_callback=log_agent_response,
+        )
+        self._agent = JsonLlmAgent(
+            base_agent=predictor_llm_agent,
+            output_schema=OpponentPokemonPrediction,
+            data_input_key="opponent_predicted_active_pokemon_draft",
+            json_output_key="opponent_predicted_active_pokemon",
+            model=predictor_model,
         )
 
     @property
@@ -107,8 +114,6 @@ class TeamPredictorAgent:
 
 def _coerce_turn_predictor_state(raw_state: Any) -> TurnPredictorState:
     """Convert an ADK callback state into a TurnPredictorState."""
-    if isinstance(raw_state, TurnPredictorState):
-        return raw_state
     if hasattr(raw_state, "model_dump"):
         return TurnPredictorState.from_state(raw_state)  # type: ignore[arg-type]
     if hasattr(raw_state, "to_dict"):

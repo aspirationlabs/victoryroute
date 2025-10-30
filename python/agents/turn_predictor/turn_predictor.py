@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
 from absl import logging
-from google.adk.agents import BaseAgent, LoopAgent, SequentialAgent
-from google.adk.models.lite_llm import LiteLlm
-from google.adk.planners import BuiltInPlanner
+from google.adk.agents import BaseAgent, SequentialAgent
 from google.adk.runners import Runner
 from google.adk.sessions import BaseSessionService, InMemorySessionService, Session
 from google.genai import types
@@ -16,10 +14,10 @@ from python.agents.tools.get_object_game_data import get_object_game_data
 from python.agents.tools.llm_event_logger import LlmEventLogger
 from python.agents.tools.pokemon_state_priors_reader import PokemonStatePriorsReader
 from python.agents.turn_predictor.action_simulation_agent import ActionSimulationAgent
-from python.agents.turn_predictor.decision_schemas import (
-    DecisionCritique,
-    DecisionProposal,
+from python.agents.turn_predictor.battle_action_loop_agent import (
+    BattleActionLoopAgent,
 )
+from python.agents.battle_action_generator import BattleActionResponse
 from python.agents.turn_predictor.team_predictor_agent import TeamPredictorAgent
 from python.agents.turn_predictor.turn_predictor_prompt_builder import (
     TurnPredictorPromptBuilder,
@@ -28,7 +26,6 @@ from python.game.data.game_data import GameData
 from python.game.environment.battle_stream_store import BattleStreamStore
 from python.game.interface.battle_action import ActionType, BattleAction
 from python.game.schema.battle_state import BattleState
-from python.agents.turn_predictor.json_llm_agent import JsonLlmAgent
 
 
 class TurnPredictorAgent(Agent):
@@ -37,7 +34,7 @@ class TurnPredictorAgent(Agent):
         battle_room: str,
         battle_stream_store: BattleStreamStore,
         session_service: BaseSessionService = InMemorySessionService(),
-        model_name: str = "openrouter/google/gemini-2.5-flash-lite-preview-09-2025",
+        model_name: str = "gemini/gemini-2.5-flash-lite-preview-09-2025",
         mode: str = "gen9ou",
         past_actions_count: int = 5,
         max_retries: int = 3,
@@ -55,6 +52,7 @@ class TurnPredictorAgent(Agent):
             battle_stream_store, mode=mode
         )
         self._agent = self._create_agent(model_name)
+        self._battle_action_output_key: str = ""
 
     def _create_agent(
         self,
@@ -81,75 +79,16 @@ class TurnPredictorAgent(Agent):
             name="action_simulation_agent",
             battle_simulator=BattleSimulator(game_data=self._game_data),
         )
-        initial_decision_prompt = self._prompt_builder.get_initial_decision_prompt()
-        critique_prompt = self._prompt_builder.get_decision_critique_prompt()
-        final_decision_prompt = self._prompt_builder.get_final_decision_prompt()
 
-        primary_agent = JsonLlmAgent(
-            model=LiteLlm(
-                model=model_name,
-            ),
-            name="battle_action_planner",
-            instruction=initial_decision_prompt,
-            planner=BuiltInPlanner(
-                thinking_config=types.ThinkingConfig(
-                    include_thoughts=True,
-                    thinking_budget=1024,
-                )
-            ),
-            include_contents="none",
+        battle_action_agent = BattleActionLoopAgent(
+            model_name=model_name,
+            prompt_builder=self._prompt_builder,
             tools=[tool_get_object_game_data],
-            output_schema=DecisionProposal,
-            output_key="decision_proposal",
-            disallow_transfer_to_parent=True,
-            disallow_transfer_to_peers=True,
-        )
-        critique_agent = JsonLlmAgent(
-            model=LiteLlm(
-                model=model_name,
-            ),
-            name="risk_analyst",
-            instruction=critique_prompt,
-            planner=BuiltInPlanner(
-                thinking_config=types.ThinkingConfig(
-                    include_thoughts=True,
-                    thinking_budget=1024,
-                )
-            ),
-            include_contents="none",
-            tools=[tool_get_object_game_data],
-            output_schema=DecisionCritique,
-            output_key="decision_critique",
-            disallow_transfer_to_parent=True,
-            disallow_transfer_to_peers=True,
-        )
-        final_agent = JsonLlmAgent(
-            model=LiteLlm(
-                model=model_name,
-            ),
-            name="battle_action_lead",
-            instruction=final_decision_prompt,
-            planner=BuiltInPlanner(
-                thinking_config=types.ThinkingConfig(
-                    include_thoughts=True,
-                    thinking_budget=1024,
-                )
-            ),
-            include_contents="none",
-            tools=[tool_get_object_game_data],
-            output_schema=DecisionProposal,
-            output_key="decision_proposal",
-            disallow_transfer_to_parent=True,
-            disallow_transfer_to_peers=True,
-        )
-        decision_loop = LoopAgent(
-            name="battle_action_decision_loop",
-            sub_agents=[primary_agent, critique_agent, final_agent],
-            max_iterations=1,
-        )
+        ).get_adk_agent
+
         return SequentialAgent(
             name="turn_predictor_workflow",
-            sub_agents=[opponent_agent, simulation_agent, decision_loop],
+            sub_agents=[opponent_agent, simulation_agent, battle_action_agent],
         )
 
     @property
@@ -200,38 +139,46 @@ class TurnPredictorAgent(Agent):
             new_message=user_query,
         )
 
-        final_proposal: Optional[DecisionProposal] = None
+        final_response: Optional[BattleActionResponse] = None
         for event in events:
             if event.is_final_response():
                 if "decision_proposal" in session.state:
-                    proposal_data = session.state["decision_proposal"]
-                    if isinstance(proposal_data, dict):
-                        final_proposal = DecisionProposal.model_validate(proposal_data)
-                    elif isinstance(proposal_data, DecisionProposal):
-                        final_proposal = proposal_data
+                    response_data = session.state["decision_proposal"]
+                    final_response = self._coerce_battle_action_response(response_data)
                     break
 
-        if final_proposal is None:
-            raise ValueError("No decision proposal returned from agent workflow")
+        if final_response is None:
+            raise ValueError("No battle action response returned from agent workflow")
 
         logging.info(
             "[TurnPredictorAgent] Final decision for battle_room=%s, turn_number=%d: %s",
             self._battle_room,
             state.field_state.turn_number,
-            final_proposal.model_dump_json(),
+            final_response.model_dump_json(),
         )
         logger.log_event(
             state.field_state.turn_number,
             {
                 "event_number": "final_decision",
-                "decision_proposal": final_proposal.model_dump(),
+                "battle_action_response": final_response.model_dump(),
             },
         )
 
-        action = self._convert_proposal_to_action(final_proposal)
+        action = self._convert_proposal_to_action(final_response)
         return action
 
-    def _convert_proposal_to_action(self, proposal: DecisionProposal) -> BattleAction:
+    def _coerce_battle_action_response(
+        self, raw_response: Union[str, dict, BattleActionResponse]
+    ) -> Optional[BattleActionResponse]:
+        if isinstance(raw_response, BattleActionResponse):
+            return raw_response
+        if isinstance(raw_response, dict):
+            return BattleActionResponse.model_validate(raw_response)
+        return BattleActionResponse.model_validate_json(raw_response)
+
+    def _convert_proposal_to_action(
+        self, proposal: BattleActionResponse
+    ) -> BattleAction:
         action_type_str = proposal.action_type.lower()
 
         if action_type_str == "move":

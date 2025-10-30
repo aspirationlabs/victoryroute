@@ -5,134 +5,189 @@ import re
 from typing import (
     Any,
     Callable,
+    Dict,
     Iterable,
     List,
     Optional,
-    Sequence,
     Type,
     TypeVar,
     Union,
     Generic,
 )
+from typing import get_args, get_origin
 
 from absl import logging
-from google.adk.agents import LlmAgent
+from google.adk.agents import BaseAgent, LlmAgent, SequentialAgent
 from google.adk.agents.callback_context import CallbackContext
 from google.adk.models import LlmResponse
-from google.adk.models.lite_llm import LiteLlm
+from google.adk.models.base_llm import BaseLlm
 from google.genai import types
 from pydantic import BaseModel, ValidationError
+from pydantic.fields import FieldInfo
+from pydantic_core import PydanticUndefined
 
 JsonType = Union[dict, list, str, int, float, bool, None]
 ModelT = TypeVar("ModelT", bound=BaseModel)
-_VALIDATION_TOOL_NAME = "validate_json_candidate"
 
 
-class JsonLlmAgent(LlmAgent, Generic[ModelT]):
-    """LLM agent wrapper that enforces JSON responses for a pydantic schema."""
+class JsonLlmAgent(SequentialAgent, Generic[ModelT]):
+    """Wraps an agent with an additional coercion step that guarantees JSON output."""
 
     def __init__(
         self,
         *,
-        model: LiteLlm,
-        name: str,
-        instruction: str,
+        base_agent: BaseAgent,
         output_schema: Type[ModelT],
-        tools: Optional[Sequence[Callable[..., Any]]] = None,
-        after_model_callback: Optional[
-            Callable[[CallbackContext, LlmResponse], Optional[LlmResponse]]
-        ] = None,
-        instruction_validation_suffix: Optional[str] = None,
-        **kwargs: Any,
+        data_input_key: str,
+        json_output_key: str,
+        model: Union[str, BaseLlm],
     ) -> None:
-        """Initialise the agent with JSON cleaning and validation support.
+        if not isinstance(base_agent, BaseAgent):
+            raise TypeError("JsonLlmAgent requires a BaseAgent to wrap.")
+        coercion_agent_name = f"{base_agent.name}_json_coercion"
 
-        Args:
-            model: LiteLlm instance to use for generation.
-            name: Agent name.
-            instruction: Base system instruction.
-            output_schema: Pydantic model class that describes the desired response.
-            tools: Optional sequence of tools to expose to the model.
-            after_model_callback: Optional extra callback to run after JSON cleaning.
-            instruction_validation_suffix: Optional override for the appended validation
-                blurb. When None, the default message is used.
-            **kwargs: Forwarded to LlmAgent.
-        """
-        if not isinstance(model, LiteLlm):
-            raise TypeError("JsonLlmAgent requires a LiteLlm model instance.")
-
-        validation_tool = self._build_validation_tool()
-        combined_tools: List[Callable[..., Any]] = list(tools or [])
-        combined_tools.append(validation_tool)
-
-        validation_suffix = instruction_validation_suffix or (
-            "When drafting your final response, remember that it must be valid JSON "
-            f"that matches the required schema. Use the `{_VALIDATION_TOOL_NAME}` tool "
-            "to confirm your draft parses correctly before responding. Only return "
-            "the final JSON object—do not include explanations or code fences."
+        coercion_agent = self._build_coercion_agent(
+            coercion_agent_name,
+            model,
+            output_schema,
+            data_input_key,
+            json_output_key,
         )
-
-        augmented_instruction = f"{instruction.rstrip()}\n\n{validation_suffix}"
 
         super().__init__(
-            model=model,
-            name=name,
-            instruction=augmented_instruction,
-            tools=combined_tools,
-            after_model_callback=self._build_after_model_callback(),
-            output_schema=output_schema,
-            **kwargs,
+            name=f"{base_agent.name}_json_adapter",
+            sub_agents=[base_agent, coercion_agent],
         )
-        self._output_schema: Type[ModelT] = output_schema
-        self._agent_name = name
-        self._user_after_model_callback: Optional[
-            Callable[[CallbackContext, LlmResponse], Optional[LlmResponse]]
-        ] = after_model_callback
+        self._data_input_key = data_input_key
+        self._json_output_key = json_output_key
+        self._coercion_agent_name = coercion_agent_name
+        self._output_schema = output_schema
 
-    def _build_validation_tool(self) -> Callable[[str], str]:
-        def validate_json_candidate(candidate: str) -> str:
-            """Validate whether the provided JSON string conforms to the expected schema."""
-            try:
-                structured_payload = self._model_validate_candidate(candidate)
-            except ValidationError as exc:
-                logging.debug(
-                    "[%s] Validation tool rejected candidate JSON: %s",
-                    self._agent_name,
-                    exc,
-                )
-                return "false"
+    def _build_coercion_agent(
+        self, agent_name, model, output_schema, data_input_key, json_output_key
+    ) -> LlmAgent:
+        structure_lines: List[str] = []
+        example_payload: Dict[str, Any] = {}
 
-            if structured_payload is None:
-                logging.debug(
-                    "[%s] Validation tool could not extract JSON from candidate.",
-                    self._agent_name,
-                )
-                return "false"
+        for field_name, field in output_schema.model_fields.items():
+            structure_lines.append(self._format_structure_line(field_name, field))
+            example_payload[field_name] = self._example_value_for_field(field)
 
-            return "true"
+        structure_section = "\n".join(structure_lines)
+        example_json = (
+            json.dumps(example_payload, indent=2, ensure_ascii=False)
+            .replace("{", "{{")
+            .replace("}", "}}")
+        )
 
-        return validate_json_candidate
+        draft_placeholder = "{" + data_input_key + "}"
+        coercion_instruction = (
+            "You are a structured-output formatter. Read the draft value provided below "
+            "and rewrite it as clean JSON that exactly matches the schema. "
+            "The draft may be formatted as markdown sections with JSON keys in parentheses. "
+            "For example:\n"
+            "## Section Name (json_key)\n"
+            "value content\n\n"
+            "Extract the json_key from parentheses and use the content below it as the value. "
+            "For lists with bullet points, extract each item. For items with metadata like "
+            "'(confidence: 0.8)', preserve that structure in the list objects.\n\n"
+            "Respond only with the final JSON object—do not include explanations, "
+            "surrounding text, or code fences.\n\n"
+            "# Draft\n"
+            f"{draft_placeholder}\n\n"
+            "## Output Structure\n"
+            f"{structure_section}\n\n"
+            "## Example Output\n"
+            f"```json\n{example_json}\n```"
+        )
+
+        return LlmAgent(
+            name=agent_name,
+            model=model,
+            instruction=coercion_instruction,
+            include_contents="none",
+            output_schema=output_schema,
+            output_key=json_output_key,
+            after_model_callback=self._build_after_model_callback(),
+            disallow_transfer_to_parent=True,
+            disallow_transfer_to_peers=True,
+        )
+
+    @staticmethod
+    def _format_structure_line(field_name: str, field: FieldInfo) -> str:
+        type_repr = JsonLlmAgent._describe_annotation(field.annotation)
+        description = field.description or "No description provided."
+        return f"- {field_name} ({type_repr}): {description}"
+
+    @staticmethod
+    def _describe_annotation(annotation: Any) -> str:
+        origin = get_origin(annotation)
+        if origin is Union:
+            args = get_args(annotation)
+            non_none = [arg for arg in args if arg is not type(None)]
+            if len(non_none) == 1 and len(non_none) + 1 == len(args):
+                return f"Optional[{JsonLlmAgent._describe_annotation(non_none[0])}]"
+            return (
+                "Union["
+                + ", ".join(JsonLlmAgent._describe_annotation(arg) for arg in args)
+                + "]"
+            )
+        if origin in (list, List):
+            elem_args = get_args(annotation)
+            elem_desc = (
+                JsonLlmAgent._describe_annotation(elem_args[0]) if elem_args else "Any"
+            )
+            return f"List[{elem_desc}]"
+        if origin in (dict, Dict):
+            key_args = get_args(annotation)
+            if len(key_args) == 2:
+                key_desc = JsonLlmAgent._describe_annotation(key_args[0])
+                val_desc = JsonLlmAgent._describe_annotation(key_args[1])
+                return f"Dict[{key_desc}, {val_desc}]"
+            return "Dict"
+        if isinstance(annotation, type):
+            return getattr(annotation, "__name__", str(annotation))
+        return str(annotation)
+
+    @staticmethod
+    def _example_value_for_field(field: FieldInfo) -> Any:
+        if field.default is not PydanticUndefined:
+            return field.default
+        if field.default_factory is not None and callable(field.default_factory):
+            return field.default_factory()
+        return JsonLlmAgent._example_value_for_annotation(field.annotation)
+
+    @staticmethod
+    def _example_value_for_annotation(annotation: Any) -> Any:
+        origin = get_origin(annotation)
+        if origin is Union:
+            args = [arg for arg in get_args(annotation) if arg is not type(None)]
+            if args:
+                return JsonLlmAgent._example_value_for_annotation(args[0])
+            return None
+        if annotation in (str,):
+            return ""
+        if annotation in (bool,):
+            return False
+        if annotation in (int,):
+            return 0
+        if annotation in (float,):
+            return 0.0
+        if origin in (list, List):
+            return []
+        if origin in (dict, Dict):
+            return {}
+        if isinstance(annotation, type) and issubclass(annotation, BaseModel):
+            return {}
+        return None
 
     def _build_after_model_callback(
         self,
     ) -> Callable[[CallbackContext, LlmResponse], Optional[LlmResponse]]:
         def _after_model_callback(
-            callback_context: CallbackContext,
-            llm_response: LlmResponse,
+            callback_context: CallbackContext, llm_response: LlmResponse
         ) -> Optional[LlmResponse]:
-            cleaned_response = self._clean_model_output(llm_response)
-
-            response_for_user_callback = cleaned_response or llm_response
-            user_result: Optional[LlmResponse] = None
-            if self._user_after_model_callback:
-                user_result = self._user_after_model_callback(
-                    callback_context, response_for_user_callback
-                )
-
-            if user_result is not None:
-                return user_result
-
-            return cleaned_response
+            return self._clean_model_output(llm_response)
 
         return _after_model_callback
 
@@ -150,7 +205,7 @@ class JsonLlmAgent(LlmAgent, Generic[ModelT]):
         if structured is None:
             logging.warning(
                 "[%s] Could not extract JSON from model output: %s",
-                self._agent_name,
+                self._coercion_agent_name,
                 raw_text,
             )
             return None
@@ -160,7 +215,7 @@ class JsonLlmAgent(LlmAgent, Generic[ModelT]):
         except ValidationError as e:
             logging.warning(
                 "[%s] Extracted JSON failed schema validation: %s",
-                self._agent_name,
+                self._coercion_agent_name,
                 e,
             )
             return None
@@ -171,7 +226,7 @@ class JsonLlmAgent(LlmAgent, Generic[ModelT]):
 
         logging.info(
             "[%s] Cleaned model output from %d to %d characters",
-            self._agent_name,
+            self._coercion_agent_name,
             len(raw_text),
             len(clean_json),
         )
