@@ -2,6 +2,8 @@
 
 I attempted a Pokemon battle agent that relies on raw LLM prompts. My goal was to build an intuition around raw LLM capabilities between different providers, along with how to use open source SDKs to build provider-agnostic agents with minimal per-provider code.
 
+This agent is not actively maintained. So while the comamnds may have worked at some point, they may not be up-to-date and require minor code changes.
+
 ## Getting Started
 
 ### Prerequisites
