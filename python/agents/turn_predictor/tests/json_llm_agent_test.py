@@ -4,10 +4,10 @@ from typing import Any, Dict, cast
 import unittest
 
 from google.adk.agents import LlmAgent
-from google.adk.models.lite_llm import LiteLlm
 
 from python.agents.battle_action_generator import BattleActionResponse
 from python.agents.turn_predictor.json_llm_agent import JsonLlmAgent
+from python.agents.turn_predictor.llm_model_factory import get_llm_model
 
 
 class TestJsonExtraction(unittest.TestCase):
@@ -144,7 +144,7 @@ class TestJsonExtraction(unittest.TestCase):
 class TestJsonLlmAgentPrompt(unittest.TestCase):
     def test_coercion_instruction_includes_placeholder_and_schema(self):
         base_agent = LlmAgent(
-            model=LiteLlm(model="test-model"),
+            model=get_llm_model("test-model"),
             name="base_agent",
             instruction="Base instruction.",
             output_key="battle_action_response_draft",
@@ -154,7 +154,7 @@ class TestJsonLlmAgentPrompt(unittest.TestCase):
             output_schema=BattleActionResponse,
             data_input_key="battle_action_response_draft",
             json_output_key="battle_action_response",
-            model=LiteLlm(model="test-model"),
+            model=get_llm_model("test-model"),
         )
         coercion_agent = cast(LlmAgent, wrapper.sub_agents[1])
         instruction = coercion_agent.instruction

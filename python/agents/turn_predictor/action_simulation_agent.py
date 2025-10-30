@@ -113,81 +113,114 @@ class ActionSimulationAgent(BaseAgent):
         move_switch_results = 0
         switch_move_results = 0
         switch_switch_results = 0
-        for our_action in our_actions:
-            if our_action.action_type == ActionType.MOVE:
-                if not our_action.move_name:
+        force_switch_required = battle_state.force_switch or not any(
+            action.action_type == ActionType.MOVE for action in our_actions
+        )
+
+        if force_switch_required:
+            for our_action in our_actions:
+                if our_action.action_type != ActionType.SWITCH:
                     raise ValueError(
-                        "Action type is MOVE, but move_name unset: {our_action}"
+                        "Force switch required but non-switch action encountered: "
+                        f"{our_action}"
                     )
-                for move_prediction in opponent_move_predictions:
-                    result = await self._simulate_move_vs_move(
-                        simulation_id=simulation_id_counter,
-                        battle_state=battle_state,
-                        our_pokemon=our_active_pokemon,
-                        our_move=our_action.move_name,
-                        our_tera=our_action.tera,
-                        opponent_pokemon=opponent_active_pokemon,
-                        opponent_move=move_prediction.name,
-                        field_state=field_state,
-                        our_player_id=our_player_id,
-                        opponent_player_id=opponent_player_id,
-                    )
-                    simulation_results.append(result)
-                    simulation_id_counter += 1
-                    move_move_results += 1
-                for switch_target in opponent_switches:
-                    result = await self._simulate_move_vs_switch(
-                        simulation_id=simulation_id_counter,
-                        battle_state=battle_state,
-                        our_pokemon=our_active_pokemon,
-                        our_move=our_action.move_name,
-                        our_tera=our_action.tera,
-                        opponent_switching_to=switch_target,
-                        field_state=field_state,
-                        our_player_id=our_player_id,
-                        opponent_player_id=opponent_player_id,
-                    )
-                    simulation_results.append(result)
-                    simulation_id_counter += 1
-                    move_switch_results += 1
-            elif our_action.action_type == ActionType.SWITCH:
                 if not our_action.switch_pokemon_name:
                     raise ValueError(
-                        "Action type is SWITCH, but switch_pokemon_name unset: {our_action}"
+                        "Action type is SWITCH, but switch_pokemon_name unset: "
+                        f"{our_action}"
                     )
                 our_switch_target = self._get_switch_target(
                     battle_state, our_player_id, our_action.switch_pokemon_name
                 )
                 if not our_switch_target:
                     raise ValueError(
-                        "No switch target found for our action: {our_action}"
+                        f"No switch target found for our action: {our_action}"
                     )
-                for move_prediction in opponent_move_predictions:
-                    result = await self._simulate_switch_vs_move(
-                        simulation_id=simulation_id_counter,
-                        battle_state=battle_state,
-                        our_switching_to=our_switch_target,
-                        opponent_pokemon=opponent_active_pokemon,
-                        opponent_move=move_prediction.name,
-                        field_state=field_state,
-                        our_player_id=our_player_id,
-                        opponent_player_id=opponent_player_id,
+                result = await self._simulate_forced_switch(
+                    simulation_id=simulation_id_counter,
+                    our_switching_to=our_switch_target,
+                    opponent_pokemon=opponent_active_pokemon,
+                    our_player_id=our_player_id,
+                    opponent_player_id=opponent_player_id,
+                )
+                simulation_results.append(result)
+                simulation_id_counter += 1
+        else:
+            for our_action in our_actions:
+                if our_action.action_type == ActionType.MOVE:
+                    if not our_action.move_name:
+                        raise ValueError(
+                            "Action type is MOVE, but move_name unset: {our_action}"
+                        )
+                    for move_prediction in opponent_move_predictions:
+                        result = await self._simulate_move_vs_move(
+                            simulation_id=simulation_id_counter,
+                            battle_state=battle_state,
+                            our_pokemon=our_active_pokemon,
+                            our_move=our_action.move_name,
+                            our_tera=our_action.tera,
+                            opponent_pokemon=opponent_active_pokemon,
+                            opponent_move=move_prediction.name,
+                            field_state=field_state,
+                            our_player_id=our_player_id,
+                            opponent_player_id=opponent_player_id,
+                        )
+                        simulation_results.append(result)
+                        simulation_id_counter += 1
+                        move_move_results += 1
+                    for switch_target in opponent_switches:
+                        result = await self._simulate_move_vs_switch(
+                            simulation_id=simulation_id_counter,
+                            battle_state=battle_state,
+                            our_pokemon=our_active_pokemon,
+                            our_move=our_action.move_name,
+                            our_tera=our_action.tera,
+                            opponent_switching_to=switch_target,
+                            field_state=field_state,
+                            our_player_id=our_player_id,
+                            opponent_player_id=opponent_player_id,
+                        )
+                        simulation_results.append(result)
+                        simulation_id_counter += 1
+                        move_switch_results += 1
+                elif our_action.action_type == ActionType.SWITCH:
+                    if not our_action.switch_pokemon_name:
+                        raise ValueError(
+                            "Action type is SWITCH, but switch_pokemon_name unset: {our_action}"
+                        )
+                    our_switch_target = self._get_switch_target(
+                        battle_state, our_player_id, our_action.switch_pokemon_name
                     )
-                    simulation_results.append(result)
-                    simulation_id_counter += 1
-                    switch_move_results += 1
-                for switch_target in opponent_switches:
-                    result = await self._simulate_switch_vs_switch(
-                        simulation_id=simulation_id_counter,
-                        battle_state=battle_state,
-                        our_switching_to=our_switch_target,
-                        opponent_switching_to=switch_target,
-                        our_player_id=our_player_id,
-                        opponent_player_id=opponent_player_id,
-                    )
-                    simulation_results.append(result)
-                    simulation_id_counter += 1
-                    switch_switch_results += 1
+                    if not our_switch_target:
+                        raise ValueError(
+                            "No switch target found for our action: {our_action}"
+                        )
+                    for move_prediction in opponent_move_predictions:
+                        result = await self._simulate_switch_vs_move(
+                            simulation_id=simulation_id_counter,
+                            battle_state=battle_state,
+                            our_switching_to=our_switch_target,
+                            opponent_pokemon=opponent_active_pokemon,
+                            opponent_move=move_prediction.name,
+                            field_state=field_state,
+                            our_player_id=our_player_id,
+                            opponent_player_id=opponent_player_id,
+                        )
+                        simulation_results.append(result)
+                        simulation_id_counter += 1
+                        switch_move_results += 1
+                    for switch_target in opponent_switches:
+                        result = await self._simulate_switch_vs_switch(
+                            simulation_id=simulation_id_counter,
+                            battle_state=battle_state,
+                            our_switching_to=our_switch_target,
+                            opponent_switching_to=switch_target,
+                            our_player_id=our_player_id,
+                            opponent_player_id=opponent_player_id,
+                        )
+                        simulation_results.append(result)
+                        simulation_id_counter += 1
+                        switch_switch_results += 1
         if isinstance(raw_state, dict):
             raw_state["simulation_actions"] = simulation_results  # type: ignore[index]
         else:
@@ -395,6 +428,57 @@ class ActionSimulationAgent(BaseAgent):
         if value > 1.0:
             return 1.0
         return value
+
+    async def _simulate_forced_switch(
+        self,
+        simulation_id: int,
+        our_switching_to: PokemonState,
+        opponent_pokemon: PokemonState,
+        our_player_id: str,
+        opponent_player_id: str,
+    ) -> SimulationResult:
+        """Simulate a forced switch where only our player acts."""
+        our_hp = our_switching_to.current_hp
+        opponent_hp = opponent_pokemon.current_hp
+
+        actions = {
+            our_player_id: BattleAction(
+                action_type=ActionType.SWITCH,
+                switch_pokemon_name=our_switching_to.species,
+            ),
+            opponent_player_id: BattleAction(action_type=ActionType.UNKNOWN_MOVE),
+        }
+
+        return SimulationResult(
+            simulation_id=simulation_id,
+            actions=actions,
+            player_move_order=(our_player_id,),
+            move_results={our_player_id: None, opponent_player_id: None},
+            player_outcomes={
+                our_player_id: PokemonOutcome(
+                    active_pokemon=our_switching_to.species,
+                    active_pokemon_hp_range=(our_hp, our_hp),
+                    active_pokemon_max_hp=our_switching_to.max_hp,
+                    critical_hit_received_hp_range=(our_hp, our_hp),
+                    active_pokemon_moves_probability=0.0,
+                    active_pokemon_fainted_probability=0.0,
+                    critical_hit_received_probability=0.0,
+                    active_pokemon_status_probability={},
+                    active_pokemon_stat_changes={},
+                ),
+                opponent_player_id: PokemonOutcome(
+                    active_pokemon=opponent_pokemon.species,
+                    active_pokemon_hp_range=(opponent_hp, opponent_hp),
+                    active_pokemon_max_hp=opponent_pokemon.max_hp,
+                    critical_hit_received_hp_range=(opponent_hp, opponent_hp),
+                    active_pokemon_moves_probability=0.0,
+                    active_pokemon_fainted_probability=0.0,
+                    critical_hit_received_probability=0.0,
+                    active_pokemon_status_probability={},
+                    active_pokemon_stat_changes={},
+                ),
+            },
+        )
 
     async def _simulate_move_vs_move(
         self,

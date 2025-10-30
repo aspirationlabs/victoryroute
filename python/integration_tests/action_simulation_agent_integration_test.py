@@ -105,6 +105,50 @@ def _collect_turn_states(
     return results
 
 
+def _collect_force_switch_states(
+    log_path: Path, past_turns: int = 3
+) -> Dict[int, TurnPredictorState]:
+    """Replay the battle log and capture states that require a forced switch."""
+    store = BattleStreamStore()
+    battle_state = BattleState()
+    prompt_builder = TurnPredictorPromptBuilder(store)
+    current_turn: Optional[int] = None
+    results: Dict[int, TurnPredictorState] = {}
+
+    for event in _iter_replay_events(log_path):
+        store.add_events([event])
+        battle_state = StateTransition.apply(battle_state, event)
+
+        if isinstance(event, TurnEvent):
+            current_turn = event.turn_number
+            continue
+
+        if not isinstance(event, RequestEvent):
+            continue
+
+        if current_turn is None:
+            continue
+
+        if not event.request_json:
+            continue
+
+        try:
+            data = json.loads(event.request_json)
+        except json.JSONDecodeError:
+            continue
+
+        force_switches = data.get("forceSwitch")
+        if not (isinstance(force_switches, list) and any(force_switches)):
+            continue
+
+        turn_state = prompt_builder.get_new_turn_state_prompt(
+            battle_state=battle_state, past_turns=past_turns
+        )
+        results[current_turn] = turn_state
+
+    return results
+
+
 def _state_dict_from_turn_state(
     state: TurnPredictorState,
     opponent_prediction: OpponentPokemonPrediction,
@@ -359,6 +403,73 @@ class ActionSimulationAgentIntegrationTest(
         )
         self.assertEqual(expected_min_action, min_damage_action)
         self.assertEqual(expected_max_action, max_damage_action)
+
+    async def test_force_switch_turn_generates_switch_only_results(self) -> None:
+        """Forced switch states should yield one simulation per available switch."""
+        log_path = Path("python/integration_tests/testdata/live_battle_5.txt").resolve()
+        self.assertTrue(
+            log_path.exists(),
+            msg="Expected battle log for forced switch scenario is missing.",
+        )
+
+        turn_state_map = _collect_force_switch_states(log_path)
+        self.assertIn(
+            6,
+            turn_state_map,
+            msg="Forced switch turn not found in supplied battle log.",
+        )
+        turn_state = turn_state_map[6]
+
+        opponent_prediction = OpponentPokemonPrediction(
+            species="Kingambit",
+            moves=[
+                MovePrediction(name="Iron Head", confidence=0.85),
+                MovePrediction(name="Sucker Punch", confidence=0.8),
+                MovePrediction(name="Low Kick", confidence=0.6),
+                MovePrediction(name="Swords Dance", confidence=0.5),
+            ],
+            item="Leftovers",
+            ability="Supreme Overlord",
+            tera_type="Dark",
+        )
+
+        state_dict = _state_dict_from_turn_state(
+            state=turn_state, opponent_prediction=opponent_prediction
+        )
+        ctx = InvocationContextStub(state_dict)
+
+        events = [event async for event in self._agent._run_async_impl(ctx)]  # type: ignore[arg-type]
+        self.assertTrue(events, msg="Agent should emit a completion event.")
+
+        simulation_results: List[SimulationResult] = ctx.session.state[
+            "simulation_actions"
+        ]
+        available_switch_actions = [
+            action
+            for action in turn_state.available_actions
+            if action.action_type == ActionType.SWITCH
+        ]
+        self.assertTrue(
+            available_switch_actions,
+            msg="Forced switch state should expose at least one switch action.",
+        )
+        self.assertEqual(
+            len(simulation_results),
+            len(available_switch_actions),
+            msg="Simulation count should match available switch choices.",
+        )
+
+        our_player_id = turn_state.our_player_id
+        opponent_player_id = "p2" if our_player_id == "p1" else "p1"
+
+        for result in simulation_results:
+            our_action = result.actions[our_player_id]
+            opponent_action = result.actions[opponent_player_id]
+            self.assertEqual(result.player_move_order, (our_player_id,))
+            self.assertEqual(our_action.action_type, ActionType.SWITCH)
+            self.assertEqual(opponent_action.action_type, ActionType.UNKNOWN_MOVE)
+            self.assertIsNone(result.move_results[our_player_id])
+            self.assertIsNone(result.move_results[opponent_player_id])
 
 
 if __name__ == "__main__":
